@@ -1,0 +1,30 @@
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+coverage/
+.vite/
+*.local
+
+# Playwright
+playwright-report/
+test-results/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+
+# Umgebungsvariablen
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
