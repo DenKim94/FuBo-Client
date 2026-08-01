@@ -5,7 +5,10 @@
 > UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`.
 
 > Projektordner: `<Projektordner>/PRJ_FuBo`, Frontend unter `client/`
-> Git-Repository: noch nicht angelegt (siehe Meilenstein C0)
+> Git-Repository: **eigenständiges Repository mit Wurzel in `client/`** (GitHub, privat, `FuBo-Client`).
+> **Kein Monorepo.** Das Backend liegt in einem getrennten Repository (`FuBo-Server`, Ordner `server/`).
+> Der übergeordnete Ordner `PRJ_FuBo/` sowie `PRJ_FuBo/harness/` sind bewusst **nicht** versioniert.
+> Anlage erfolgt in Meilenstein C0.
 > Stand: 01.08.2026, Aufteilung in Client-/Server-Verantwortung
 
 ---
@@ -62,12 +65,24 @@ Kein Code vorhanden (reine Konzeptionsphase). UI-Prototypen liegen als Design-Re
 Schritt ist C0.
 
 ## 7. Nächste Schritte
-1. **C0** starten: Frontend-Struktur `client/` im Monorepo anlegen, SCSS-Konventionen und
-   `_globalVars.scss` festlegen, Branch-Strategie und `.gitignore` (inklusive `.env`).
-2. Endpunktkontrakt mit dem Server-Agenten abstimmen (OpenAPI) und Mock-Schicht aufsetzen.
+1. **C0** starten: Eigenes Git-Repository mit Wurzel in `client/` initialisieren (`git init -b main`,
+   privates Remote `FuBo-Client`), `.gitignore` und `.gitattributes` (inklusive `.env`) sowie
+   Branch-Strategie festlegen, Vite/TS-Projekt aufsetzen, SCSS-Konventionen und `_globalVars.scss`
+   festlegen.
+2. Endpunktkontrakt mit dem Server-Agenten abstimmen (OpenAPI) und Mock-Schicht aufsetzen. Die
+   OpenAPI-Datei ist **Quelle der Wahrheit im Server-Repository**
+   (`FuBo-Server: src/main/resources/openapi/fubo-api.yaml`); der Client generiert daraus seine
+   TypeScript-Typen (z. B. `openapi-typescript`) und checkt das Generat ein, damit nachvollziehbar
+   bleibt, gegen welche Vertragsversion gebaut wurde.
 3. Danach C1 (Design-System) und C2 (Login-Fluss).
 
 ## 8. Weitere Anweisungen
+- **Repository-Konventionen:** Repo-Wurzel ist `client/`. Branch-Namen mit Meilenstein-Präfix
+  (`feature/c0-frontend-setup`, `fix/...`, `chore/...`, `docs/...`). Commit-Nachrichten nach Conventional
+  Commits **ohne** Scope `(client)` – die Zuordnung ergibt sich aus dem Repository.
+- **Getrennte Repositories:** Änderungen an Client und Server können nicht in einem gemeinsamen Commit
+  erfolgen. Bei Vertragsänderungen zuerst die OpenAPI-Datei im Server-Repo prüfen, dann die generierten
+  Typen und die Mock-Schicht im Client nachziehen.
 - Ohne ausdrückliche Anweisung des Entwicklers nichts in `main` mergen/pushen; Feature-Branch erlaubt.
 - `.env`-Dateien nie einchecken. Dokumentation in deutscher Sprache. **Keine realen Personennamen** in
   Code, Testdaten oder Dokumentation.
@@ -76,3 +91,4 @@ Schritt ist C0.
 - Nach Abschluss eines Arbeitspakets kurze visuelle Verifikation durchführen und diesen Handoff
   aktualisieren (veraltete Fassung zuvor unter `client/harness/archive/` ablegen).
   Zudem soll auch das zentrale Handoff in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md` (Gesamtstand) entsprechend aktualisiert werden.
+  *Hinweis:* `/PRJ_FuBo/harness/` liegt **außerhalb** dieses Repositories und wird nicht mitcommittet.
