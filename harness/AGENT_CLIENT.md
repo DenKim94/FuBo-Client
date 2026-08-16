@@ -41,7 +41,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 
 **Dashboards und Abläufe**
 - (A7) Zu-/Absage zum nächsten Termin (klare, große Aktion).
-- (A10) Teilnehmerübersicht mit Fortschrittsbalken: rot solange die Mindestanzahl (Default 8) nicht
+- (A10) Teilnehmerübersicht mit Fortschrittsbalken: rot solange die Mindestanzahl (Default 6) nicht
   erreicht ist, sonst grün. Auf User- und Admin-Dashboard.
 - (A11) Anzeige der Warteschlange, wenn die Maximalzahl (Default 22) überschritten ist.
 - (A15) Teamgenerierung auslösen; Kontingentstand anzeigen; bei Teilnehmeränderung die bestehende
@@ -72,7 +72,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Transport:** REST/JSON über HTTPS gegen `api.<domain>`; das Frontend läuft unter `app.<domain>`
   (Cloudflare Pages). Aufrufe mit `credentials: 'include'`.
 - **Auth-Fluss:** zweistufig – zuerst PIN (Server setzt Session `stage=PIN_VERIFIED`), dann Namensauswahl
-  (`stage=PLAYER_AUTHENTICATED`). In der Stufe `PIN_VERIFIED` sind nur Namensliste und Namensauswahl
+  (`stage=PROFILE_AUTHENTICATED`). In der Stufe `PIN_VERIFIED` sind nur Namensliste und Namensauswahl
   erlaubt; andere Aufrufe liefern `403`.
 - **Sitzung:** `401` ⇒ automatischer Logout und Rückkehr zum Login. Vor Ablauf des gleitenden Fensters
   einen Erneuerungs-Hinweis anzeigen.

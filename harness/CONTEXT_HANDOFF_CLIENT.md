@@ -33,7 +33,7 @@ Vollständige Liste in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md`, Abschnitt 3. Fron
   Erneuerungs-Hinweis vor Ablauf des gleitenden 15-Minuten-Fensters.
 - **Keine Skillwerte für USER/GAST**: Skills erscheinen ausschließlich in Admin-Ansichten.
 - Namensbelegung wird per TanStack-Query-Polling aktuell gehalten (belegte Namen ausgrauen).
-- Teilnehmerübersicht mit Balken: rot unter der Mindestanzahl (Default 8), sonst grün; Warteschlange bei
+- Teilnehmerübersicht mit Balken: rot unter der Mindestanzahl (Default 6), sonst grün; Warteschlange bei
   Überschreiten der Maximalzahl (Default 22).
 - Bei Teilnehmeränderung wird eine bestehende Team-Einteilung als veraltet gekennzeichnet.
 
