@@ -79,6 +79,10 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Teamdaten:** Antworten enthalten für USER/GAST nur Namen, Team (A/B) und Auswechselspieler-Flag,
   keine Skillwerte.
 - **Namensbelegung:** per Polling des Belegtstatus-Endpunkts aktuell halten; Auswahl entsprechend ausgrauen.
+- **Der Kontrakt liegt als `FuBo-Server: fubo-api.json` vor** (OpenAPI 3.1 auf der Wurzel des
+  Server-Repositories) und ist bei Abweichungen massgeblich. Vertragsänderungen werden immer zuerst
+  dort abgebildet und hier nachgezogen - bei getrennten Repositories gibt es keinen gemeinsamen
+  Commit.
 - Der finale Endpunkt-/Schemakontrakt wird mit dem Server-Agenten abgestimmt (OpenAPI-Beschreibung
   empfohlen) und in `CONTEXT_HANDOFF_CLIENT.md` bzw. `CONTEXT_HANDOFF_SERVER.md` festgehalten. Bis dahin
   gegen die dokumentierten Verträge und eine Mock-Schicht entwickeln.

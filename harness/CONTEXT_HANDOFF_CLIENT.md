@@ -41,7 +41,8 @@ Vollständige Liste in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md`, Abschnitt 3. Fron
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kernpunkte: REST/JSON gegen `api.<domain>`,
 Aufrufe mit `credentials: 'include'`, zweistufiger Auth-Fluss, `401`/`403`-Behandlung, Teamdaten ohne
 Skillwerte, Belegtstatus-Polling, einheitliches Fehler-JSON in deutschsprachige Meldungen übersetzen. Der
-konkrete Endpunktkontrakt (OpenAPI empfohlen) ist mit dem Server-Agenten abzustimmen; bis dahin gegen die
+konkrete Endpunktkontrakt liegt als `FuBo-Server: fubo-api.json` vor (OpenAPI 3.1, Repo-Wurzel) und ist
+bei Abweichungen massgeblich; für alles, was er noch nicht beschreibt, gegen die
 dokumentierten Verträge und eine Mock-Schicht entwickeln.
 
 ## 5. Meilensteine & Aufwandsschätzung (Client)
@@ -61,17 +62,16 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche.
 und C5. Abhängigkeit: C3–C5 benötigen den abgestimmten Endpunktkontrakt bzw. eine Mock-Schicht.
 
 ## 6. Aktueller Code-Zustand
-Kein Code vorhanden (reine Konzeptionsphase). UI-Prototypen liegen als Design-Referenz vor. Nächster
-Schritt ist C0.
+Projektstruktu (Frontend-Setup: Vite/TS) ist bereits initialisiert und mit Beispielinhalt befüllt.
 
 ## 7. Nächste Schritte
-1. **C0** starten: Eigenes Git-Repository mit Wurzel in `client/` initialisieren (`git init -b main`,
-   privates Remote `FuBo-Client`), `.gitignore` und `.gitattributes` (inklusive `.env`) sowie
-   Branch-Strategie festlegen, Vite/TS-Projekt aufsetzen, SCSS-Konventionen und `_globalVars.scss`
-   festlegen.
-2. Endpunktkontrakt mit dem Server-Agenten abstimmen (OpenAPI) und Mock-Schicht aufsetzen. Die
-   OpenAPI-Datei ist **Quelle der Wahrheit im Server-Repository**
-   (`FuBo-Server: src/main/resources/openapi/fubo-api.yaml`); der Client generiert daraus seine
+1. **C0** starten: Bisherige Struktur prüfen und die initialen Beispieldaten entfernen. 
+SCSS-Konventionen und `_globalVars.scss` festlegen.
+2. Endpunktkontrakt und Mock-Schicht. **Der Kontrakt liegt seit dem 22.08.2026 vor** und deckt die
+   Auth- und Sitzungsendpunkte aus S2 vollständig ab. Er ist **Quelle der Wahrheit im
+   Server-Repository** und liegt dort auf der Wurzel: **`FuBo-Server: fubo-api.json`** (OpenAPI 3.1
+   in JSON; Ablageort und Format sind eine Festlegung des Haupt-Entwicklers und ersetzen den früher
+   geplanten Pfad `src/main/resources/openapi/fubo-api.yaml`). Der Client generiert daraus seine
    TypeScript-Typen (z. B. `openapi-typescript`) und checkt das Generat ein, damit nachvollziehbar
    bleibt, gegen welche Vertragsversion gebaut wurde.
 3. Danach C1 (Design-System) und C2 (Login-Fluss).
@@ -81,7 +81,7 @@ Schritt ist C0.
   (`feature/c0-frontend-setup`, `fix/...`, `chore/...`, `docs/...`). Commit-Nachrichten nach Conventional
   Commits **ohne** Scope `(client)` – die Zuordnung ergibt sich aus dem Repository.
 - **Getrennte Repositories:** Änderungen an Client und Server können nicht in einem gemeinsamen Commit
-  erfolgen. Bei Vertragsänderungen zuerst die OpenAPI-Datei im Server-Repo prüfen, dann die generierten
+  erfolgen. Bei Vertragsänderungen zuerst `fubo-api.json` im Server-Repo prüfen, dann die generierten
   Typen und die Mock-Schicht im Client nachziehen.
 - Ohne ausdrückliche Anweisung des Entwicklers nichts in `main` mergen/pushen; Feature-Branch erlaubt.
 - `.env`-Dateien nie einchecken. Dokumentation in deutscher Sprache. **Keine realen Personennamen** in
