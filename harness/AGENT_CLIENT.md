@@ -24,7 +24,8 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   funktionieren (nachrangig). Nutzungssituation oft draußen, bei Sonnenlicht, einhändig: hoher Kontrast,
   große Schrift, große Tap-Ziele, primäre Aktionen in Daumenreichweite, wenige Schritte pro Aufgabe.
 - (A9) Getrenntes User-Dashboard und Admin-Dashboard.
-- App-Logo (`/PRJ_FuBo/harness/assets/Design/FuBo_AppLogo.png`) einbinden.
+- Designvorlage aus `/PRJ_FuBo/harness/assets/Design/FuBo_Design_Prototypen.html` ist als Referenz zu nutzen.
+- Die erforderlichen Icons sind aus `/PRJ_FuBo/client/public/icons/` zu nutzen. Weitere Icons sind dort abzulegen. 
 
 **Login und Identität**
 - (A1/A3) PIN-Eingabe als Zugangsschranke; Anzeige von Fehlversuchen/Sperrhinweisen gemäß Server-Antwort.
@@ -83,15 +84,12 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   Server-Repositories) und ist bei Abweichungen massgeblich. Vertragsänderungen werden immer zuerst
   dort abgebildet und hier nachgezogen - bei getrennten Repositories gibt es keinen gemeinsamen
   Commit.
-- Der finale Endpunkt-/Schemakontrakt wird mit dem Server-Agenten abgestimmt (OpenAPI-Beschreibung
-  empfohlen) und in `CONTEXT_HANDOFF_CLIENT.md` bzw. `CONTEXT_HANDOFF_SERVER.md` festgehalten. Bis dahin
-  gegen die dokumentierten Verträge und eine Mock-Schicht entwickeln.
 
 ### Techstack (Client)
 - React (ab Version 19), Vite als Build-Tool, TypeScript.
 - SCSS mit CSS Modules; TanStack Query für Server-State.
 - Tests: Vitest und React Testing Library (Unit/Component), Playwright (End-to-End).
-- Hosting: Cloudflare Pages (Domain als gegeben angenommen).
+- Hosting: Cloudflare Pages (Domain ist als gegeben anzunehmen: z.B. https://fubo-app.denis-kim.dev).
 
 ### Implementierungs-Richtlinien (Client)
 - Funktions- und Variablennamen in camelCase; Konstanten groß mit maximal einem Unterstrich.
@@ -106,4 +104,5 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - Dokumentation und Erklärungen in deutscher Sprache. **Keine realen Personennamen** in Code, Testdaten
   oder Dokumentation verwenden (neutrale Platzhalter nutzen).
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben),
-  `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend).
+  `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
+  Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren. Falls die Dateien jeweils 600 Zeilen überschreiten sind diese auf die wesentlichen Punkte zusammen zu fassen.
