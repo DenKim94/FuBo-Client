@@ -302,4 +302,4 @@ aus `client/public/icons/` (inklusive einer `maskable`-Fassung). Diese Konfigura
 - Validierung der Implementierung erfolgt über `npm run build` und `npm run dev`.  
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
-- Falls die Datei 600 Zeilen überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.    
+- Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      

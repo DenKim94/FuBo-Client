@@ -60,16 +60,15 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche.
 
 ## 6. Aktueller Code-Zustand
 Die Projektstruktur (Frontend-Setup: Vite/TS) ist initialisiert bzw. konfiguriert.
+Die Schnittstellenbeschreibung (Endpunktkontrakt) `fubo-api.json` ist aktuell und listet die benötigten Endpunkte als **Quelle der Wahrheit** auf.
 
 ## 7. Nächste Schritte
 Zunächst ist das initiale Setup und die Konfigurationen in `tsconfig.json` und `vite.config.ts` zu prüfen. 
 Dabei ist insbesondere auf die korrekte Initialisierung/Konfiguration der PWA zu achten.
 Falls erforderlich sind Ergänzungen bzw. Korrekturen des Setups vor dem Start der Meilenstein-Bearbeitung vorzunehmen.
-
+Anschließend: 
 1. Die Bearbeitung von **C0** starten.
-2. Endpunktkontrakt `fubo-api.json`. Die Schnittstellenbeschreibung ist aktuell und listet die
-   benötigten Endpunkte als **Quelle der Wahrheit** auf.
-3. Danach C1 (Design-System) und C2 (Login-Fluss).
+2. Danach C1 (Design-System) und C2 (Login-Fluss).
 
 ## 8. Weitere Anweisungen
 - **Repository-Konventionen:** Repo-Wurzel ist `client/`. Branch-Namen mit `dev_xxx` (initial `dev_client`) nutzen.
@@ -85,4 +84,4 @@ Falls erforderlich sind Ergänzungen bzw. Korrekturen des Setups vor dem Start d
   aktualisieren (veraltete Fassung zuvor unter `client/harness/archive/` ablegen).
   Zudem soll auch das zentrale Handoff in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md` (Gesamtstand) entsprechend aktualisiert werden.
   *Hinweis:* `/PRJ_FuBo/harness/` liegt **außerhalb** dieses Repositories und wird nicht mitcommittet.
-- Falls die Datei 600 Zeilen überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.  
+- Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.
