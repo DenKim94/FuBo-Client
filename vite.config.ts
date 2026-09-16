@@ -1,11 +1,88 @@
 import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    babel({ presets: [reactCompilerPreset()] })
+    babel({ presets: [reactCompilerPreset()] }),
+    VitePWA({
+      registerType: 'prompt',
+      includeAssets: ['favicon.svg', 'icons/*.svg'],
+      manifest: {
+        name: 'FuBo – Teamgenerator',
+        short_name: 'FuBo-PWA',
+        lang: 'de',
+        background_color: '#ffffff',
+        theme_color: '#0b6b3a', 
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {
+            src: "icons/pwa/app-icon-48.png",
+            sizes: "48x48",
+            type: "image/png"
+          },  	  
+          {
+            src: "icons/pwa/app-icon-72.png",
+            sizes: "72x72",
+            type: "image/png"
+          },  	  
+          {
+            src: "icons/pwa/app-icon-96.png",
+            sizes: "96x96",
+            type: "image/png"
+          },    
+        {
+            src: "icons/pwa/app-icon-128.png",
+            sizes: "128x128",
+            type: "image/png"
+          },		  
+          {
+            src: "icons/pwa/app-icon-144.png",
+            sizes: "144x144",
+            type: "image/png"
+          },	  
+          {
+            src: "icons/pwa/apple-touch-icon.png",
+            sizes: "180x180",
+            type: "image/png"
+          },
+          {
+            src: "icons/pwa/app-icon-192.png",
+            sizes: "192x192",
+            type: "image/png"
+          },
+          {
+            src: "icons/pwa/app-icon-256.png",
+            sizes: "256x256",
+            type: "image/png"
+          },	
+          {
+            src: "icons/pwa/app-icon-384.png",
+            sizes: "384x384",
+            type: "image/png"
+          },	
+          {
+            src: "icons/pwa/app-icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: 'maskable'
+          },
+          {
+            src: "icons/pwa/app-icon-700.png",
+            sizes: "700x700",
+            type: "image/png"
+          }	
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        navigateFallbackDenylist: [/^\/api\//], // Verhindert Caching von /api/*
+        runtimeCaching: []
+      }
+    })
   ],
 })

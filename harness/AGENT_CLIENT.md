@@ -79,6 +79,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   ein Angebot: wegklickbar, und danach nicht bei jedem Start erneut.
 - **Der Text der Benachrichtigung kommt vom Server** und ist dort vollständig anzeigefähig hinterlegt.
   Der Service Worker darf ihn verfeinern, aber nie nachladen.
+- Im **Offline-Modus** muss dem User ein entsprechender Hinweis angezeigt werden, dass die Funktionen der Anwendung eine stabile Verbindung zum Server benötigen.  
 
 **Admin-Verwaltung (UI)**
 - (A13/A17) Verwaltung von Spielerprofilen inklusive Skills, Gästen und deren Skill-Stufen.
@@ -97,7 +98,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   endgültige Prüfung erfolgt serverseitig. Fehlerantworten (einheitliches JSON) in deutschsprachige
   Meldungen übersetzen.
 - **Server-State** über TanStack Query (Caching, Polling, Invalidierung), lokaler UI-State getrennt davon.
-- **Der Service Worker cacht keine API-Antworten.** Für `/api/v1/*` gilt `NetworkOnly`. Der Cache
+- **Der Service Worker cacht keine API-Antworten.** Für `/api/*` gilt `NetworkOnly`. Der Cache
   Storage ist wie `localStorage` von jedem Skript des Origins lesbar und überlebt den Logout; eine
   zwischengespeicherte Admin-Antwort liesse Skillwerte auf dem Gerät zurück und verletzte die Regel
   „keine Skillbewertungen für normale User". Zwischengespeichert wird ausschliesslich die App-Shell
@@ -124,8 +125,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   `POST /api/v1/push/einstellung/aendern`, `GET /api/v1/push/status/lesen`. Alle verlangen
   `stage=PROFILE_AUTHENTICATED`; GAST erhält `403`. Der Personenschalter wirkt serverseitig nur auf die
   eigene Sitzungsidentität – eine Spieler-ID im Rumpf wird nicht ausgewertet.
-- **Der Kontrakt liegt als `FuBo-Server: fubo-api.json` vor** (OpenAPI 3.1 auf der Wurzel des
-  Server-Repositories) und ist bei Abweichungen massgeblich. Vertragsänderungen werden immer zuerst
+- **Der Kontrakt liegt als `fubo-api.json` (Kopie aus der serverseite) vor** (OpenAPI 3.1; in `client/harness/assets/`) und ist bei Abweichungen massgeblich. Vertragsänderungen werden immer zuerst
   dort abgebildet und hier nachgezogen - bei getrennten Repositories gibt es keinen gemeinsamen
   Commit.
 
@@ -283,21 +283,23 @@ sich diese Nachricht an die eigenen Nutzer. In der Konfiguration stünde sie an 
 dem Rückfalltext im Code – zwei Wahrheiten, die auseinanderlaufen.
 
 **Manifest:** `lang: de`, `display: standalone`, `start_url: /`, `theme_color` aus `DESIGN.md`, Icons
-aus `client/public/icons/` (inklusive einer `maskable`-Fassung). Für die Offline-Seite ist
+aus `client/public/icons/` (inklusive einer `maskable`-Fassung). Diese Konfiguration ist in `vite.config.ts` eingebunden. Für die Offline-Seite ist
 `no_connection_icon.svg` bereits vorhanden.
 
 ### Implementierungs-Richtlinien (Client)
-- Funktions- und Variablennamen in camelCase; Konstanten groß mit maximal einem Unterstrich.
+- Funktions- und Variablennamen in camelCase; Konstanten groß, falls erfordrlich mit Unterstrich.
 - Jede Funktion und Komponente kurz und prägnant im JS-Doc-Format in deutscher Sprache dokumentieren.
 - Zu jeder Komponente eine eigene Style-Datei anlegen. **Lokale** (S)CSS-Variablen direkt in der Datei
   `<Komponentenname>.module.scss`; **globale** (S)CSS-Variablen zentral in einem separaten Ordner in
   `_globalVars.scss`. In Sass `@use`/`@forward` statt des abgekündigten `@import`.
 - Implementierungen funktional sauber testen und überprüfen; Barrierefreiheit beachten (Kontrast,
-  Tap-Ziele, Tastatur/Screenreader).
+  Tap-Ziele, Tastatur/Screenreader). 
+- Für die automatisierten End-To-End-Tests ist jedem Element eine `data-testid` hinzuzufügen. Beispielsweise: `‹button data-testid="submit-button">Submit</button>`
 - Umgebungsvariablen (`.env`) nie einchecken. Ohne ausdrückliche Anweisung nicht in `main` mergen/pushen;
-  Commits/Pushes in den Feature-Branch sind erlaubt.
+  Commits/Pushes in den dev/feature-Branch sind erlaubt.
 - Dokumentation und Erklärungen in deutscher Sprache. **Keine realen Personennamen** in Code, Testdaten
   oder Dokumentation verwenden (neutrale Platzhalter nutzen).
-- Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben),
-  `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
-  Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren. Falls die Dateien jeweils 600 Zeilen überschreiten sind diese auf die wesentlichen Punkte zusammen zu fassen.
+- Validierung der Implementierung erfolgt über `npm run build` und `npm run dev`.  
+- Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
+  Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
+- Falls die Datei 600 Zeilen überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.    
