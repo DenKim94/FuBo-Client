@@ -29,11 +29,19 @@ test.describe('PWA-Grundgeruest', () => {
     expect(manifest.status()).toBe(200)
     const manifestInhalt = (await manifest.json()) as {
       name: string
+      short_name: string
       display: string
       icons: Array<{ sizes: string; purpose?: string }>
     }
     expect(manifestInhalt.name).toBe('MONTAGS-KICKER')
     expect(manifestInhalt.display).toBe('standalone')
+
+    // Der `short_name` steht unter dem Symbol auf dem Startbildschirm. Er ist
+    // hier festgenagelt, weil zwei Vorgaben daran haengen: keine Erwaehnung des
+    // Projektnamens "FuBo" in der Oberflaeche und hoechstens zwoelf Zeichen,
+    // sonst kuerzt das Betriebssystem.
+    expect(manifestInhalt.short_name).toBe('GUT-KICK')
+    expect(manifestInhalt.short_name.length).toBeLessThanOrEqual(12)
 
     // Ohne eine 512er-Ikone mit `any` zaehlt Chrome die Anwendung nicht als
     // installierbar, und `beforeinstallprompt` feuert stillschweigend nicht.

@@ -296,8 +296,10 @@ Absagevorlage des Hallenmodus (A23), die an einen Aussenstehenden geht und dem A
 sich diese Nachricht an die eigenen Nutzer. In der Konfiguration stünde sie an einem zweiten Ort neben
 dem Rückfalltext im Code – zwei Wahrheiten, die auseinanderlaufen.
 
-**Manifest:** `name` und `short_name` sind **`MONTAGS-KICKER`** – derselbe Name wie im Dokumenttitel;
-„FuBo" ist Projekt- und Repositoriumsname und erscheint nicht in der Oberfläche. Dazu `lang: de`,
+**Manifest:** `name` ist **`MONTAGS-KICKER`** – derselbe Name wie im Dokumenttitel. `short_name` ist
+**`GUT-KICK`** (festgelegt am 26.09.2026): Startbildschirme kürzen nach rund zwölf Zeichen, und
+`MONTAGS-KICKER` hat vierzehn. „FuBo" ist Projekt- und Repositoriumsname und erscheint **nirgends** in
+der Oberfläche – auch nicht als `short_name`. Der Wert ist in `e2e/pwa.spec.ts` festgenagelt. Dazu `lang: de`,
 `dir: ltr`, `display: standalone`, `start_url: /`, `scope: /`, `theme_color` abgestimmt mit
 `<meta name="theme-color">` in `index.html`. Die Konfiguration steht in `vite.config.ts`.
 
@@ -309,8 +311,9 @@ müssen übereinstimmen; drei Einträge waren zuvor falsch deklariert und wurden
 
 **Precache:** nur die App-Shell. `includeManifestIcons: false` ist dabei entscheidend – ein enges
 `globPatterns` allein hält die Manifest-Ikonen nicht heraus, weil das Plugin sie von sich aus aufnimmt.
-Für die Offline-Seite ist `no_connection_icon.svg` vorhanden und ausdrücklich über `includeAssets`
-eingeschlossen.
+Für die Offline-Seite ist `no_connection_icon_red.svg` über `includeAssets` eingeschlossen (die graue
+Fassung `no_connection_icon.svg` liegt daneben, ist aber **nicht** vorgehalten). Beide tragen eine
+feste `fill`-Farbe; über ein `<img>` eingebunden folgt das Symbol daher keinem Farb-Token.
 
 ### Implementierungs-Richtlinien (Client)
 - Funktions- und Variablennamen in camelCase; Konstanten groß, falls erfordrlich mit Unterstrich. Keine Umlaute nutzen. 
@@ -323,8 +326,8 @@ Beispiel: `import style from './Platzhalter.module.scss'`
 - Implementierungen funktional sauber testen und überprüfen; Barrierefreiheit beachten (Kontrast,
   Tap-Ziele, Tastatur/Screenreader). 
 - Für die automatisierten End-To-End-Tests ist jedem Element eine `data-testid` hinzuzufügen. Beispielsweise: `‹button data-testid="submit-button">Submit</button>`
-- **End-to-End-Rahmen (festgelegt am 26.09.2026):** Playwright läuft mit acht Geräteprojekten gegen die
-  gebaute Fassung. Die iPhone- und iPad-Deskriptoren tragen `defaultBrowserType: 'webkit'`; vor dem
+- **End-to-End-Rahmen (festgelegt am 26.09.2026):** Playwright läuft mit **sieben** Geräteprojekten
+  gegen die gebaute Fassung (drei Chromium, vier WebKit). Die iPhone- und iPad-Deskriptoren tragen `defaultBrowserType: 'webkit'`; vor dem
   ersten Lauf `npm run e2e:browser`. **Service Worker unterstützt Playwright nur in Chromium** – die
   PWA-Tests liegen deshalb in `e2e/*.pwa.spec.ts`, das alle WebKit-Projekte über `testIgnore`
   auslassen. Geräteemulation bildet **keine** Safe-Area-Insets ab (`env(safe-area-inset-*)` bleibt
@@ -345,6 +348,11 @@ Beispiel: `import style from './Platzhalter.module.scss'`
   dass `env(safe-area-inset-*)` überhaupt Werte liefert; Safe-Area und Zurück-Navigation im
   `AppLayout` statt in jeder Ansicht; Dev-Proxy `/api` auf Port 8080 und `VITE_API_BASE_URL`;
   `client/harness/tmp/` unversioniert.
+- **Nachtrag vom 26.09.2026 (Prüfung des C0-Stands):** Stil-Importe heißen ausnahmslos `style`, nicht
+  `stile`; sichtbarer Oberflächentext wird mit Umlauten geschrieben („Zurück"), während die
+  Umlautfreiheit nur für Bezeichner gilt; `public/_headers` adressiert die Wurzel `/` gesondert, weil
+  Cloudflare Pages den angefragten Pfad auswertet und nicht die ausgelieferte Datei;
+  `package-lock.json` muss `npm ci` standhalten – nach jedem `npm uninstall` ist das zu prüfen.
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
 - Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      

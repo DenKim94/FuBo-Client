@@ -14,6 +14,13 @@
 /index.html
   Cache-Control: no-cache
 
+# Cloudflare Pages wertet den angefragten Pfad aus, nicht die ausgelieferte
+# Datei: Ein Aufruf von https://app.<domain>/ trifft die Regel fuer
+# /index.html nicht. Ohne diesen Block bliebe ausgerechnet der Einstieg in die
+# Anwendung ohne ausdrueckliche Cache-Vorgabe.
+/
+  Cache-Control: no-cache
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 

@@ -1,4 +1,4 @@
-import stile from './Platzhalter.module.scss'
+import style from './Platzhalter.module.scss'
 
 /** Eigenschaften des Platzhalters. */
 type PlatzhalterEigenschaften = {
@@ -14,9 +14,9 @@ type PlatzhalterEigenschaften = {
  */
 export default function Platzhalter({ titel, paket }: PlatzhalterEigenschaften) {
   return (
-    <section className={stile.platzhalter} data-testid={`platzhalter-${paket.toLowerCase()}`}>
-      <h1 className={stile.titel}>{titel}</h1>
-      <p className={stile.hinweis}>Diese Ansicht entsteht im Arbeitspaket {paket}.</p>
+    <section className={style.platzhalter} data-testid={`platzhalter-${paket.toLowerCase()}`}>
+      <h1 className={style.titel}>{titel}</h1>
+      <p className={style.hinweis}>Diese Ansicht entsteht im Arbeitspaket {paket}.</p>
     </section>
   )
 }

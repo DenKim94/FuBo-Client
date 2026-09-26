@@ -16,7 +16,7 @@ import { defineConfig, devices } from '@playwright/test'
  * **Service Worker gibt es nur in Chromium.** Playwright haelt das in den
  * Typdefinitionen ausdruecklich fest. Die PWA-Tests liegen deshalb in einer
  * eigenen Datei, die alle Nicht-Chromium-Projekte ueber `testIgnore` auslassen –
- * sonst waeren sie in fuenf von acht Projekten rot, ohne dass etwas kaputt ist.
+ * sonst waeren sie in vier von sieben Projekten rot, ohne dass etwas kaputt ist.
  */
 
 /** Tests, die einen Chromium-Unterbau brauchen (Service Worker, Manifest-Pruefung). */

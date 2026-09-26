@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import AktualisierungsHinweis from '@/komponenten/AktualisierungsHinweis/AktualisierungsHinweis'
-import stile from './AppLayout.module.scss'
+import style from './AppLayout.module.scss'
 
 /**
  * Rahmen aller Ansichten.
@@ -19,21 +19,21 @@ export default function AppLayout() {
   const istStartseite = pathname === '/'
 
   return (
-    <div className={stile.rahmen} data-testid="app-layout">
-      <header className={stile.kopf}>
+    <div className={style.rahmen} data-testid="app-layout">
+      <header className={style.kopf}>
         {!istStartseite && (
           <button
             type="button"
-            className={stile.zurueck}
+            className={style.zurueck}
             onClick={() => void navigate(-1)}
             data-testid="layout-zurueck"
           >
-            Zurueck
+            Zurück
           </button>
         )}
       </header>
 
-      <main className={stile.inhalt}>
+      <main className={style.inhalt}>
         <Outlet />
       </main>
 

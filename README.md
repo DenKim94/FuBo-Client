@@ -12,7 +12,8 @@ REST-Schnittstelle angesprochen.
 
 - Node ab 20 (entwickelt wird mit 22, siehe `.nvmrc`)
 - Ein laufender Server unter `http://localhost:8080` für die Entwicklung gegen
-  echte Daten; ohne ihn greift die Mock-Schicht.
+  echte Daten. Eine Mock-Schicht als Ersatz entsteht im Arbeitspaket C1; bis
+  dahin laufen Aufrufe ohne Server ins Leere.
 
 ## Einrichtung
 
@@ -31,9 +32,10 @@ npm run dev
 | `npm run build` | Typprüfung und Produktionsbau nach `dist/` |
 | `npm run preview` | Gebaute Fassung auf Port 4173 ausliefern |
 | `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript über alle drei Teilprojekte |
+| `npm run typecheck` | TypeScript über alle vier Teilprojekte (`app`, `node`, `worker`, `e2e`) |
 | `npm test` | Unit- und Komponententests (Vitest) |
 | `npm run test:e2e` | End-to-End-Tests (Playwright, baut vorher) |
+| `npm run e2e:browser` | Browser für Playwright nachladen (Chromium und WebKit), vor dem ersten Lauf |
 
 ## Technik
 

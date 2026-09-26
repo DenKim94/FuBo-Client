@@ -9,7 +9,7 @@
 > Arbeitsbranch `dev_client`. **Kein Monorepo.** Das Backend liegt in einem getrennten Repository
 > (`FuBo-Server`, Ordner `server/`). Der übergeordnete Ordner `PRJ_FuBo/` sowie `PRJ_FuBo/harness/`
 > sind bewusst **nicht** versioniert; `client/harness/tmp/` ebenfalls nicht (Entscheidung 25.09.2026).
-> Stand: 26.09.2026. Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-25.md`.
+> Stand: 25.09.2026. Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-16.md`.
 
 ---
 
@@ -40,17 +40,12 @@ Vollständige Liste in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md`, Abschnitt 3. Fron
   liefert der Server (`gueltigBis`, `absolutGueltigBis`).
 - **Keine Skillwerte für USER/GAST**: Skills erscheinen ausschließlich in Admin-Ansichten.
 - Namensbelegung wird per TanStack-Query-Polling aktuell gehalten (belegte Namen ausgrauen).
-  Zyklische Abrufe tragen den Kopf `X-FuBo-Kein-Refresh: true`, sonst läuft das gleitende Fenster nie
-  ab, solange ein Tab offen ist.
 - Teilnehmerliste ist **eine** bereits sortierte Liste mit `wartet`, nicht zwei; im Frontend nicht
   umsortieren. Balken rot unter der Mindestanzahl, sonst grün.
 - Bei Teilnehmeränderung wird eine bestehende Team-Einteilung als veraltet gekennzeichnet.
 - **Entscheidungen aus C0 (25.09.2026):** React Router statt TanStack Router; PWA über
   `injectManifest`; deutsche Ordnernamen im Quellbaum; Anwendungsname `MONTAGS-KICKER` in Titel und
   Manifest; `client/harness/tmp/` unversioniert.
-- **Ergänzt am 26.09.2026:** Der Manifest-`short_name` ist **`GUT-KICK`**. Der `name` bleibt
-  `MONTAGS-KICKER`, wird auf dem Startbildschirm aber nach rund zwölf Zeichen abgeschnitten; „FuBo"
-  scheidet als Kurzform aus, weil der Projektname nicht in der Oberfläche erscheint.
 
 ## 4. Schnittstelle zum Server (Vertrag)
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kernpunkte: REST/JSON gegen `api.<domain>`,
@@ -59,9 +54,8 @@ Skillwerte, Belegtstatus-Polling, einheitliches Fehler-JSON (`ProblemDetail` mit
 `detail` und einem von 34 `Fehlercode`-Werten).
 
 **Kontrakt-Kopie:** `client/harness/assets/fubo-api.json`, **44 Operationen**, am 25.09.2026 vom
-Server-Stand aufgefrischt. **Am 26.09.2026 erneut gegen `server/fubo-api.json` verglichen: byteweise
-identisch.** Sie trug zuvor nur 38 Operationen und kannte die sechs Push-Endpunkte aus A25 nicht –
-daraus war der falsche Schluss entstanden, das serverseitige Paket S8 sei offen.
+Server-Stand aufgefrischt. Sie trug zuvor nur 38 Operationen und kannte die sechs Push-Endpunkte aus
+A25 nicht – daraus war der falsche Schluss entstanden, das serverseitige Paket S8 sei offen.
 **Massgeblich bleibt `server/fubo-api.json`;** Vertragsänderungen werden immer zuerst dort abgebildet,
 der Client zieht nach. Bei getrennten Repositories gibt es keinen gemeinsamen Commit.
 
@@ -75,8 +69,8 @@ Begründung steht in Abschnitt 5.1.
 
 | MS | Inhalt | Aufwand (h) | Stand |
 |---|---|---|---|
-| C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **abgeschlossen**: umgesetzt 25.09.2026, Abnahme auf dem Entwicklungsrechner erfolgreich, committet als `e6f8bad`, nachgeprüft und korrigiert am 26.09.2026 (Abschnitt 6.1) |
-| C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **in Arbeit** – Anleitung: `harness/tmp/C1_UMSETZUNG.md` |
+| C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **umgesetzt 25.09.2026**, Abnahme auf dem Entwicklungsrechner erfoglreich |
+| C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | offen |
 | C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | offen |
 | C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | offen |
 | C4 | Admin-Zugang: Login (zwei Pflichtfelder, zeichengenau), dreistufiger Passwort-Reset, Passwortwechsel | 8 | offen |
@@ -121,8 +115,7 @@ vorgezogenen Testwerkzeuge.
 
 ## 6. Aktueller Code-Zustand
 
-**C0 ist abgeschlossen** (umgesetzt 25.09.2026, committet als `e6f8bad` auf `dev_client`). Der Stand
-im Einzelnen:
+**C0 ist umgesetzt** (25.09.2026, noch nicht committet). Der Stand im Einzelnen:
 
 - Vite-Vorlagenreste entfernt (`App.tsx`, `App.module.scss`, `main.scss`, `react.svg`, README).
 - `tsconfig.app.json` mit `strict`, `DOM.Iterable`, `noUncheckedSideEffectImports`, Pfad-Alias `@/*`;
@@ -147,88 +140,43 @@ im Einzelnen:
   `virtual:pwa-register/react`.
 - `public/_headers` und `public/_redirects` gemäß den vier Cloudflare-Auflagen aus A25.
 - Dev-Proxy `/api` → `localhost:8080`, `.env.example` mit `VITE_API_BASE_URL`.
-- Vitest + RTL mit **neun Tests in drei Dateien** (Layout, `GeschuetzteRoute`, `AdminRoute`).
-  Playwright mit **sieben Geräteprojekten** (360 px bis Desktop, nach Breite sortiert) und zwei
-  Testdateien: `layout.spec.ts` läuft überall (Rahmen, Zurück-Navigation, Tap-Ziel 44×44 px, kein
-  waagerechtes Scrollen, Verbrauch der Safe-Area-Tokens), `pwa.spec.ts` nur in den drei
-  Chromium-Projekten (Service Worker, Manifest, Inhaltstyp von `sw.js`), weil Playwright Service
-  Worker nur dort unterstützt. `npm run e2e:browser` installiert Chromium und WebKit. CI-Workflow für
-  Lint, Typprüfung, Bau und Unit-Tests.
+- Vitest + RTL (zwei Komponententests). Playwright mit **acht Geräteprojekten** (360 px bis Desktop,
+  nach Breite sortiert) und zwei Testdateien: `layout.spec.ts` läuft überall (Rahmen,
+  Zurück-Navigation, Tap-Ziel 44×44 px, kein waagerechtes Scrollen, Verbrauch der Safe-Area-Tokens),
+  `pwa.spec.ts` nur in Chromium-Projekten (Service Worker, Manifest, Inhaltstyp von `sw.js`), weil
+  Playwright Service Worker nur dort unterstützt. `npm run e2e:browser` installiert Chromium und
+  WebKit. CI-Workflow für Lint, Typprüfung, Bau und Unit-Tests.
 - Vier `tsconfig`-Teilprojekte: `app`, `node`, `worker` (Service Worker, `lib: WebWorker`) und `e2e`
   (DOM-Typen für die Rückrufe von `page.evaluate`). Ohne Letzteres lagen die E2E-Tests ausserhalb
   jeder Typprüfung.
 - `.gitignore` um `dev-dist`, Testartefakte, `harness/tmp/` und `!.env.example` ergänzt.
 
-### 6.1 Nachprüfung und Korrekturen vom 26.09.2026
+**Verifiziert** in einer sauberen Umgebung gegen einen frischen `npm install`: Typprüfung (vier
+Teilprojekte), ESLint, zwei Unit-Tests, vollständiger Bau (sechs Precache-Einträge) und **21 E2E-Tests
+über die drei Chromium-Projekte**, darunter die tatsächliche Registrierung des Service Workers und die
+Prüfung des Inhaltstyps von `sw.js`. **Die fünf WebKit-Projekte sind noch ungeprüft** – der
+WebKit-Download war in der Prüfumgebung durch die Netzrichtlinie gesperrt. Sie laufen erstmals nach
+`npm run e2e:browser` auf dem Entwicklungsrechner.
 
-Der abgeschlossene C0-Stand wurde gegen `harness/tmp/C0_UMSETZUNG.md` und die Vorgaben geprüft. Sechs
-Punkte wurden korrigiert; die ersten beiden sind sachlich, die übrigen betreffen Vorgabentreue und
-Dokumentation.
-
-1. **`npm ci` schlug fehl – und damit jeder CI-Lauf.** `package-lock.json` war nicht mit
-   `package.json` synchron: Fehlermeldung `Missing: sass@1.103.1 from lock file`. Ursache ist das
-   `npm uninstall sass` aus C0, Schritt 2.3. Die Plattform-Rückfallpakete
-   `sass-embedded-all-unknown` und `sass-embedded-unknown-all` hängen hart an `sass`; npm hat den
-   Eintrag `node_modules/sass` beim Deinstallieren aber aus der Sperrdatei entfernt. Behoben mit
-   `npm install --package-lock-only`; der Eintrag steht jetzt als `optional: true, dev: true` darin
-   und wird auf bekannten Plattformen nicht mitinstalliert. Nebenbei hat npm vierzehn veraltete
-   `"peer": true`-Vermerke bereinigt.
-   **Warum das durch die Abnahme fiel:** Auf dem Entwicklungsrechner wurde `npm install` gefahren,
-   und das schreibt die Sperrdatei stillschweigend zurecht, statt sie zu prüfen. Nur `npm ci`
-   vergleicht beide Dateien – und genau das tut CI als ersten Schritt. Nach jedem `npm uninstall`
-   gehört deshalb ein `npm ci` in einem frischen Baum dazu.
-2. **`public/_headers` erreichte die Wurzel nicht.** Es gab eine Regel für `/index.html`, aber keine
-   für `/`. Cloudflare Pages wertet den **angefragten Pfad** aus, nicht die ausgelieferte Datei – der
-   Einstieg in die Anwendung blieb damit ohne ausdrückliche `Cache-Control`-Vorgabe. Block für `/`
-   ergänzt.
-3. **Manifest-`short_name` war `FuBo`.** Das widersprach zwei Vorgaben zugleich: „`name` und
-   `short_name` sind `MONTAGS-KICKER`" und „FuBo erscheint nicht in der Oberfläche" – der
-   `short_name` ist genau die Beschriftung unter dem Symbol auf dem Startbildschirm. Neu:
-   **`GUT-KICK`**, acht Zeichen und damit unterhalb der Kürzungsgrenze. `e2e/pwa.spec.ts` prüft den
-   Wert und die Länge jetzt mit, damit er nicht unbemerkt zurückfällt.
-4. **Stil-Importe hießen teils `stile`.** `AGENT_CLIENT.md` schreibt `style` vor
-   (`import style from './Platzhalter.module.scss'`). In `AppLayout.tsx` und `Platzhalter.tsx`
-   umbenannt; `AktualisierungsHinweis.tsx` war bereits richtig.
-5. **Sichtbarer Text ohne Umlaut.** Die Zurück-Schaltfläche beschriftete sich mit „Zurueck". Die
-   Umlautfreiheit gilt für Bezeichner, nicht für Oberflächentext – jetzt „Zurück".
-6. **Zahlenangaben in der Dokumentation stimmten nicht mehr.** `playwright.config.ts` führt **sieben**
-   Projekte (drei Chromium, vier WebKit), nicht acht; die Unit-Tests sind neun, nicht zwei. Die Zahlen
-   in diesem Dokument, in `AGENT_CLIENT.md`, in `playwright.config.ts` und im CI-Kommentar wurden
-   nachgezogen. Ausserdem nannte `AGENT_CLIENT.md` für die Offline-Seite `no_connection_icon.svg`,
-   während `vite.config.ts` die rote Fassung vorhält; die Doku folgt jetzt dem Code.
-
-**Verifiziert am 26.09.2026** in einer sauberen Linux-Umgebung gegen einen frischen `npm ci`:
-Typprüfung über vier Teilprojekte, ESLint, **neun Unit-Tests**, vollständiger Bau (sechs
-Precache-Einträge, Manifest mit `short_name: GUT-KICK` und vier Ikonen) und **27 E2E-Tests über die
-drei Chromium-Projekte**, darunter die tatsächliche Registrierung des Service Workers und die Prüfung
-des Inhaltstyps von `sw.js`. Die geprüfte `package-lock.json` ist byteweise identisch mit der im
-Arbeitsbaum.
-
-**Nicht erneut geprüft:** die vier WebKit-Projekte (der WebKit-Download ist in der Prüfumgebung durch
-die Netzrichtlinie gesperrt) sowie die Handprüfungen auf einem echten Gerät. Beides ist bei der
-Abnahme am 25./26.09.2026 auf dem Entwicklungsrechner gelaufen.
-
-### 6.2 Bewusst offen gelassen
-
-- **`navigate(-1)` in `AppLayout`.** Wird die Anwendung direkt auf einer Unterseite geöffnet – Deeplink
-  oder Start der installierten PWA –, hat der Verlauf keinen Vorgänger, und die Schaltfläche tut
-  nichts. Der Fall ist in C2 zu lösen, wenn die Schaltfläche eine optionale Zielangabe bekommt.
-- **`X-FuBo-Kein-Refresh` fehlt in `src/api/sitzung.ts`.** Solange die Sitzung nur bei Bedarf gelesen
-  wird, ist das folgenlos. Sobald in C3 zyklisch abgefragt wird, ist der Kopf Pflicht – sonst läuft
-  das gleitende Fenster nie ab.
-- **`src/api/sitzung.ts` ist vorläufig** (eigener `fetch`, handgeschriebene Typen). Ablösung in C1;
-  die Signatur von `sitzungLesen` bleibt erhalten, damit die Guards unberührt bleiben.
+Die vier Abweichungen, die sich dabei ergaben, stehen in `harness/tmp/C0_UMSETZUNG.md`, Abschnitt 16.
 
 ## 7. Nächste Schritte
 
-1. **C1 umsetzen** nach `harness/tmp/C1_UMSETZUNG.md`: Typgenerierung aus
-   `harness/assets/fubo-api.json` (Generat einchecken), fetch-Schicht mit `credentials: 'include'` und
-   Übersetzung des `ProblemDetail`, globale `401`-Behandlung, MSW-Mocks, Offline-Hinweis.
-2. **Vor dem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts nach
-   `main`.
-3. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
-   `npm install` (Begründung in Abschnitt 6.1, Punkt 1).
-4. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
+1. **`npm install` auf dem Entwicklungsrechner**, danach **`npm run e2e:browser`**. Ersteres löst die
+   plattformabhängigen Rolldown-Bindungen für macOS auf, Letzteres installiert Chromium und WebKit –
+   ohne WebKit scheitern die fünf iPhone- und iPad-Projekte beim Start des Browsers.
+2. **Abnahme von C0** nach der Prüfliste in `harness/tmp/C0_UMSETZUNG.md`, Abschnitt 13 – insbesondere
+   die Punkte, die einen Browser brauchen: Service-Worker-Registrierung, Manifest ohne Ikonen-Warnung,
+   Lighthouse „Installable", Safe-Area in der iPhone-Geräteansicht.
+3. **Commit auf `dev_client`.** Vorher prüfen, dass weder `.env`-Inhalte noch reale Personennamen
+   mitgehen. Nichts nach `main`.
+4. **C1 beginnen:** Typgenerierung aus `harness/assets/fubo-api.json` (Generat einchecken),
+   fetch-Schicht mit `credentials: 'include'` und Übersetzung des `ProblemDetail`, globale
+   `401`-Behandlung, MSW-Mocks, Offline-Hinweis.
+   *Dabei ablösen:* `src/api/sitzung.ts` enthält derzeit einen eigenen `fetch` und handgeschriebene
+   Typen — bewusst vorläufig, damit der Routen-Schutz schon steht. Die Signatur von `sitzungLesen`
+   bleibt erhalten, sodass die Guards unberührt bleiben.
+5. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
    Rocket Loader und Auto-Minify für diese Domain abschalten. Die Adresse erst an die Spieler
    verteilen, wenn sie die endgültige ist.
 
@@ -241,9 +189,9 @@ Abnahme am 25./26.09.2026 auf dem Entwicklungsrechner gelaufen.
 - Ohne ausdrückliche Anweisung des Entwicklers nichts in `main` mergen/pushen; Feature-Branch erlaubt.
 - `.env`-Dateien nie einchecken. Dokumentation in deutscher Sprache. **Keine realen Personennamen** in
   Code, Testdaten oder Dokumentation.
-- Zu jeder Komponente eine eigene Style-Datei (`<Komponentenname>.module.scss`); der Import heißt
-  `style`. Globale Variablen in `_globalVars.scss`. In Sass `@use`/`@forward` statt `@import`. Jedes
-  bedienbare Element trägt ein `data-testid`.
+- Zu jeder Komponente eine eigene Style-Datei (`<Komponentenname>.module.scss`); globale Variablen in
+  `_globalVars.scss`. In Sass `@use`/`@forward` statt `@import`. Jedes bedienbare Element trägt ein
+  `data-testid`.
 - Nach Abschluss eines Arbeitspakets kurze visuelle Verifikation durchführen und diesen Handoff
   aktualisieren (veraltete Fassung zuvor unter `client/harness/archive/` ablegen).
   Zudem ist `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md` (Gesamtstand) nachzuziehen.
