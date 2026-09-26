@@ -97,6 +97,13 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Server ist die Autorität.** Client-Validierung dient nur der UX und spiegelt die Serverregeln; die
   endgültige Prüfung erfolgt serverseitig. Fehlerantworten (einheitliches JSON) in deutschsprachige
   Meldungen übersetzen.
+- **Routen-Schutz in drei Ebenen** über pfadlose Layout-Routen in `src/app/schutz/`: öffentlich,
+  `GeschuetzteRoute` (`stage = PROFILE_AUTHENTICATED`) und darin `AdminRoute` (`rolle = ADMIN`).
+  `/admin/anmelden` bleibt ausdrücklich öffentlich – der Admin muss sich anmelden können, bevor er
+  Admin ist. Solange der Sitzungszustand unbekannt ist, rendern die Guards nichts, statt auf Verdacht
+  umzuleiten. **Sie sind Bedienkomfort, keine Sicherheitsmassnahme:** Wer sie umginge, sähe eine
+  Ansicht voller `403`-Antworten und keine Daten. Die Rolle kommt aus `useSitzung`
+  (`GET /auth/session/lesen`), nie aus lokal gehaltenem Zustand.
 - **Server-State** über TanStack Query (Caching, Polling, Invalidierung), lokaler UI-State getrennt davon.
 - **Der Service Worker cacht keine API-Antworten.** Für `/api/*` gilt `NetworkOnly`. Der Cache
   Storage ist wie `localStorage` von jedem Skript des Origins lesbar und überlebt den Logout; eine
@@ -125,14 +132,26 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   `POST /api/v1/push/einstellung/aendern`, `GET /api/v1/push/status/lesen`. Alle verlangen
   `stage=PROFILE_AUTHENTICATED`; GAST erhält `403`. Der Personenschalter wirkt serverseitig nur auf die
   eigene Sitzungsidentität – eine Spieler-ID im Rumpf wird nicht ausgewertet.
-- **Der Kontrakt liegt als `fubo-api.json` (Kopie aus der serverseite) vor** (OpenAPI 3.1; in `client/harness/assets/`) und ist bei Abweichungen massgeblich. Vertragsänderungen werden immer zuerst
-  dort abgebildet und hier nachgezogen - bei getrennten Repositories gibt es keinen gemeinsamen
-  Commit.
+- **Der Kontrakt liegt als `fubo-api.json` (Kopie aus der Serverseite) vor** (OpenAPI 3.1; in
+  `client/harness/assets/`, **44 Operationen**, aufgefrischt am 25.09.2026). Massgeblich ist bei
+  Abweichungen `server/fubo-api.json`: Vertragsänderungen werden immer zuerst dort abgebildet und hier
+  nachgezogen – bei getrennten Repositories gibt es keinen gemeinsamen Commit. **Die Kopie ist beim
+  Auffrischen gegen den Unterschied zu prüfen, nicht blind zu überschreiben.** Sie trug bis zum
+  25.09.2026 nur 38 Operationen und kannte die Push-Endpunkte aus A25 nicht, obwohl der Server sie
+  seit dem 15.09.2026 ausliefert – eine veraltete Kopie ist teurer als eine fehlende, weil sie richtig
+  aussieht.
+- **Konfigurations-Voll-Update:** fünfzehn Pflichtfelder, zuletzt ergänzt um `pushAktiv` und
+  `pushErinnerungStunden`. Ein Formular, das eines weglässt, bekommt `400`.
 
 ### Techstack (Client)
 - React (ab Version 19), Vite als Build-Tool, TypeScript.
 - SCSS mit CSS Modules; TanStack Query für Server-State.
-- PWA (A25a): `vite-plugin-pwa` (Workbox). **Kompatibilität geprüft am 13.09.2026:** Fassung 1.3.0
+- **Routing: React Router 7** (Paket `react-router`; `react-router-dom` entfällt ab Fassung 7).
+  Festgelegt in C0 gegen TanStack Router: Bei rund 15 Routen und ausschliesslich einfachen Parametern
+  wiegt die typisierte Route den zusätzlichen Generierungsschritt nicht auf.
+- PWA (A25a): `vite-plugin-pwa` mit **`strategies: 'injectManifest'`** und eigenem Service Worker unter
+  `src/sw.ts`. Der von `generateSW` erzeugte Worker nimmt keinen eigenen Code auf; A25b verlangt aber,
+  dass er `push` und `notificationclick` selbst behandelt. **Kompatibilität geprüft am 13.09.2026:** Fassung 1.3.0
   nennt `vite: ^8.0.0` in den Peer-Dependencies und passt damit zum eingesetzten Vite 8;
   `workbox-build`/`workbox-window` 7.4.1 kommen als reguläre Abhängigkeiten mit,
   `@vite-pwa/assets-generator` ist optional. Node ab 20.
@@ -170,12 +189,7 @@ oder Aktualisierungen kommen verzögert an:
 - **Rocket Loader und Auto-Minify** für diese Domain abschalten; Rocket Loader verschiebt die
   Skriptausführung und bricht die Registrierung.
 
-Eine PWA ist **an ihren Origin gebunden**: Service Worker, Installationszustand und Push-Abonnements
-gelten je Herkunft. Vorschau-Deployments unter einer anderen Subdomain teilen davon nichts mit der
-Produktionsdomain; Abnahmetests laufen deshalb auf einer festen Domain. **Daraus folgt für den
-Betrieb:** Die Adresse wird erst an die Spieler verteilt, wenn sie die endgültige ist. Wer von
-`*.pages.dev` installiert und später `app.<domain>` bekommt, hat zwei getrennte Anwendungen auf dem
-Gerät – mit getrennten Abonnements, getrennten Sitzungen und einem Symbol, das ins Leere führt.
+Eine PWA ist **an ihren Origin gebunden**.
 
 #### Installation und Onboarding (A25a)
 
@@ -282,24 +296,55 @@ Absagevorlage des Hallenmodus (A23), die an einen Aussenstehenden geht und dem A
 sich diese Nachricht an die eigenen Nutzer. In der Konfiguration stünde sie an einem zweiten Ort neben
 dem Rückfalltext im Code – zwei Wahrheiten, die auseinanderlaufen.
 
-**Manifest:** `lang: de`, `display: standalone`, `start_url: /`, `theme_color` aus `DESIGN.md`, Icons
-aus `client/public/icons/` (inklusive einer `maskable`-Fassung). Diese Konfiguration ist in `vite.config.ts` eingebunden. Für die Offline-Seite ist
-`no_connection_icon.svg` bereits vorhanden.
+**Manifest:** `name` und `short_name` sind **`MONTAGS-KICKER`** – derselbe Name wie im Dokumenttitel;
+„FuBo" ist Projekt- und Repositoriumsname und erscheint nicht in der Oberfläche. Dazu `lang: de`,
+`dir: ltr`, `display: standalone`, `start_url: /`, `scope: /`, `theme_color` abgestimmt mit
+`<meta name="theme-color">` in `index.html`. Die Konfiguration steht in `vite.config.ts`.
+
+**Ikonen:** 192 und 512 Pixel **mit `purpose: 'any'`** sowie zusätzlich eine eigene 512er mit
+`purpose: 'maskable'` (`app-icon-512-maskable.png`). Eine rein maskierbare Ikone zählt Chrome für die
+Installierbarkeit nicht mit – fehlt die 512er mit `any`, feuert `beforeinstallprompt` stillschweigend
+nicht, und der Installationshinweis aus A25a käme nie. Deklarierte und tatsächliche Kantenlängen
+müssen übereinstimmen; drei Einträge waren zuvor falsch deklariert und wurden entfernt.
+
+**Precache:** nur die App-Shell. `includeManifestIcons: false` ist dabei entscheidend – ein enges
+`globPatterns` allein hält die Manifest-Ikonen nicht heraus, weil das Plugin sie von sich aus aufnimmt.
+Für die Offline-Seite ist `no_connection_icon.svg` vorhanden und ausdrücklich über `includeAssets`
+eingeschlossen.
 
 ### Implementierungs-Richtlinien (Client)
-- Funktions- und Variablennamen in camelCase; Konstanten groß, falls erfordrlich mit Unterstrich.
-- Jede Funktion und Komponente kurz und prägnant im JS-Doc-Format in deutscher Sprache dokumentieren.
+- Funktions- und Variablennamen in camelCase; Konstanten groß, falls erfordrlich mit Unterstrich. Keine Umlaute nutzen. 
+- Jede Funktion und Komponente kurz und prägnant im JS-Doc-Format in deutscher Sprache dokumentieren. Hier ist die Verwednung von Umlauten erwünscht (z.B. `ü` statt `ue`)
 - Zu jeder Komponente eine eigene Style-Datei anlegen. **Lokale** (S)CSS-Variablen direkt in der Datei
   `<Komponentenname>.module.scss`; **globale** (S)CSS-Variablen zentral in einem separaten Ordner in
   `_globalVars.scss`. In Sass `@use`/`@forward` statt des abgekündigten `@import`.
+- Die in einer React-Komponente importierten Stile sind als `style` zu benennen.
+Beispiel: `import style from './Platzhalter.module.scss'`    
 - Implementierungen funktional sauber testen und überprüfen; Barrierefreiheit beachten (Kontrast,
   Tap-Ziele, Tastatur/Screenreader). 
 - Für die automatisierten End-To-End-Tests ist jedem Element eine `data-testid` hinzuzufügen. Beispielsweise: `‹button data-testid="submit-button">Submit</button>`
+- **End-to-End-Rahmen (festgelegt am 26.09.2026):** Playwright läuft mit acht Geräteprojekten gegen die
+  gebaute Fassung. Die iPhone- und iPad-Deskriptoren tragen `defaultBrowserType: 'webkit'`; vor dem
+  ersten Lauf `npm run e2e:browser`. **Service Worker unterstützt Playwright nur in Chromium** – die
+  PWA-Tests liegen deshalb in `e2e/*.pwa.spec.ts`, das alle WebKit-Projekte über `testIgnore`
+  auslassen. Geräteemulation bildet **keine** Safe-Area-Insets ab (`env(safe-area-inset-*)` bleibt
+  `0px`); prüfbar ist nur, ob das Layout die Tokens verbraucht. `beforeinstallprompt` und Web Push auf
+  iOS sind mit Playwright grundsätzlich nicht erreichbar und bleiben Handprüfungen.
 - Umgebungsvariablen (`.env`) nie einchecken. Ohne ausdrückliche Anweisung nicht in `main` mergen/pushen;
   Commits/Pushes in den dev/feature-Branch sind erlaubt.
 - Dokumentation und Erklärungen in deutscher Sprache. **Keine realen Personennamen** in Code, Testdaten
   oder Dokumentation verwenden (neutrale Platzhalter nutzen).
-- Validierung der Implementierung erfolgt über `npm run build` und `npm run dev`.  
+- Validierung der Implementierung erfolgt über `npm run build`, `npm run dev`, `npm run lint`,
+  `npm run typecheck` und `npm test`; End-to-End über `npm run test:e2e` (baut vorher und prüft gegen
+  die gebaute Fassung, weil sich der Service Worker nur dort wie im Betrieb verhält).
+- **Festlegungen aus C0 (25.09.2026):** `strict` in `tsconfig.app.json`; eigener `tsconfig.worker.json`
+  für den Service Worker (`lib: WebWorker`, und `src/sw.ts` in `tsconfig.app.json` ausgeschlossen);
+  Pfad-Alias `@/*` in `tsconfig` **und** `resolve.alias` – ohne `baseUrl`, die seit TypeScript 6
+  abgekündigt ist, und mit führendem `./` in den Zielen; deutsche Ordnernamen im Quellbaum
+  (`komponenten`, `seiten`, `layouts`); `viewport-fit=cover` in `index.html` als Voraussetzung dafür,
+  dass `env(safe-area-inset-*)` überhaupt Werte liefert; Safe-Area und Zurück-Navigation im
+  `AppLayout` statt in jeder Ansicht; Dev-Proxy `/api` auf Port 8080 und `VITE_API_BASE_URL`;
+  `client/harness/tmp/` unversioniert.
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
 - Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      

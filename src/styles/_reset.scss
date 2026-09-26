@@ -1,0 +1,72 @@
+// Zurueckhaltender Reset. Bewusst kein vollstaendiges Fremdpaket: Was hier steht,
+// muss erklaerbar bleiben, weil es jede Komponente betrifft.
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+html {
+  box-sizing: border-box;
+  // Keine feste Pixelgroesse: die Systemschriftgroesse des Nutzers bleibt wirksam.
+  font-size: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+img,
+svg,
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+// Sichtbarer Fokus ist Pflicht (Tastaturbedienung, WCAG 2.1 AA).
+:focus-visible {
+  outline: var(--fokus-rand) solid var(--farbe-primaer);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

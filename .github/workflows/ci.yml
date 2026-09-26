@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [dev_client]
+  pull_request:
+
+jobs:
+  pruefen:
+    name: Lint, Typen, Bau und Unit-Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+  # End-to-End-Tests laufen bewusst noch nicht in CI: Sie brauchen entweder einen
+  # erreichbaren Server oder die Mock-Schicht. Beides kommt im naechsten Paket.
+  #
+  # Wenn sie dazukommen, gehoert vor `npx playwright test` dieser Schritt dorthin.
+  # Die iPhone- und iPad-Projekte laufen im WebKit-Build, der unter Linux
+  # zusaetzliche Systembibliotheken braucht:
+  #
+  #   - run: npx playwright install --with-deps chromium webkit
+  #
+  # Die acht Geraeteprojekte vervielfachen die Laufzeit; fuer CI genuegt zunaechst
+  # eine Auswahl, etwa:
+  #
+  #   - run: npx playwright test --project=android-schmal --project=ios-telefon

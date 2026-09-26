@@ -1,77 +1,59 @@
-# React + TypeScript + Vite
+# MONTAGS-KICKER – Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend der Anwendung: Anmeldung über die zentrale PIN und den hinterlegten
+Namen, Terminteilnahme, Teamübersicht, Ergebniserfassung und ein getrenntes
+Admin-Dashboard. Mobile-First, durchgaengig deutschsprachig, als installierbare
+Progressive Web App.
 
-Currently, two official plugins are available:
+Das Backend liegt in einem eigenen Repository (`FuBo-Server`) und wird über eine
+REST-Schnittstelle angesprochen.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Voraussetzungen
 
-## React Compiler
+- Node ab 20 (entwickelt wird mit 22, siehe `.nvmrc`)
+- Ein laufender Server unter `http://localhost:8080` für die Entwicklung gegen
+  echte Daten; ohne ihn greift die Mock-Schicht.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Einrichtung
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+nvm use
+npm install
+cp .env.example .env.local
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Befehle
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Befehl | Zweck |
+|---|---|
+| `npm run dev` | Entwicklungsserver auf Port 5173, Proxy für `/api` auf Port 8080 |
+| `npm run build` | Typprüfung und Produktionsbau nach `dist/` |
+| `npm run preview` | Gebaute Fassung auf Port 4173 ausliefern |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript über alle drei Teilprojekte |
+| `npm test` | Unit- und Komponententests (Vitest) |
+| `npm run test:e2e` | End-to-End-Tests (Playwright, baut vorher) |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Technik
 
-```
+React 19, Vite 8, TypeScript, SCSS mit CSS Modules, TanStack Query für den
+Server-State, React Router, `vite-plugin-pwa` mit eigenem Service Worker
+(`src/sw.ts`). Tests mit Vitest, React Testing Library und Playwright.
+
+## Konventionen
+
+- Funktions- und Variablennamen in camelCase, Konstanten gross geschrieben.
+- Jede Funktion und Komponente ist im JSDoc-Format auf Deutsch dokumentiert.
+- Zu jeder Komponente gehoert eine eigene `<Name>.module.scss`; globale
+  Variablen stehen in `src/styles/_globalVars.scss`. In Sass `@use`/`@forward`
+  statt des abgekündigten `@import`.
+- Jedes bedienbare Element traegt ein `data-testid`.
+- Keine `.env`-Dateien einchecken, keine realen Personennamen in Code, Testdaten
+  oder Dokumentation.
+
+## Weiterführende Dokumente
+
+- `harness/AGENT_CLIENT.md` – Vorgaben für die Frontend-Entwicklung
+- `harness/CONTEXT_HANDOFF_CLIENT.md` – Stand und Arbeitspakete
+- `harness/assets/fubo-api.json` – Endpunktkontrakt (OpenAPI 3.1)

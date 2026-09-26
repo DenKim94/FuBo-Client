@@ -1,0 +1,30 @@
+@use '@/styles/globalVars';
+
+.hinweis {
+  position: fixed;
+  // Ueber dem Home-Indicator, nicht darunter (A25a).
+  bottom: calc(var(--abstand-m) + var(--sicher-unten));
+  left: var(--abstand-m);
+  right: var(--abstand-m);
+  z-index: var(--ebene-hinweis);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--abstand-m);
+
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-flaeche);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+}
+
+.schaltflaeche {
+  min-height: var(--tapziel-min);
+  padding: 0 var(--abstand-m);
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--farbe-primaer);
+  color: var(--farbe-primaer-kontrast);
+}

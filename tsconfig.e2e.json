@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    /* Die Rueckrufe von page.evaluate() laufen im Browser und brauchen DOM-Typen,
+       der Testlauf selbst dagegen Node. Deshalb ein eigenes Teilprojekt statt
+       DOM in tsconfig.node.json, wo es fuer vite.config.ts nichts zu suchen hat. */
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": ["e2e"]
+}

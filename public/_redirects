@@ -1,0 +1,11 @@
+# Cloudflare Pages – SPA-Rueckfall (A25a).
+#
+# Die Rueckfallregel auf index.html darf sw.js, das Manifest und die Icons NICHT
+# erfassen: Wuerde sw.js als HTML ausgeliefert, scheiterte die Registrierung am
+# Content-Type – ohne Fehlermeldung in der Oberflaeche. Die drei ausdruecklichen
+# 200-Regeln stehen deshalb vor dem Auffangmuster.
+
+/sw.js                  /sw.js                  200
+/manifest.webmanifest   /manifest.webmanifest   200
+/icons/*                /icons/:splat           200
+/*                      /index.html             200

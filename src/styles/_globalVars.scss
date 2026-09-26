@@ -1,0 +1,65 @@
+// Globale Design-Tokens und Umgebungswerte.
+// Vorgabe: AGENT_CLIENT.md – "globale (S)CSS-Variablen zentral in _globalVars.scss".
+//
+// Die Farbwerte sind bewusst Platzhalter: DESIGN.md haelt fest, dass eine
+// verbindliche Markenfarbwelt noch nicht existiert. Die endgueltigen Tokens und
+// die Kontrastpruefung nach WCAG 2.1 AA gehoeren in das Design-System-Paket.
+//
+// Eingebunden wird die Datei ueber `@use '@/styles/globalVars';` – sie enthaelt
+// nur Deklarationen und erzeugt daher bei mehrfacher Einbindung keine Duplikate.
+
+:root {
+  /* --- Farben (Platzhalter) --- */
+  --farbe-primaer: #0b6b3a;
+  --farbe-primaer-dunkel: #075129;
+  --farbe-primaer-kontrast: #ffffff;
+  --farbe-hintergrund: #ffffff;
+  --farbe-flaeche: #f4f5f4;
+  --farbe-text: #121212;
+  --farbe-text-schwach: #4a4a4a;
+  --farbe-rand: #d6d8d6;
+  /* Balken der Teilnehmeruebersicht (A10): rot unter der Mindestanzahl, sonst gruen */
+  --farbe-warnung: #b3261e;
+  --farbe-erfolg: #0b6b3a;
+  --farbe-hinweis: #8a5a00;
+
+  /* --- Typografie ---
+     Gross genug fuer die Nutzung draussen bei Sonnenlicht (DESIGN.md). */
+  --schrift-familie: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --schrift-klein: 1rem;
+  --schrift-basis: 1.125rem;
+  --schrift-gross: 1.5rem;
+  --schrift-titel: 2rem;
+  --zeilenhoehe: 1.45;
+
+  /* --- Abstaende --- */
+  --abstand-xs: 0.25rem;
+  --abstand-s: 0.5rem;
+  --abstand-m: 1rem;
+  --abstand-l: 1.5rem;
+  --abstand-xl: 2rem;
+
+  /* --- Formen --- */
+  --radius-s: 0.25rem;
+  --radius-m: 0.5rem;
+  --radius-l: 1rem;
+
+  /* --- Bedienbarkeit ---
+     Mindestmass fuer Tap-Ziele aus DESIGN.md (WCAG 2.1 AA). */
+  --tapziel-min: 44px;
+  --fokus-rand: 3px;
+
+  /* --- Vollbildmodus (A25a) ---
+     Diese Werte bleiben 0, solange index.html kein `viewport-fit=cover` setzt.
+     Sie sind besonders unten relevant, weil A2 die primaeren Aktionen in
+     Daumenreichweite verlangt – also genau dorthin, wo der Home-Indicator liegt. */
+  --sicher-oben: env(safe-area-inset-top, 0px);
+  --sicher-unten: env(safe-area-inset-bottom, 0px);
+  --sicher-links: env(safe-area-inset-left, 0px);
+  --sicher-rechts: env(safe-area-inset-right, 0px);
+
+  /* --- Ebenen --- */
+  --ebene-kopf: 10;
+  --ebene-dialog: 100;
+  --ebene-hinweis: 200;
+}

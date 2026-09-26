@@ -2,8 +2,19 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <link rel="apple-touch-icon" type="image/png" href="/icons/pwa/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover ist Voraussetzung dafuer, dass env(safe-area-inset-*)
+         im Anzeigemodus standalone ueberhaupt Werte liefert (A25a). Ohne diese
+         Angabe bleiben die Werte durchgaengig 0px, und der Inhalt liegt unter
+         Notch und Home-Indicator. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Muss mit manifest.theme_color in vite.config.ts uebereinstimmen. -->
+    <meta name="theme-color" content="#0b6b3a" />
+    <meta
+      name="description"
+      content="Teameinteilung und Terminverwaltung fuer die Trainingsgruppe."
+    />
+    <link rel="icon" type="image/png" href="/icons/pwa/app-icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/pwa/apple-touch-icon.png" />
     <title>MONTAGS-KICKER</title>
   </head>
   <body>

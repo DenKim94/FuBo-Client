@@ -1,0 +1,16 @@
+@use '@/styles/globalVars';
+
+.platzhalter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding: var(--abstand-l) 0;
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+}
+
+.hinweis {
+  color: var(--farbe-text-schwach);
+}

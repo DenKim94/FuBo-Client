@@ -1,0 +1,43 @@
+@use '@/styles/globalVars';
+
+.rahmen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  // Ohne diese vier Zeilen liegt der Inhalt im Vollbildmodus unter Notch und
+  // Home-Indicator (A25a). Sie wirken nur, wenn index.html `viewport-fit=cover`
+  // setzt – sonst liefert env() durchgaengig 0px.
+  padding-top: var(--sicher-oben);
+  padding-bottom: var(--sicher-unten);
+  padding-left: var(--sicher-links);
+  padding-right: var(--sicher-rechts);
+}
+
+.kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  min-height: var(--tapziel-min);
+  padding: var(--abstand-s) var(--abstand-m);
+  border-bottom: 1px solid var(--farbe-rand);
+}
+
+.zurueck {
+  min-height: var(--tapziel-min);
+  min-width: var(--tapziel-min);
+  padding: 0 var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-flaeche);
+}
+
+.inhalt {
+  flex: 1;
+  width: 100%;
+  max-width: 48rem; // Tablet und Desktop: Zeilen bleiben lesbar (nachrangig, A2)
+  margin: 0 auto;
+  padding: var(--abstand-m);
+  // Reserve fuer die primaeren Aktionen in Daumenreichweite (A2);
+  // der konkrete Aktionsbereich entsteht im Design-System-Paket.
+  padding-bottom: calc(var(--abstand-xl) + var(--sicher-unten));
+}

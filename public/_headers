@@ -1,0 +1,22 @@
+# Cloudflare Pages – Kopfzeilen (A25a, Auflagen fuer die Auslieferung).
+#
+# Ein langlebiger Cache vor dem Service Worker verzoegert jede Aktualisierung um
+# die Cache-Dauer. index.html gehoert aus demselben Grund dazu, weil es auf die
+# versionierten Bundles verweist. Die Dateien unter /assets/ tragen dagegen einen
+# Hash im Namen und duerfen dauerhaft gehalten werden.
+
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
