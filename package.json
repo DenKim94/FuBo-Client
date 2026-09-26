@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "e2e:browser": "playwright install chromium webkit"
+    "e2e:browser": "playwright install chromium webkit",
+    "api:typen": "npx --yes openapi-typescript@7.13.0 harness/assets/fubo-api.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.2",
@@ -45,6 +46,7 @@
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
     "jsdom": "^27.0.0",
+    "msw": "^2.15.0",
     "sass-embedded": "^1.103.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.65.0",

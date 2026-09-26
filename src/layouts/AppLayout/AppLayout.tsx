@@ -1,5 +1,7 @@
 import { Outlet, useLocation, useNavigate } from 'react-router'
+import SitzungsWaechter from '@/app/SitzungsWaechter'
 import AktualisierungsHinweis from '@/komponenten/AktualisierungsHinweis/AktualisierungsHinweis'
+import OfflineHinweis from '@/komponenten/OfflineHinweis/OfflineHinweis'
 import style from './AppLayout.module.scss'
 
 /**
@@ -20,6 +22,9 @@ export default function AppLayout() {
 
   return (
     <div className={style.rahmen} data-testid="app-layout">
+      {/* Rendert nichts; verbindet die globale 401-Behandlung mit dem Router. */}
+      <SitzungsWaechter />
+
       <header className={style.kopf}>
         {!istStartseite && (
           <button
@@ -32,6 +37,8 @@ export default function AppLayout() {
           </button>
         )}
       </header>
+
+      <OfflineHinweis />
 
       <main className={style.inhalt}>
         <Outlet />

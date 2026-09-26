@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
+import { schluessel } from '@/api/schluessel'
 import { sitzungLesen } from '@/api/sitzung'
 import type { SitzungInfo } from '@/api/sitzung'
-
-/** Query-Schluessel der Sitzung. Wird beim Ab- und Anmelden invalidiert. */
-export const SITZUNG_SCHLUESSEL = ['sitzung'] as const
 
 /** Rueckgabe von {@link useSitzung}. */
 export type SitzungZustand = {
@@ -35,8 +33,12 @@ export type SitzungZustand = {
  */
 export function useSitzung(): SitzungZustand {
   const abfrage = useQuery({
-    queryKey: SITZUNG_SCHLUESSEL,
-    queryFn: sitzungLesen,
+    queryKey: schluessel.sitzung,
+    // Bewusst gekapselt statt `queryFn: sitzungLesen`: TanStack Query uebergibt
+    // der Funktion einen Kontext. Der landete sonst im Parameter `keinRefresh`
+    // und waere dort truthy – jeder Aufruf truege dann den Kopf
+    // `X-FuBo-Kein-Refresh`, und das gleitende Fenster wanderte nie nach hinten.
+    queryFn: () => sitzungLesen(),
     retry: false,
     staleTime: 10_000,
   })

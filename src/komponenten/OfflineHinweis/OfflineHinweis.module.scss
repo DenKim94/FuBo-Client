@@ -1,0 +1,29 @@
+@use '@/styles/globalVars';
+
+.hinweis {
+  // Klebt unter dem Kopf statt unten zu schweben: Der Aktualisierungshinweis
+  // liegt bereits am unteren Rand, und die Daumenreichweite gehoert nach A2 den
+  // primaeren Aktionen, nicht einem Zustandshinweis.
+  position: sticky;
+  top: 0;
+  z-index: var(--ebene-kopf);
+
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+
+  padding: var(--abstand-s) var(--abstand-m);
+  border-bottom: 1px solid var(--farbe-warnung);
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text);
+  font-size: var(--schrift-klein);
+}
+
+.symbol {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  // Das Symbol traegt eine feste fill-Farbe und folgt deshalb keinem
+  // Farb-Token (AGENT_CLIENT.md). Es liegt ueber `includeAssets` im Precache.
+  background: url('/icons/no_connection_icon_red.svg') no-repeat center / contain;
+}

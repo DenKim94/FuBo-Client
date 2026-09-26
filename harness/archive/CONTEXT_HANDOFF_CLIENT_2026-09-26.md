@@ -9,7 +9,7 @@
 > Arbeitsbranch `dev_client`. **Kein Monorepo.** Das Backend liegt in einem getrennten Repository
 > (`FuBo-Server`, Ordner `server/`). Der übergeordnete Ordner `PRJ_FuBo/` sowie `PRJ_FuBo/harness/`
 > sind bewusst **nicht** versioniert; `client/harness/tmp/` ebenfalls nicht (Entscheidung 25.09.2026).
-> Stand: 26.09.2026 (nach C1). Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-26.md`.
+> Stand: 26.09.2026. Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-25.md`.
 
 ---
 
@@ -51,23 +51,6 @@ Vollständige Liste in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md`, Abschnitt 3. Fron
 - **Ergänzt am 26.09.2026:** Der Manifest-`short_name` ist **`GUT-KICK`**. Der `name` bleibt
   `MONTAGS-KICKER`, wird auf dem Startbildschirm aber nach rund zwölf Zeichen abgeschnitten; „FuBo"
   scheidet als Kurzform aus, weil der Projektname nicht in der Oberfläche erscheint.
-- **Entscheidungen aus C1 (26.09.2026):**
-  - **`aufrufen` aus `src/api/httpService.ts` ist der einzige Zugang zum Server.** Im Quellbaum gibt
-    es genau ein `fetch(` – das ist zugleich der Abnahmetest des Pakets.
-  - **Keine Übersetzungstabelle `Fehlercode → Text` im Frontend.** Der Server liefert `detail`
-    deutschsprachig und oft genauer; eine zweite Fassung im Client liefe auseinander. Programmlogik
-    verzweigt über `code`, nie über den Text.
-  - **`openapi-typescript` wird nicht installiert, sondern über `npx` mit fester Fassung 7.13.0
-    aufgerufen** (`npm run api:typen`). Das Werkzeug verlangt als Peer TypeScript 5, das Projekt fährt
-    6; das Generat selbst übersetzt unter `strict` einwandfrei. Es läuft einmal und erzeugt eine
-    eingecheckte Datei – ein Zwang in der Sperrdatei wäre dauerhaft, sein Grund in einem Jahr
-    vergessen.
-  - **Der MSW-Browser-Modus ist zurückgestellt.** `msw init` legte einen zweiten Service Worker im
-    Geltungsbereich `/` an; ein Geltungsbereich trägt nur eine Registrierung, und die zweite ersetzt
-    die erste stillschweigend. Entwickelt wird gegen den lokalen Server, getestet im Node-Modus.
-  - **Der Offline-Zustand wird aus zwei Quellen gebildet**: `navigator.onLine` **und** dem Ergebnis
-    des letzten Aufrufs (`src/api/verbindungsStatus.ts`). Der Browserwert meldet auch im WLAN ohne
-    Weg ins Internet `true` – dem Alltagsfall am Sportplatz.
 
 ## 4. Schnittstelle zum Server (Vertrag)
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kernpunkte: REST/JSON gegen `api.<domain>`,
@@ -76,10 +59,8 @@ Skillwerte, Belegtstatus-Polling, einheitliches Fehler-JSON (`ProblemDetail` mit
 `detail` und einem von 34 `Fehlercode`-Werten).
 
 **Kontrakt-Kopie:** `client/harness/assets/fubo-api.json`, **44 Operationen**, am 25.09.2026 vom
-Server-Stand aufgefrischt. **Am 26.09.2026 zweimal gegen `server/fubo-api.json` verglichen – zuletzt
-vor der Typgenerierung in C1: byteweise identisch.** Das eingecheckte Generat
-`src/api/schema.d.ts` stammt aus genau diesem Stand; eine Vertragsänderung wird dadurch im Diff
-sichtbar. Sie trug zuvor nur 38 Operationen und kannte die sechs Push-Endpunkte aus A25 nicht –
+Server-Stand aufgefrischt. **Am 26.09.2026 erneut gegen `server/fubo-api.json` verglichen: byteweise
+identisch.** Sie trug zuvor nur 38 Operationen und kannte die sechs Push-Endpunkte aus A25 nicht –
 daraus war der falsche Schluss entstanden, das serverseitige Paket S8 sei offen.
 **Massgeblich bleibt `server/fubo-api.json`;** Vertragsänderungen werden immer zuerst dort abgebildet,
 der Client zieht nach. Bei getrennten Repositories gibt es keinen gemeinsamen Commit.
@@ -95,7 +76,7 @@ Begründung steht in Abschnitt 5.1.
 | MS | Inhalt | Aufwand (h) | Stand |
 |---|---|---|---|
 | C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **abgeschlossen**: umgesetzt 25.09.2026, Abnahme auf dem Entwicklungsrechner erfolgreich, committet als `e6f8bad`, nachgeprüft und korrigiert am 26.09.2026 (Abschnitt 6.1) |
-| C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **abgeschlossen**: umgesetzt 26.09.2026 nach `harness/tmp/C1_UMSETZUNG.md`, verifiziert (Abschnitt 6.2) |
+| C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **in Arbeit** – Anleitung: `harness/tmp/C1_UMSETZUNG.md` |
 | C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | offen |
 | C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | offen |
 | C4 | Admin-Zugang: Login (zwei Pflichtfelder, zeichengenau), dreistufiger Passwort-Reset, Passwortwechsel | 8 | offen |
@@ -140,9 +121,8 @@ vorgezogenen Testwerkzeuge.
 
 ## 6. Aktueller Code-Zustand
 
-**C0 und C1 sind abgeschlossen.** C0 wurde am 25.09.2026 umgesetzt (Commit `e6f8bad`) und am
-26.09.2026 nachgeprüft (Abschnitt 6.1); C1 am 26.09.2026 (Abschnitt 6.2). Der C0-Stand im
-Einzelnen:
+**C0 ist abgeschlossen** (umgesetzt 25.09.2026, committet als `e6f8bad` auf `dev_client`). Der Stand
+im Einzelnen:
 
 - Vite-Vorlagenreste entfernt (`App.tsx`, `App.module.scss`, `main.scss`, `react.svg`, README).
 - `tsconfig.app.json` mit `strict`, `DOM.Iterable`, `noUncheckedSideEffectImports`, Pfad-Alias `@/*`;
@@ -228,94 +208,27 @@ Arbeitsbaum.
 die Netzrichtlinie gesperrt) sowie die Handprüfungen auf einem echten Gerät. Beides ist bei der
 Abnahme am 25./26.09.2026 auf dem Entwicklungsrechner gelaufen.
 
-### 6.2 C1 – Vertrag, Datenzugriff und Mocks (26.09.2026)
-
-Umgesetzt nach `harness/tmp/C1_UMSETZUNG.md`. Nach C1 gibt es **einen** Weg zum Server und **einen**
-Weg, ohne ihn zu entwickeln.
-
-- **Vertragstypen:** `src/api/schema.d.ts` (4638 Zeilen) aus `harness/assets/fubo-api.json` erzeugt
-  und **eingecheckt**; aufgefrischt mit `npm run api:typen`. Der Kontrakt wurde vorher gegen
-  `server/fubo-api.json` verglichen: byteweise identisch, 44 Operationen, 59 Schemata, 34
-  Fehlercodes. Das Generat steht in `eslint.config.js` auf der Ignorierliste – der Kontrakt trägt in
-  seinen Beschreibungstexten geschützte Leerzeichen, die `no-irregular-whitespace` melden würde, und
-  eine Korrektur von Hand wäre beim nächsten Erzeugen wieder weg.
-- **`src/api/fehler.ts`:** `ApiFehler` mit `status`, `code`, Anzeigetext und – nur bei `429` – der
-  Restwartezeit aus dem Rumpf. Dazu `istNetzfehler`, damit keine Ansicht auf `TypeError` prüfen muss,
-  um „es kam gar keine Antwort" von „der Server hat abgelehnt" zu unterscheiden.
-- **`src/api/httpService.ts`:** `aufrufen(methode, pfad, optionen)` – `credentials: 'include'`,
-  `Content-Type` nur bei vorhandenem Rumpf, `X-FuBo-Kein-Refresh` über `keinRefresh: true`,
-  `204` → `undefined` (23 der 44 Operationen), jede Fehlerantwort als `ApiFehler`. **Einziges
-  `fetch(` im Quellbaum.**
-- **`src/app/queryClient.ts`:** `QueryCache`/`MutationCache` mit gemeinsamer `401`-Behandlung –
-  Cache leeren, dann der über `sitzungsendeBehandeln` hinterlegte Rückruf. Die Wiederholungsregel
-  unterscheidet jetzt: unter `500` kein zweiter Versuch (bei `429` verschärfte er die Sperre), sonst
-  einer.
-- **`src/app/SitzungsWaechter.tsx`:** verbindet die `401`-Behandlung mit dem Router (`navigate` mit
-  `replace`), hängt im `AppLayout` und rendert nichts. Kein `window.location` – ein harter
-  Seitenwechsel würfe die Anwendung weg und zeigte ein weißes Bild.
-- **`src/api/schluessel.ts`:** alle Query-Schlüssel an einem Ort; `SITZUNG_SCHLUESSEL` aus
-  `useSitzung` ist durch `schluessel.sitzung` ersetzt.
-- **`src/api/sitzung.ts` abgelöst:** nutzt `aufrufen`, Typen kommen aus dem Generat, `401` wird
-  **lokal** zu `null` – sonst liefe der Startaufruf jedes nicht angemeldeten Besuchers in die globale
-  Umleitung nach `/anmelden`, wo derselbe Aufruf wieder stattfindet. Die Signatur bleibt
-  aufwärtskompatibel (`keinRefresh` mit Vorgabewert), die Guards aus C0 sind unberührt.
-  **Achtung für C3:** In `useSitzung` ist die Abfrage als `() => sitzungLesen()` gekapselt. Direkt
-  übergeben bekäme die Funktion den Kontext von TanStack Query als ersten Parameter – der wäre
-  truthy, jeder Aufruf trüge den Kopf `X-FuBo-Kein-Refresh`, und das gleitende Fenster wanderte nie.
-- **Mock-Schicht:** `src/test/mocks/handlers.ts` (Sitzung, `204`, `ProblemDetail`) und
-  `src/test/mocks/server.ts`; `src/test/setup.ts` startet sie mit `onUnhandledRequest: 'error'` und
-  setzt die Handler nach jedem Test zurück. Der Browser-Modus ist zurückgestellt (Abschnitt 3).
-- **Offline-Hinweis:** `src/api/verbindungsStatus.ts` (Zustand aus den tatsächlichen Aufrufen, ohne
-  React), `src/hooks/useVerbindung.ts` (`useSyncExternalStore` über Browser-Ereignisse **und** diesen
-  Zustand) und `src/komponenten/OfflineHinweis/` – ein klebender Streifen unter dem Kopf. Das Symbol
-  kommt als CSS-Hintergrund und nicht über ein `img`: Ohne aktiven Service Worker liegt es noch nicht
-  im Precache und erschiene sonst ausgerechnet im Fehlerfall als kaputtes Bild.
-- **Tests:** 35 Unit- und Komponententests in acht Dateien (vorher neun in drei). Neu:
-  `httpService.test.ts` (11), `sitzung.test.ts` (5), `queryClient.test.ts` (5),
-  `OfflineHinweis.test.tsx` (4), `SitzungsWaechter.test.tsx` (1).
-
-**Verifiziert am 26.09.2026** in einer sauberen Linux-Umgebung gegen einen frischen `npm ci`:
-Typprüfung über vier Teilprojekte, ESLint, 35 Unit-Tests, vollständiger Bau (**sechs**
-Precache-Einträge, darunter `icons/no_connection_icon_red.svg`, **kein** `mockServiceWorker.js`) und
-**27 E2E-Tests über die drei Chromium-Projekte**. Dazu eine Sichtprüfung des Offline-Hinweises bei
-360 px Breite im Praxisfall „Netz vorhanden, Server nicht erreichbar".
-
-**Nicht geprüft:** die vier WebKit-Projekte (der Browser-Download ist in der Prüfumgebung durch die
-Netzrichtlinie gesperrt) sowie die Prüfpunkte 9 und 11 der Abnahmeliste gegen eine **laufende
-Serverinstanz** – Sitzungscookie im Netzwerkfenster und serverseitig beendete Sitzung. Der
-Umleitungspfad bei `401` ist stattdessen über `SitzungsWaechter.test.tsx` abgedeckt.
-
-### 6.3 Bewusst offen gelassen
+### 6.2 Bewusst offen gelassen
 
 - **`navigate(-1)` in `AppLayout`.** Wird die Anwendung direkt auf einer Unterseite geöffnet – Deeplink
   oder Start der installierten PWA –, hat der Verlauf keinen Vorgänger, und die Schaltfläche tut
   nichts. Der Fall ist in C2 zu lösen, wenn die Schaltfläche eine optionale Zielangabe bekommt.
-- **Die Anmeldeseite löst von sich aus keinen Aufruf aus.** Solange `/anmelden` nur einen Platzhalter
-  zeigt, bleibt der Offline-Hinweis dort aus, wenn der Browser ein Netz sieht – es gibt keinen
-  fehlschlagenden Aufruf, der das Gegenteil belegen könnte. Mit der PIN-Prüfung in C3 erledigt sich
-  das; der harte Fall (`navigator.onLine === false`) wird schon heute überall angezeigt.
-- **Der Personenkreis der Query-Schlüssel ist vorläufig.** `src/api/schluessel.ts` führt die absehbaren
-  Einträge; jedes fachliche Paket ergänzt seine eigenen dort und nirgends sonst.
-- **`npm audit` meldet drei moderate Befunde** in `@vitest/mocker` (Pfad-Traversal, nur
-  Entwicklungsabhängigkeit). Die Behebung verlangt Vitest 5 und damit einen Fassungssprung; das ist
-  eine eigene Entscheidung und gehört nicht in C1. Der Befund bestand bereits vor diesem Paket.
+- **`X-FuBo-Kein-Refresh` fehlt in `src/api/sitzung.ts`.** Solange die Sitzung nur bei Bedarf gelesen
+  wird, ist das folgenlos. Sobald in C3 zyklisch abgefragt wird, ist der Kopf Pflicht – sonst läuft
+  das gleitende Fenster nie ab.
+- **`src/api/sitzung.ts` ist vorläufig** (eigener `fetch`, handgeschriebene Typen). Ablösung in C1;
+  die Signatur von `sitzungLesen` bleibt erhalten, damit die Guards unberührt bleiben.
 
 ## 7. Nächste Schritte
 
-1. **Handprüfung zu C1 gegen eine laufende Serverinstanz** (Prüfpunkte 9 und 11 aus
-   `harness/tmp/C1_UMSETZUNG.md`): `npm run dev` gegen den Server, im Netzwerkfenster prüfen, dass
-   jeder Aufruf das Sitzungscookie trägt; anschliessend die Sitzung serverseitig beenden und eine
-   Aktion auslösen – erwartet wird die Umleitung auf `/anmelden` ohne Neuladen der Seite.
-2. **C2 umsetzen** (Design-System und Basis-Layout): Tokens, Raster, Button, Dropdown, Balken,
-   Info-Icon, Dialog sowie Lade-, Leer- und Fehlerzustand. Letzterer setzt unmittelbar auf `ApiFehler`
-   aus C1 auf. Die Farbwerte in `_globalVars.scss` sind bis dahin Platzhalter; die Kontrastprüfung
-   nach WCAG 2.1 AA gehört dorthin. Ebenfalls in C2: die Zielangabe für die Zurück-Schaltfläche
-   (Abschnitt 6.3) und die endgültige Gestaltung des Offline-Hinweises.
-3. **Vor jedem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts
-   nach `main`.
-4. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
+1. **C1 umsetzen** nach `harness/tmp/C1_UMSETZUNG.md`: Typgenerierung aus
+   `harness/assets/fubo-api.json` (Generat einchecken), fetch-Schicht mit `credentials: 'include'` und
+   Übersetzung des `ProblemDetail`, globale `401`-Behandlung, MSW-Mocks, Offline-Hinweis.
+2. **Vor dem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts nach
+   `main`.
+3. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
    `npm install` (Begründung in Abschnitt 6.1, Punkt 1).
-5. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
+4. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
    Rocket Loader und Auto-Minify für diese Domain abschalten. Die Adresse erst an die Spieler
    verteilen, wenn sie die endgültige ist.
 

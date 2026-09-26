@@ -95,8 +95,16 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Kein Token im `localStorage`.** Authentifizierung läuft über das serverseitige HttpOnly-Cookie;
   Anfragen mit `credentials: 'include'`. Das Frontend kennt den Token nicht.
 - **Server ist die Autorität.** Client-Validierung dient nur der UX und spiegelt die Serverregeln; die
-  endgültige Prüfung erfolgt serverseitig. Fehlerantworten (einheitliches JSON) in deutschsprachige
-  Meldungen übersetzen.
+  endgültige Prüfung erfolgt serverseitig.
+- **Genau ein Zugang zum Server: `aufrufen` aus `src/api/httpService.ts`** (seit C1). Im Quellbaum gibt
+  es genau ein `fetch(`. Die Funktion setzt `credentials: 'include'`, unterscheidet `204` von `200`
+  (23 der 44 Operationen antworten ohne Rumpf) und übersetzt jede Fehlerantwort in einen `ApiFehler`.
+  Ein zweiter Weg zum Server bedeutete eine zweite Fehlerbehandlung.
+- **Anzeigetext ist `detail` vom Server, Programmlogik verzweigt über `code`.** Der Kontrakt hält
+  ausdrücklich fest, dass `detail` sich ohne Vertragsänderung ändern darf. **Keine Übersetzungstabelle
+  `Fehlercode → Text` im Frontend** – sie wäre ein zweiter Ort für dieselbe Wahrheit. Eigene
+  Formulierungen nur dort, wo gar keine Antwort kam oder die Oberfläche mehr weiss als der Server
+  (Fehler in einem Formularfeld statt in einem Kasten).
 - **Routen-Schutz in drei Ebenen** über pfadlose Layout-Routen in `src/app/schutz/`: öffentlich,
   `GeschuetzteRoute` (`stage = PROFILE_AUTHENTICATED`) und darin `AdminRoute` (`rolle = ADMIN`).
   `/admin/anmelden` bleibt ausdrücklich öffentlich – der Admin muss sich anmelden können, bevor er
@@ -142,6 +150,10 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   aussieht.
 - **Konfigurations-Voll-Update:** fünfzehn Pflichtfelder, zuletzt ergänzt um `pushAktiv` und
   `pushErinnerungStunden`. Ein Formular, das eines weglässt, bekommt `400`.
+- **Typen kommen aus dem Generat `src/api/schema.d.ts`** (eingecheckt, erzeugt mit `npm run api:typen`),
+  nie aus abgeschriebenen Deklarationen: `components['schemas'][...]` für Datentypen,
+  `operations[...]` für einen Antwortrumpf. Das Generat wird **nie von Hand bearbeitet** und steht
+  deshalb auf der ESLint-Ignorierliste.
 
 ### Techstack (Client)
 - React (ab Version 19), Vite als Build-Tool, TypeScript.
@@ -353,6 +365,17 @@ Beispiel: `import style from './Platzhalter.module.scss'`
   Umlautfreiheit nur für Bezeichner gilt; `public/_headers` adressiert die Wurzel `/` gesondert, weil
   Cloudflare Pages den angefragten Pfad auswertet und nicht die ausgelieferte Datei;
   `package-lock.json` muss `npm ci` standhalten – nach jedem `npm uninstall` ist das zu prüfen.
+- **Festlegungen aus C1 (26.09.2026):** `openapi-typescript` wird **nicht installiert**, sondern über
+  `npx` mit fester Fassung aufgerufen (`npm run api:typen`) – es verlangt als Peer TypeScript 5, das
+  Projekt fährt 6, und das Werkzeug läuft ohnehin nur einmal je Vertragsstand; **der MSW-Browser-Modus
+  ist zurückgestellt**, weil `msw init` einen zweiten Service Worker im Geltungsbereich `/` anlegt und
+  die Registrierung des PWA-Workers stillschweigend ersetzt (getestet wird im Node-Modus, entwickelt
+  gegen den lokalen Server); der **Offline-Zustand** wird aus zwei Quellen gebildet –
+  `navigator.onLine` **und** dem Ergebnis des letzten Aufrufs (`src/api/verbindungsStatus.ts`), weil
+  der Browserwert im WLAN ohne Weg ins Internet `true` meldet; **Query-Schlüssel stehen ausschliesslich
+  in `src/api/schluessel.ts`**; eine Abfragefunktion mit optionalen Parametern wird in TanStack Query
+  **gekapselt** übergeben (`queryFn: () => lesen()`), sonst landet der Kontext der Bibliothek im ersten
+  Parameter.
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
 - Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      

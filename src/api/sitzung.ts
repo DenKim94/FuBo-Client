@@ -1,52 +1,37 @@
-/**
- * Zugriff auf die eigene Sitzung.
- *
- * **Vorlaeufig.** Der allgemeine HTTP-Baustein (Fehleruebersetzung, globales
- * `401`, erzeugte Typen aus `fubo-api.json`) entsteht im naechsten Arbeitspaket.
- * Diese Datei wird dann darauf umgestellt; die Signatur von `sitzungLesen`
- * bleibt dabei erhalten, damit die Routen-Schutzkomponenten unberuehrt bleiben.
- */
+import { ApiFehler } from '@/api/fehler'
+import { aufrufen } from '@/api/httpService'
+import type { components } from '@/api/schema'
+
+/** Zustand der eigenen Sitzung, wie der Server ihn meldet. */
+export type SitzungInfo = components['schemas']['SitzungInfo']
 
 /** Stufe des zweistufigen Logins. Wird serverseitig erzwungen. */
-export type Stage = 'PIN_VERIFIED' | 'PROFILE_AUTHENTICATED'
+export type Stage = components['schemas']['Stage']
 
-/** Rolle der angemeldeten Identitaet. In der Stufe `PIN_VERIFIED` noch nicht gesetzt. */
-export type Rolle = 'ADMIN' | 'USER' | 'GAST'
-
-/** Auskunft des Servers ueber die laufende Sitzung. */
-export type SitzungInfo = {
-  stage: Stage
-  /** `null`, solange nur die PIN geprueft wurde. */
-  rolle: Rolle | null
-  /** Profilname, Gastname oder `null` in der Stufe `PIN_VERIFIED`. */
-  anzeigeName: string | null
-  /** Ende des gleitenden Leerlauf-Fensters. */
-  gueltigBis: string
-  /** Harte Obergrenze. Wird nie verschoben, auch nicht durch eine Erneuerung. */
-  absolutGueltigBis: string
-}
-
-const API_BASIS = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
+/** Rolle der angemeldeten Identität. In der Stufe `PIN_VERIFIED` noch nicht gesetzt. */
+export type Rolle = components['schemas']['Rolle']
 
 /**
  * Liest die laufende Sitzung.
  *
- * Gibt bei `401` bewusst `null` zurueck statt zu werfen: „keine Sitzung" ist der
- * Normalzustand eines nicht angemeldeten Besuchers und kein Fehlerfall. Ein
- * geworfener Fehler zwaenge jede aufrufende Stelle zu einer Fallunterscheidung
- * zwischen „abgemeldet" und „kaputt", obwohl nur die zweite eine Meldung verdient.
+ * Gibt bei `401` bewusst `null` zurück statt zu werfen: „keine Sitzung" ist der
+ * Normalzustand eines nicht angemeldeten Besuchers und kein Fehlerfall.
+ *
+ * **Zugleich darf dieser eine Aufruf die globale Abmeldung nicht auslösen.**
+ * Täte er es, liefe der Startaufruf jedes nicht angemeldeten Besuchers in die
+ * Behandlung aus `queryClient.ts`, die auf `/anmelden` umleitet – wo derselbe
+ * Aufruf wieder stattfindet. Der `401` wird deshalb hier abgefangen, bevor er
+ * den Query-Cache erreicht.
+ *
+ * @param keinRefresh Bei zyklischen Abrufen `true` setzen (Countdown ab C3),
+ *   damit das gleitende Sitzungsfenster nicht durch die Abfrage selbst
+ *   verlängert wird.
  */
-export async function sitzungLesen(): Promise<SitzungInfo | null> {
-  const antwort = await fetch(`${API_BASIS}/auth/session/lesen`, {
-    method: 'GET',
-    // Die Authentifizierung laeuft ueber das serverseitige HttpOnly-Cookie.
-    credentials: 'include',
-    headers: { Accept: 'application/json' },
-  })
-
-  if (antwort.status === 401) return null
-  if (!antwort.ok) {
-    throw new Error(`Sitzung konnte nicht gelesen werden (HTTP ${antwort.status}).`)
+export async function sitzungLesen(keinRefresh = false): Promise<SitzungInfo | null> {
+  try {
+    return await aufrufen<SitzungInfo>('GET', '/auth/session/lesen', { keinRefresh })
+  } catch (fehler) {
+    if (fehler instanceof ApiFehler && fehler.status === 401) return null
+    throw fehler
   }
-  return (await antwort.json()) as SitzungInfo
 }
