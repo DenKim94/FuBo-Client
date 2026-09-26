@@ -96,7 +96,7 @@ Begründung steht in Abschnitt 5.1.
 |---|---|---|---|
 | C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **abgeschlossen**: umgesetzt 25.09.2026, Abnahme auf dem Entwicklungsrechner erfolgreich, committet als `e6f8bad`, nachgeprüft und korrigiert am 26.09.2026 (Abschnitt 6.1) |
 | C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **abgeschlossen**: umgesetzt 26.09.2026 nach `harness/tmp/C1_UMSETZUNG.md`, verifiziert (Abschnitt 6.2) |
-| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | offen |
+| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | offen – Anleitung: `harness/tmp/C2_UMSETZUNG.md` (26.09.2026) |
 | C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | offen |
 | C4 | Admin-Zugang: Login (zwei Pflichtfelder, zeichengenau), dreistufiger Passwort-Reset, Passwortwechsel | 8 | offen |
 | C5 | Termin & Teilnahme: User-Dashboard, Zu-/Absage, Teilnehmerliste mit Balken und Warteschlange, Bilanz | 14 | offen |
@@ -306,7 +306,7 @@ Umleitungspfad bei `401` ist stattdessen über `SitzungsWaechter.test.tsx` abged
    `harness/tmp/C1_UMSETZUNG.md`): `npm run dev` gegen den Server, im Netzwerkfenster prüfen, dass
    jeder Aufruf das Sitzungscookie trägt; anschliessend die Sitzung serverseitig beenden und eine
    Aktion auslösen – erwartet wird die Umleitung auf `/anmelden` ohne Neuladen der Seite.
-2. **C2 umsetzen** (Design-System und Basis-Layout): Tokens, Raster, Button, Dropdown, Balken,
+2. **C2 umsetzen** nach `harness/tmp/C2_UMSETZUNG.md`: Tokens, Raster, Button, Dropdown, Balken,
    Info-Icon, Dialog sowie Lade-, Leer- und Fehlerzustand. Letzterer setzt unmittelbar auf `ApiFehler`
    aus C1 auf. Die Farbwerte in `_globalVars.scss` sind bis dahin Platzhalter; die Kontrastprüfung
    nach WCAG 2.1 AA gehört dorthin. Ebenfalls in C2: die Zielangabe für die Zurück-Schaltfläche
