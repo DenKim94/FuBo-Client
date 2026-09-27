@@ -1,6 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, test } from 'vitest'
-import { verbindungMelden } from '@/api/verbindungsStatus'
+import { verbindungMelden } from '@/api/common/verbindungsStatus'
 import OfflineHinweis from './OfflineHinweis'
 
 /** Setzt `navigator.onLine` fuer die Dauer eines Tests. */

@@ -1,4 +1,4 @@
-import type { components } from '@/api/schema'
+import type { components } from '@/api/common/types/schema'
 
 /** Einheitliches Fehlerformat des Servers (RFC 9457). */
 export type ProblemDetail = components['schemas']['ProblemDetail']

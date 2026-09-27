@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router'
 import AppLayout from '@/layouts/AppLayout/AppLayout'
 import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
-import Platzhalter from '@/seiten/Platzhalter/Platzhalter'
+import Platzhalter from '@/components/Platzhalter/Platzhalter'
 
 /**
  * Routenbaum der Anwendung.

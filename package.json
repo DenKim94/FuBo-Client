@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "e2e:browser": "playwright install chromium webkit",
-    "api:typen": "npx --yes openapi-typescript@7.13.0 harness/assets/fubo-api.json -o src/api/schema.d.ts"
+    "api:typen": "npx --yes openapi-typescript@7.13.0 harness/assets/fubo-api.json -o src/api/common/types/schema.d.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.2",

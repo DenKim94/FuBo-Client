@@ -1,6 +1,6 @@
-import { ApiFehler } from '@/api/fehler'
-import { aufrufen } from '@/api/httpService'
-import type { components } from '@/api/schema'
+import { ApiFehler } from '@/api/common/fehler'
+import { aufrufen } from '@/api/common/httpService'
+import type { components } from '@/api/common/types/schema'
 
 /** Zustand der eigenen Sitzung, wie der Server ihn meldet. */
 export type SitzungInfo = components['schemas']['SitzungInfo']

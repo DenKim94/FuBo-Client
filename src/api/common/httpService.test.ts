@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, test } from 'vitest'
-import { ApiFehler } from '@/api/fehler'
-import { aufrufen } from '@/api/httpService'
+import { ApiFehler } from '@/api/common/fehler'
+import { aufrufen } from '@/api/common/httpService'
 import { problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'
 

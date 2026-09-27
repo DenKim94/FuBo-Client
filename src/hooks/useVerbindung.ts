@@ -3,7 +3,7 @@ import {
   verbindungAbonnieren,
   verbindungGestoert,
   verbindungMelden,
-} from '@/api/verbindungsStatus'
+} from '@/api/common/verbindungsStatus'
 
 /**
  * Liest den aktuellen Zustand aus beiden Quellen.
@@ -48,6 +48,12 @@ function abonnieren(benachrichtigen: () => void): () => void {
  * anzuzeigen.
  */
 export function useVerbindung(): { verbunden: boolean } {
+  // Bekannte Optimismus-Luecke (Handoff 6.3): Solange kein Aufruf
+  // fehlgeschlagen ist, steht der beobachtete Zustand auf „intakt", und
+  // `navigator.onLine` meldet auch im WLAN ohne Weg ins Internet `true` – der
+  // Hook sagt dann „verbunden", ohne es zu wissen. Den Gegenbeweis liefert
+  // erst ein Aufruf, und `/anmelden` loest bis C3 keinen aus. Der dritte
+  // Parameter ist nur der Serverschnappschuss (kein SSR im Projekt).
   const verbunden = useSyncExternalStore(abonnieren, lesen, () => true)
   return { verbunden }
 }

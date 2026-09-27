@@ -1,5 +1,5 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query'
-import { ApiFehler } from '@/api/fehler'
+import { ApiFehler } from '@/api/common/fehler'
 
 /**
  * Rückruf für den Sitzungsablauf.

@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import type { components } from '@/api/schema'
+import type { components } from '@/api/common/types/schema'
 
 /** Beispielsitzung. Keine realen Personennamen (Vorgabe AGENT_CLIENT.md). */
 export const beispielSitzung: components['schemas']['SitzungInfo'] = {

@@ -12,8 +12,8 @@ REST-Schnittstelle angesprochen.
 
 - Node ab 20 (entwickelt wird mit 22, siehe `.nvmrc`)
 - Ein laufender Server unter `http://localhost:8080` für die Entwicklung gegen
-  echte Daten. Eine Mock-Schicht als Ersatz entsteht im Arbeitspaket C1; bis
-  dahin laufen Aufrufe ohne Server ins Leere.
+  echte Daten. Tests laufen ohne Server gegen die Mock-Schicht (MSW im
+  Node-Modus, `src/test/mocks/`).
 
 ## Einrichtung
 
@@ -42,6 +42,27 @@ npm run dev
 React 19, Vite 8, TypeScript, SCSS mit CSS Modules, TanStack Query für den
 Server-State, React Router, `vite-plugin-pwa` mit eigenem Service Worker
 (`src/sw.ts`). Tests mit Vitest, React Testing Library und Playwright.
+
+## Ordnerstruktur
+
+```
+src/api/common/          Querschnitt des Datenzugriffs (httpService, fehler, schluessel)
+src/api/common/types/    schema.d.ts – Generat aus harness/assets/fubo-api.json
+src/api/<domaene>/       fachlicher Datenzugriff je Domäne, z. B. sitzung/
+src/app/                 Routen, Guards (schutz/), Query-Client
+src/components/<Name>/   Komponente, Stil und Test in einem Ordner
+src/context/             React-Kontexte (noch leer)
+src/hooks/               use<Sache>.ts, flach
+src/layouts/<Name>Layout/
+src/pages/<Name>/        Routen-Ansichten (ab C3)
+src/styles/              _globalVars.scss, _reset.scss, global.scss
+src/test/                Testrahmen und Mock-Schicht
+```
+
+Ordnernamen sind englisch, Bezeichner und Oberflächentext deutsch. Eine Domäne
+trägt über alle Ebenen denselben Namen (`api/admin/` ↔ `AdminLayout` ↔
+`AdminDashboard`). Die verbindliche Fassung steht in `harness/AGENT_CLIENT.md`,
+Abschnitt „Ordnerstruktur und Domänenkonsistenz".
 
 ## Konventionen
 

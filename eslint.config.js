@@ -16,7 +16,7 @@ export default defineConfig([
     // enthaelt in seinen Beschreibungstexten geschuetzte Leerzeichen, die
     // `no-irregular-whitespace` melden wuerde; eine Korrektur waere beim
     // naechsten `npm run api:typen` wieder weg.
-    'src/api/schema.d.ts',
+    'src/api/common/types/schema.d.ts',
   ]),
   {
     files: ['**/*.{ts,tsx}'],

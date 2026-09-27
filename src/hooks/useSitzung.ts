@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { schluessel } from '@/api/schluessel'
-import { sitzungLesen } from '@/api/sitzung'
-import type { SitzungInfo } from '@/api/sitzung'
+import { schluessel } from '@/api/common/schluessel'
+import { sitzungLesen, type SitzungInfo } from '@/api/sitzung/sitzung'
 
 /** Rueckgabe von {@link useSitzung}. */
 export type SitzungZustand = {

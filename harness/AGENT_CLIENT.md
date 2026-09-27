@@ -96,7 +96,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   Anfragen mit `credentials: 'include'`. Das Frontend kennt den Token nicht.
 - **Server ist die Autorität.** Client-Validierung dient nur der UX und spiegelt die Serverregeln; die
   endgültige Prüfung erfolgt serverseitig.
-- **Genau ein Zugang zum Server: `aufrufen` aus `src/api/httpService.ts`** (seit C1). Im Quellbaum gibt
+- **Genau ein Zugang zum Server: `aufrufen` aus `src/api/common/httpService.ts`** (seit C1). Im Quellbaum gibt
   es genau ein `fetch(`. Die Funktion setzt `credentials: 'include'`, unterscheidet `204` von `200`
   (23 der 44 Operationen antworten ohne Rumpf) und übersetzt jede Fehlerantwort in einen `ApiFehler`.
   Ein zweiter Weg zum Server bedeutete eine zweite Fehlerbehandlung.
@@ -124,6 +124,46 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Die Push-Berechtigung wird nur aus einer Nutzergeste heraus erfragt**, nie beim Laden der Seite –
   sonst verweigern Browser die Abfrage dauerhaft für diesen Origin.
 
+### Ordnerstruktur und Domänenkonsistenz (verbindlich, 27.09.2026)
+
+Der Quellbaum folgt einem festen Muster. Es ersetzt die C0-Festlegung „deutsche Ordnernamen im
+Quellbaum": **Ordnernamen sind englisch**, Bezeichner und Oberflächentext bleiben deutsch.
+
+| Ort | Muster | Beispiele |
+|---|---|---|
+| Datenzugriff | `src/api/<domaene>/<domaene>.ts` | `src/api/sitzung/sitzung.ts`, künftig `src/api/admin/admin.ts` |
+| Querschnitt des Datenzugriffs | `src/api/common/` | `httpService.ts`, `fehler.ts`, `schluessel.ts`, `verbindungsStatus.ts` |
+| Vertragstypen (Generat) | `src/api/common/types/schema.d.ts` | einzige Quelle der Typen, nie von Hand bearbeitet |
+| Komponenten | `src/components/<Name>/<Name>.{tsx,module.scss,test.tsx}` | `src/components/OfflineHinweis/` |
+| Layouts | `src/layouts/<Name>Layout/` | `src/layouts/AppLayout/`, künftig `src/layouts/AdminLayout/` |
+| Seiten (Routen-Ansichten, ab C3) | `src/pages/<Name>/` | `src/pages/Anmeldung/`, `src/pages/AdminDashboard/` |
+| React-Kontexte | `src/context/<Name>Context.tsx` | Ordner liegt leer vor; erster Kontext frühestens C3 |
+| Hooks | `src/hooks/use<Sache>.ts`, flach | `useSitzung.ts`, `useVerbindung.ts` |
+| Routen, Guards, Query-Client | `src/app/` | `routen.tsx`, `schutz/`, `queryClient.ts` |
+
+Drei Regeln dazu:
+
+- **Der Ordnername ist der Komponentenname.** Ordner, Datei und exportierte Komponente tragen
+  denselben Namen in PascalCase; Stil- und Testdatei liegen daneben. Ein `index.ts` als Sammelstelle
+  wird **nicht** angelegt – es verdeckt im Importpfad, welche Datei gemeint ist.
+- **Eine Domäne trägt über alle Ebenen denselben Namen.** Was in `src/api/admin/` liegt, heißt in den
+  übrigen Ebenen `AdminLayout`, `AdminDashboard`, `useAdmin…`. Zwei Namen für eine Domäne sind
+  teurer als ein langer Name.
+- **Verschieben endet nicht im Quellbaum.** Pfade stehen auch außerhalb von `src/`: `package.json`
+  (`api:typen`), `eslint.config.js` (Ignorierliste), `tsconfig*.json`, `vite.config.ts`,
+  `vitest.config.ts`, CI-Workflow sowie `README.md` und die Dokumente in `harness/`. Diese Verweise
+  scheitern **lautlos**: Eine falsche Ignorierliste meldet plötzlich Fehler im Generat, ein falscher
+  Ausgabepfad in `api:typen` legt beim nächsten Lauf eine zweite Schemadatei an.
+
+**Prüfpflicht und Korrekturpflicht.** Nach jedem Umbau der Struktur – und bei jeder Prüfung eines
+vorgefundenen Stands – ist die Vollständigkeit über `npm run lint`, `npm run typecheck`, `npm test`
+und `npm run build` nachzuweisen, dazu eine Suche nach verwaisten Pfaden
+(`grep -rn "src/api/\|@/komponenten\|@/seiten" --include='*.ts' --include='*.tsx' --include='*.json' --include='*.js' --include='*.yml' --include='*.md' .`).
+**Dabei auffallende Abweichungen von diesem Muster und gefundene Fehler sind unmittelbar zu
+beheben**, nicht nur zu melden; die Behebung wird im Handoff festgehalten. Wird der Bruch stattdessen
+weitergetragen, wächst er mit jedem Paket: Ab C3 entstehen acht Seiten, die dem Muster folgen oder
+es endgültig auflösen.
+
 ### Schnittstelle zum Server (Vertrag)
 - **Transport:** REST/JSON über HTTPS gegen `api.<domain>`; das Frontend läuft unter `app.<domain>`
   (Cloudflare Pages). Aufrufe mit `credentials: 'include'`.
@@ -150,7 +190,7 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
   aussieht.
 - **Konfigurations-Voll-Update:** fünfzehn Pflichtfelder, zuletzt ergänzt um `pushAktiv` und
   `pushErinnerungStunden`. Ein Formular, das eines weglässt, bekommt `400`.
-- **Typen kommen aus dem Generat `src/api/schema.d.ts`** (eingecheckt, erzeugt mit `npm run api:typen`),
+- **Typen kommen aus dem Generat `src/api/common/types/schema.d.ts`** (eingecheckt, erzeugt mit `npm run api:typen`),
   nie aus abgeschriebenen Deklarationen: `components['schemas'][...]` für Datentypen,
   `operations[...]` für einen Antwortrumpf. Das Generat wird **nie von Hand bearbeitet** und steht
   deshalb auf der ESLint-Ignorierliste.
@@ -355,8 +395,7 @@ Beispiel: `import style from './Platzhalter.module.scss'`
 - **Festlegungen aus C0 (25.09.2026):** `strict` in `tsconfig.app.json`; eigener `tsconfig.worker.json`
   für den Service Worker (`lib: WebWorker`, und `src/sw.ts` in `tsconfig.app.json` ausgeschlossen);
   Pfad-Alias `@/*` in `tsconfig` **und** `resolve.alias` – ohne `baseUrl`, die seit TypeScript 6
-  abgekündigt ist, und mit führendem `./` in den Zielen; deutsche Ordnernamen im Quellbaum
-  (`komponenten`, `seiten`, `layouts`); `viewport-fit=cover` in `index.html` als Voraussetzung dafür,
+  abgekündigt ist, und mit führendem `./` in den Zielen; `viewport-fit=cover` in `index.html` als Voraussetzung dafür,
   dass `env(safe-area-inset-*)` überhaupt Werte liefert; Safe-Area und Zurück-Navigation im
   `AppLayout` statt in jeder Ansicht; Dev-Proxy `/api` auf Port 8080 und `VITE_API_BASE_URL`;
   `client/harness/tmp/` unversioniert.
@@ -371,9 +410,9 @@ Beispiel: `import style from './Platzhalter.module.scss'`
   ist zurückgestellt**, weil `msw init` einen zweiten Service Worker im Geltungsbereich `/` anlegt und
   die Registrierung des PWA-Workers stillschweigend ersetzt (getestet wird im Node-Modus, entwickelt
   gegen den lokalen Server); der **Offline-Zustand** wird aus zwei Quellen gebildet –
-  `navigator.onLine` **und** dem Ergebnis des letzten Aufrufs (`src/api/verbindungsStatus.ts`), weil
+  `navigator.onLine` **und** dem Ergebnis des letzten Aufrufs (`src/api/common/verbindungsStatus.ts`), weil
   der Browserwert im WLAN ohne Weg ins Internet `true` meldet; **Query-Schlüssel stehen ausschliesslich
-  in `src/api/schluessel.ts`**; eine Abfragefunktion mit optionalen Parametern wird in TanStack Query
+  in `src/api/common/schluessel.ts`**; eine Abfragefunktion mit optionalen Parametern wird in TanStack Query
   **gekapselt** übergeben (`queryFn: () => lesen()`), sonst landet der Kontext der Bibliothek im ersten
   Parameter.
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 

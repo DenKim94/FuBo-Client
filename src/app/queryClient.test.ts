@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { ApiFehler } from '@/api/fehler'
+import { ApiFehler } from '@/api/common/fehler'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 
 /** Erzeugt eine Abfrage, die mit dem gewuenschten Status scheitert. */

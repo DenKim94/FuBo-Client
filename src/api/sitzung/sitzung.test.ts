@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, test, vi } from 'vitest'
-import { sitzungLesen } from '@/api/sitzung'
+import { sitzungLesen } from '@/api/sitzung/sitzung'
 import { sitzungsendeBehandeln } from '@/app/queryClient'
 import { problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'

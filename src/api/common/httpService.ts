@@ -1,5 +1,5 @@
-import { ApiFehler, istNetzfehler, type Fehlercode } from '@/api/fehler'
-import { verbindungMelden } from '@/api/verbindungsStatus'
+import { ApiFehler, istNetzfehler, type Fehlercode } from '@/api/common/fehler'
+import { verbindungMelden } from '@/api/common/verbindungsStatus'
 
 /**
  * Basis aller Aufrufe.

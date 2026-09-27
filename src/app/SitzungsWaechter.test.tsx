@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
-import { ApiFehler } from '@/api/fehler'
+import { ApiFehler } from '@/api/common/fehler'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 

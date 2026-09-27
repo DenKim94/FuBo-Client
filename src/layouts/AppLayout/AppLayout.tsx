@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
-import AktualisierungsHinweis from '@/komponenten/AktualisierungsHinweis/AktualisierungsHinweis'
-import OfflineHinweis from '@/komponenten/OfflineHinweis/OfflineHinweis'
+import AktualisierungsHinweis from '@/components/AktualisierungsHinweis/AktualisierungsHinweis'
+import OfflineHinweis from '@/components/OfflineHinweis/OfflineHinweis'
 import style from './AppLayout.module.scss'
 
 /**
