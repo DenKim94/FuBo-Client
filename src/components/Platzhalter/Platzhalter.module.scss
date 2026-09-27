@@ -12,5 +12,8 @@
 }
 
 .hinweis {
+  // Erster Verbraucher von --breite-text: Fliesstext bricht nach etwa 70
+  // Zeichen um, statt auf dem Tablet ueber die ganze Inhaltsbreite zu laufen.
+  max-width: var(--breite-text);
   color: var(--farbe-text-schwach);
 }

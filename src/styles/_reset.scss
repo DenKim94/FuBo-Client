@@ -54,10 +54,27 @@ button {
   cursor: pointer;
 }
 
-// Sichtbarer Fokus ist Pflicht (Tastaturbedienung, WCAG 2.1 AA).
+// Sichtbarer Fokus ist Pflicht (Tastaturbedienung, WCAG 2.4.7).
+// `:focus-visible` statt `:focus`: Ein Mausklick soll keinen Ring hinterlassen,
+// eine Tabulatortaste schon. Der Ton ist ein eigenes Token und nicht
+// --farbe-primaer, damit der Ring nicht mit Erfolg oder Primaeraktion
+// verwechselbar ist.
 :focus-visible {
-  outline: var(--fokus-rand) solid var(--farbe-primaer);
+  outline: var(--fokus-rand) solid var(--farbe-fokus);
   outline-offset: 2px;
+  // Bewusst **kein** `border-radius: inherit` hier: Die Eigenschaft rundet nicht
+  // den Umriss, sondern setzt den Radius des Elements auf den des Elternteils.
+  // Nachgemessen am 27.09.2026 in Chromium: Die Zurueck-Schaltflaeche fiel damit
+  // im Fokus von 8px auf 0px und wurde eckig. Den Umriss rundet der Browser
+  // ohnehin am Radius des Elements (Chrome ab 94, Firefox ab 88, Safari ab 16.4
+  // – unterhalb der Schwelle, die A25b mit iOS 16.4 setzt).
+}
+
+// Den Vorgabe-Ring des Browsers nicht entfernen, ohne ihn zu ersetzen – genau
+// das ist der haeufigste Zugaenglichkeitsfehler ueberhaupt. Hier wird er nur
+// dort abgeschaltet, wo `:focus-visible` oben ihn schon ersetzt hat.
+:focus:not(:focus-visible) {
+  outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

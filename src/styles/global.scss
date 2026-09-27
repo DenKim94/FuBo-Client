@@ -1,7 +1,7 @@
 // Einziger globaler Stil-Einstiegspunkt. Wird ausschliesslich in main.tsx
 // eingebunden; jede Komponente bringt sonst ihre eigene <Name>.module.scss mit.
 //
-// `@use` statt des abgekuendigten `@import` (Vorgabe AGENT_CLIENT.md).
+// `@use` statt der abgekuendigten Import-Regel (Vorgabe AGENT_CLIENT.md).
 
 @use 'globalVars';
 @use 'reset';

@@ -1,0 +1,28 @@
+@use '@/styles/globalVars';
+
+.leiste {
+  // `sticky` statt `fixed`: Eine feste Leiste ueberdeckt auf kurzen Ansichten
+  // den letzten Listeneintrag, und auf iOS springt sie beim Einblenden der
+  // Tastatur.
+  position: sticky;
+  bottom: 0;
+  z-index: var(--ebene-kopf);
+
+  display: flex;
+  gap: var(--abstand-s);
+  align-items: center;
+
+  min-height: var(--aktionsleiste-hoehe);
+  padding: var(--abstand-s) var(--abstand-m);
+  // Der Home-Indicator liegt genau hier. Ohne diese Zeile steht die wichtigste
+  // Schaltflaeche der Anwendung halb darunter (A25a).
+  padding-bottom: calc(var(--abstand-s) + var(--sicher-unten));
+
+  background: var(--farbe-hintergrund);
+  border-top: 1px solid var(--farbe-rand);
+}
+
+// Eine Aktion nimmt die Breite, zwei teilen sie.
+.leiste > * {
+  flex: 1;
+}

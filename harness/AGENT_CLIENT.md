@@ -415,6 +415,19 @@ Beispiel: `import style from './Platzhalter.module.scss'`
   in `src/api/common/schluessel.ts`**; eine Abfragefunktion mit optionalen Parametern wird in TanStack Query
   **gekapselt** übergeben (`queryFn: () => lesen()`), sonst landet der Kontext der Bibliothek im ersten
   Parameter.
+- **Festlegungen aus C2, Schritte 1 bis 5 (27.09.2026):** **Kein Hexwert ausserhalb von
+  `src/styles/_globalVars.scss`** – die Tokendatei ist die einzige Stelle, an der ein Markenwechsel
+  stattfindet; eine Komponente mit eigener Farbe macht das Design-System zur Empfehlung. **Zwei
+  Randrollen:** `--farbe-rand` dekorativ (Trennlinien, Kartenkanten), `--farbe-rand-bedienbar` für
+  alles, was angetippt oder befüllt wird – WCAG 1.4.11 verlangt 3:1 nur für Letzteres, ein einziges
+  Token zwänge zur Wahl zwischen zu schwachem Rand und zu hartem Gitter. **Eigenes Fokus-Token**
+  (`--farbe-fokus`, 9.39:1), damit der Ring nicht mit Erfolg oder Primäraktion verwechselbar ist; die
+  Regel steht einmal in `_reset.scss` und **nicht** zusätzlich in `global.scss`. **In der
+  `:focus-visible`-Regel kein `border-radius: inherit`:** Die Eigenschaft rundet nicht den Umriss,
+  sondern setzt den Radius des Elements auf den des Elternteils – nachgemessen fiel die
+  Zurück-Schaltfläche damit im Fokus von 8 px auf 0 px. Den Umriss rundet der Browser von sich aus.
+  **Zustände über eigene Tokens bei der Primäraktion, sonst `color-mix`**; die globalen Sass-Funktionen
+  `darken()`/`lighten()`/`mix()` sind abgekündigt und nicht zu benutzen.
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
 - Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      

@@ -1,36 +1,71 @@
 // Globale Design-Tokens und Umgebungswerte.
 // Vorgabe: AGENT_CLIENT.md – "globale (S)CSS-Variablen zentral in _globalVars.scss".
 //
-// Die Farbwerte sind bewusst Platzhalter: DESIGN.md haelt fest, dass eine
-// verbindliche Markenfarbwelt noch nicht existiert. Die endgueltigen Tokens und
-// die Kontrastpruefung nach WCAG 2.1 AA gehoeren in das Design-System-Paket.
+// Die Farbwerte stammen aus den Design-Prototypen (ausgezaehlt in
+// harness/tmp/C2_UMSETZUNG.md, Abschnitt 3.1) und sind am 27.09.2026 gegen
+// WCAG 2.1 AA nachgerechnet; die Zahl hinter einem Wert ist das gemessene
+// Verhaeltnis. Uebernommen sind sie, weil sie aus dem Entwurf kommen und geprueft
+// sind – nicht, weil sie Marke waeren: DESIGN.md haelt die Markenfarbwelt
+// ausdruecklich offen.
+//
+// **Dies ist die einzige Datei im Quellbaum mit Hexwerten.** Ein spaeterer
+// Markenwechsel findet nur hier statt; keine Komponente schreibt eine Farbe
+// selbst (Abnahmepunkt 6 von C2).
 //
 // Eingebunden wird die Datei ueber `@use '@/styles/globalVars';` – sie enthaelt
 // nur Deklarationen und erzeugt daher bei mehrfacher Einbindung keine Duplikate.
 
 :root {
-  /* --- Farben (Platzhalter) --- */
-  --farbe-primaer: #0b6b3a;
-  --farbe-primaer-dunkel: #075129;
-  --farbe-primaer-kontrast: #ffffff;
+  /* --- Flaechen --- */
   --farbe-hintergrund: #ffffff;
-  --farbe-flaeche: #f4f5f4;
-  --farbe-text: #121212;
-  --farbe-text-schwach: #4a4a4a;
-  --farbe-rand: #d6d8d6;
-  /* Balken der Teilnehmeruebersicht (A10): rot unter der Mindestanzahl, sonst gruen */
-  --farbe-warnung: #b3261e;
-  --farbe-erfolg: #0b6b3a;
-  --farbe-hinweis: #8a5a00;
+  --farbe-flaeche: #f4f6f4; /* Karten, Listenzeilen */
+  --farbe-flaeche-kraeftig: #edefeb; /* Spur des Fortschrittsbalkens */
+
+  /* --- Text --- */
+  --farbe-text: #11150f; /* 18.45:1 auf Weiss */
+  --farbe-text-schwach: #5a6157; /* 6.40:1 auf Weiss, 5.89:1 auf --farbe-flaeche */
+  --farbe-primaer-kontrast: #ffffff; /* Name aus C0 beibehalten */
+
+  /* --- Primaeraktion --- */
+  --farbe-primaer: #1b7a33; /* Weiss darauf 5.41:1 */
+  --farbe-primaer-dunkel: #145c26; /* gedrueckter Zustand, Weiss darauf 8.11:1 */
+
+  /* --- Bedeutungen ---
+     Die Aussage darf nie allein an der Farbe haengen (DESIGN.md); diese Werte
+     begleiten immer einen Text oder ein Symbol. */
+  --farbe-fehler: #a6231c; /* 7.30:1 auf Weiss, 6.65:1 auf der Fehlerflaeche */
+  --farbe-erfolg: #1b7a33; /* bewusst derselbe Wert wie --farbe-primaer */
+  --farbe-hinweis: #8a5a00; /* 5.93:1 auf Weiss, 5.51:1 auf der Hinweisflaeche */
+  --farbe-fehler-flaeche: #fdf2f1;
+  --farbe-hinweis-flaeche: #fdf6e8;
+
+  /* --- Raender: zwei Rollen, nicht eine ---
+     WCAG 1.4.11 verlangt 3:1 fuer alles, was ein Bedienelement ueberhaupt
+     erkennbar macht. Eine Trennlinie zwischen zwei Listenzeilen traegt diese
+     Information nicht – sie ordnet nur. Ein einziges Token zwaenge zur Wahl
+     zwischen einem zu schwachen Rand an Schaltflaechen und einem zu harten
+     Gitter in Listen. */
+  --farbe-rand: #d8ddd6; /* dekorativ: Trennlinien, Kartenkanten (1.38:1) */
+  --farbe-rand-bedienbar: #767b72; /* Schaltflaechen, Felder, Auswahllisten (4.33:1) */
+
+  /* --- Fokus ---
+     Eigener Ton, nicht --farbe-primaer: Der Ring soll nicht mit Erfolg oder
+     Primaeraktion verwechselbar sein (Regel in _reset.scss). */
+  --farbe-fokus: #14477f; /* 9.39:1 auf Weiss, 8.64:1 auf --farbe-flaeche */
 
   /* --- Typografie ---
      Gross genug fuer die Nutzung draussen bei Sonnenlicht (DESIGN.md). */
   --schrift-familie: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --schrift-klein: 1rem;
+  --schrift-klein: 1rem; /* Fusszeilen, Zeitangaben – nie fuer Aussagen */
   --schrift-basis: 1.125rem;
   --schrift-gross: 1.5rem;
   --schrift-titel: 2rem;
+  --schrift-zahl: 2.5rem; /* Teilnehmerzahl, Countdown, Bilanz */
   --zeilenhoehe: 1.45;
+  --gewicht-normal: 400;
+  /* Kein Schmuck: das Mittel, eine Aussage **ohne Farbe** hervorzuheben –
+     Vorgabe aus DESIGN.md, Bedienbarkeit nicht allein ueber Farbe zu vermitteln. */
+  --gewicht-halbfett: 600;
 
   /* --- Abstaende --- */
   --abstand-xs: 0.25rem;
@@ -38,6 +73,11 @@
   --abstand-m: 1rem;
   --abstand-l: 1.5rem;
   --abstand-xl: 2rem;
+
+  /* --- Masse --- */
+  --breite-inhalt: 48rem; /* Inhaltsspalte auf Tablet und Desktop (nachrangig, A2) */
+  --breite-text: 34rem; /* Zeilenlaenge fuer Fliesstext, damit Hinweise nicht ausufern */
+  --aktionsleiste-hoehe: 4.5rem; /* Hoehe des unteren Aktionsbereichs */
 
   /* --- Formen --- */
   --radius-s: 0.25rem;

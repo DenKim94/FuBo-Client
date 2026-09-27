@@ -98,7 +98,7 @@ Begründung steht in Abschnitt 5.1.
 |---|---|---|---|
 | C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **abgeschlossen**: umgesetzt 25.09.2026, Abnahme auf dem Entwicklungsrechner erfolgreich, committet als `e6f8bad`, nachgeprüft und korrigiert am 26.09.2026 (Abschnitt 6.1) |
 | C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **abgeschlossen**: umgesetzt 26.09.2026 nach `harness/tmp/C1_UMSETZUNG.md`, verifiziert (Abschnitt 6.2) |
-| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | offen – Anleitung: `harness/tmp/C2_UMSETZUNG.md` (26.09.2026) |
+| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | **in Arbeit**: Schritte 1 bis 5 umgesetzt am 27.09.2026 (Abschnitt 6.5); offen sind 6 bis 13 – Anleitung: `harness/tmp/C2_UMSETZUNG.md` |
 | C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | offen |
 | C4 | Admin-Zugang: Login (zwei Pflichtfelder, zeichengenau), dreistufiger Passwort-Reset, Passwortwechsel | 8 | offen |
 | C5 | Termin & Teilnahme: User-Dashboard, Zu-/Absage, Teilnehmerliste mit Balken und Warteschlange, Bilanz | 14 | offen |
@@ -341,17 +341,69 @@ Gegenteil, und `/anmelden` löst bis C3 keinen Aufruf aus. Der Kommentar ist ent
 aufgelöst wird der Fall mit der PIN-Prüfung in C3 (oder früher durch einen eigenen Erreichbarkeitsruf,
 der dafür aber einen Endpunkt und eine Entscheidung gegen „Offline-Fähigkeit ist kein Ziel" bräuchte).
 
+### 6.5 C2, Schritte 1 bis 5 (27.09.2026)
+
+Umgesetzt sind Befundprüfung, Vorbereitung, Farbwelt, Typografie/Fokus und der Aktionsbereich.
+Die Basis-Komponenten (Schritt 7), die Ikonen (Schritt 6) und die Nacharbeiten (Schritt 8) stehen aus.
+
+- **Befund nachgerechnet, nicht übernommen.** Alle Kontrastwerte aus Abschnitt 3.2 der Anleitung
+  reproduzieren exakt; `public/icons/` enthält 29 SVG-Dateien, **keine** mit `currentColor`, mit
+  `#BB271A` (5×), `#DA954B` und `#48752C` neben den Tokens. **Befund B2 war ungenau:** Eine
+  `:focus-visible`-Regel existierte bereits in `_reset.scss` und erreichte mit `--farbe-primaer`
+  6.61:1 – die Anwendung war also nicht ohne sichtbaren Fokus. Gefehlt haben ein eigenes Fokus-Token
+  und die Gegenregel `:focus:not(:focus-visible)`.
+- **Tokens** in `src/styles/_globalVars.scss` ersetzt: Flächen, Text, Primäraktion, Bedeutungen samt
+  zwei Hintergrundflächen, **zwei Randrollen**, Fokusfarbe, `--schrift-zahl`, `--gewicht-normal`,
+  `--gewicht-halbfett`, `--breite-inhalt`, `--breite-text`, `--aktionsleiste-hoehe`. Jeder Wert trägt
+  sein gemessenes Verhältnis als Kommentar.
+- **`--farbe-warnung` heißt jetzt `--farbe-fehler`.** Der alte Name beschrieb zwei Dinge zugleich
+  (roter Fortschrittsbalken und Fehlermeldung). Einziger Verbraucher war `OfflineHinweis.module.scss`;
+  nachgezogen. CSS-Variablen scheitern lautlos, deshalb gehören Umbenennung und Fundstellen in
+  denselben Schritt.
+- **Der bedienbare Rand** steht jetzt an `.zurueck` in `AppLayout.module.scss` – der einzigen Stelle,
+  die ihn braucht. Trennlinie unter dem Kopf, Offline-Streifen und Aktualisierungshinweis bleiben
+  dekorativ (so auch Abschnitt 8.3 der Anleitung; Abschnitt 3.4 nennt dort abweichend drei Stellen –
+  8.3 ist die genauere Angabe und gilt).
+- **Fokusregel** in `_reset.scss` statt in `global.scss` (Abweichung von Abschnitt 4.3): Die Regel
+  stand dort schon, und `_reset.scss` führt auch den `prefers-reduced-motion`-Block. Eine zweite
+  Fassung in `global.scss` wären zwei Wahrheiten.
+- **Gefundener Fehler in der Anleitung:** `:focus-visible { border-radius: inherit }` rundet nicht den
+  Umriss, sondern setzt den Radius des Elements auf den des Elternteils. In Chromium nachgemessen:
+  Die Zurück-Schaltfläche fiel im Fokus von 8 px auf 0 px und wurde eckig. Die Zeile ist entfernt;
+  den Umriss rundet der Browser ohnehin am Radius des Elements.
+- **`src/components/Aktionsleiste/`** neu: klebt am unteren Rand, verbraucht `--sicher-unten` und
+  liegt damit über dem Home-Indicator. `sticky` statt `fixed`, weil eine feste Leiste auf kurzen
+  Ansichten den letzten Listeneintrag überdeckt und auf iOS beim Einblenden der Tastatur springt.
+  Dazu ein Komponententest (36 Unit-Tests, vorher 35): Die Leiste hat bis C3 keine Ansicht, die sie
+  einbindet, und der Test hält die `data-testid` fest, an der die E2E-Prüfung hängt.
+- **Erster Verbraucher von `--breite-text`** ist der Hinweistext im `Platzhalter`.
+
+**Verifiziert am 27.09.2026:** `npm run lint`, `npm run typecheck` über vier Teilprojekte,
+36 Unit-Tests, vollständiger Bau (weiterhin **sechs** Precache-Einträge) sowie eine Messung an der
+**gebauten** Fassung in Chromium bei 360 px Breite: Tokens greifen (`--farbe-rand-bedienbar` am
+Rand der Schaltfläche, `--breite-text` = 544 px am Hinweistext), Tap-Ziel 97×44 px, kein waagerechtes
+Scrollen, und nach einem Tabulator ein 3 px breiter Ring in `#14477f` bei erhaltenem Eckradius.
+
+**Nicht geprüft:** `npm run test:e2e`. Der Chromium-Download für Playwright ist in dieser Umgebung
+durch die Netzrichtlinie gesperrt; die Messung oben lief deshalb gegen einen separat gestarteten
+Chromium. Die E2E-Suite gehört auf den Entwicklungsrechner.
+
+**Offen aus Schritt 5 für Schritt 9:** Die E2E-Prüfung „Die Aktionsleiste verbraucht `--sicher-unten`"
+hat noch kein Ziel – die Leiste wird von keiner Ansicht eingebunden, die erste kommt in C3. Entweder
+zieht der Test nach C3 um, oder Schritt 9 bindet die Leiste versuchsweise in den `Platzhalter` ein.
+
 ## 7. Nächste Schritte
 
 1. **Handprüfung zu C1 gegen eine laufende Serverinstanz** (Prüfpunkte 9 und 11 aus
    `harness/tmp/C1_UMSETZUNG.md`): `npm run dev` gegen den Server, im Netzwerkfenster prüfen, dass
    jeder Aufruf das Sitzungscookie trägt; anschliessend die Sitzung serverseitig beenden und eine
    Aktion auslösen – erwartet wird die Umleitung auf `/anmelden` ohne Neuladen der Seite.
-2. **C2 umsetzen** nach `harness/tmp/C2_UMSETZUNG.md`: Tokens, Raster, Button, Dropdown, Balken,
-   Info-Icon, Dialog sowie Lade-, Leer- und Fehlerzustand. Letzterer setzt unmittelbar auf `ApiFehler`
-   aus C1 auf. Die Farbwerte in `_globalVars.scss` sind bis dahin Platzhalter; die Kontrastprüfung
-   nach WCAG 2.1 AA gehört dorthin. Ebenfalls in C2: die Zielangabe für die Zurück-Schaltfläche
-   (Abschnitt 6.3) und die endgültige Gestaltung des Offline-Hinweises.
+2. **C2 fortsetzen** ab Schritt 6 von `harness/tmp/C2_UMSETZUNG.md`: Ikonen als CSS-Maske (Schritt 6),
+   die Basis-Komponenten Schaltfläche, Feld, Auswahlliste, Fortschrittsbalken, Erklärung und Dialog
+   samt Lade-, Leer- und Fehlerzustand (Schritt 7), die Nacharbeiten aus C0 und C1 – Zielangabe für die
+   Zurück-Schaltfläche und endgültige Gestaltung des Offline-Hinweises (Schritt 8) – sowie Tests,
+   Abnahme und Nachdokumentation (Schritte 9 bis 11). Die Farbwelt steht seit dem 27.09.2026
+   (Abschnitt 6.5) und ist nicht mehr Platzhalter.
 3. **Vor jedem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts
    nach `main`.
 4. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
