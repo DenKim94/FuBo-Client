@@ -101,4 +101,18 @@ test.describe('Rahmen und Navigation', () => {
     // abstand-s (8 px) plus Safe Area – die Primaeraktion liegt ueber dem Home-Indicator.
     await expect(page.getByTestId('aktionsleiste')).toHaveCSS('padding-bottom', '42px')
   })
+
+  test('stellt die PIN-Kaestchen nebeneinander', async ({ page }) => {
+    await page.goto('/pin/pruefen')
+    const kaestchen = page.getByTestId('pin-kasten')
+    await expect(kaestchen).toHaveCount(4)
+    const kaesten = await kaestchen.evaluateAll((elemente) =>
+      elemente.map((e) => e.getBoundingClientRect()).map((r) => ({ x: r.x, y: r.y })),
+    )
+    // Safari (WebKit) stellte die Kaestchen bei `fit-content` an einer
+    // umbrechenden Flex-Zeile untereinander (03.10.2026). Alle vier muessen auf
+    // einer Hoehe liegen, von links nach rechts.
+    expect(new Set(kaesten.map((k) => Math.round(k.y))).size).toBe(1)
+    for (let i = 1; i < kaesten.length; i++) expect(kaesten[i].x).toBeGreaterThan(kaesten[i - 1].x)
+  })
 })

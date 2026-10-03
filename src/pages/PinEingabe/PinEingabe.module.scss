@@ -46,23 +46,25 @@ $kasten-hoehe: 4rem;
 .felder {
   position: relative;
   inline-size: fit-content;
-  max-inline-size: min(100%, 20rem);
+  max-inline-size: 100%;
 }
 
+// Raster mit fester Spaltenzahl statt umbrechender Flex-Zeile. Grund: Safari
+// (WebKit) berechnet `fit-content` eines umbrechenden Flex-Containers aus der
+// Mindestbreite – also aus einem einzigen Kaestchen – und stellte die Kaestchen
+// untereinander. Die Breite eines Rasters mit festen Spalten ist in allen
+// Engines eindeutig. Die Spaltenzahl kommt aus `PIN_LAENGE` in der Komponente.
 .kaestchen {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(var(--kaestchen-anzahl, 4), $kasten-breite);
   gap: var(--abstand-s);
 }
 
 .kasten {
   display: grid;
   place-items: center;
-  // Feste Breite statt schrumpfbarer Basis: Die Breite des Feldes ergibt sich
-  // aus den Kaestchen (`fit-content`), und leere Kaestchen haben keinen Inhalt,
-  // aus dem sich eine Breite ableiten liesse. Mehr als fuenf brechen bei 360 px um.
-  flex: 0 0 $kasten-breite;
+  // Die Breite liefert die Rasterspalte; leere Kaestchen haben keinen Inhalt,
+  // aus dem sich eine Breite ableiten liesse.
   block-size: $kasten-hoehe;
   // Bedienbarer Rand: Die Kaestchen sind die sichtbare Grenze des Feldes (1.4.11).
   border: 2px solid var(--farbe-rand-bedienbar);

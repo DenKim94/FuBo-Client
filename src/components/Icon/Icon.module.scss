@@ -1,0 +1,12 @@
+@use '@/styles/globalVars';
+
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  inline-size: var(--icon-groesse, 1.5rem);
+  block-size: var(--icon-groesse, 1.5rem);
+  background-color: currentColor;
+  // Beide Schreibweisen: Safari braucht die praefixierte Fassung bis 15.4.
+  -webkit-mask: var(--icon-quelle) no-repeat center / contain;
+  mask: var(--icon-quelle) no-repeat center / contain;
+}

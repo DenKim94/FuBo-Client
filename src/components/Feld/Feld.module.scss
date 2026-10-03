@@ -1,0 +1,42 @@
+@use '@/styles/globalVars';
+
+// Lokale Hoehe der Eingabe: deutlich ueber dem Mindestmass, weil das Feld
+// draussen und einhaendig getroffen werden muss (A2).
+$eingabe-hoehe: 3.5rem;
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  inline-size: 100%;
+}
+
+.beschriftung {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.eingabe {
+  min-block-size: $eingabe-hoehe;
+  padding-inline: var(--abstand-m);
+  // Bedienbarer Rand: Er ist die einzige Grenze des Feldes (WCAG 1.4.11).
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  // Mindestens 16 px: Darunter vergroessert iOS die Seite beim Fokussieren.
+  font-size: var(--schrift-basis);
+}
+
+.ungueltig {
+  border: 2px solid var(--farbe-fehler);
+}
+
+.hinweis {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+.fehler {
+  color: var(--farbe-fehler);
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+}

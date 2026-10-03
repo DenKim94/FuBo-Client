@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type SubmitEvent } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties, type SubmitEvent } from 'react'
 import { Link } from 'react-router'
 import { ApiFehler, istNetzfehler } from '@/api/common/fehler'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
@@ -107,8 +107,8 @@ export default function PinEingabe() {
       <div className={style.bereich}>
         <img
           className={style.logo}
-          src="/icons/pwa/app-icon-512.png"
-          alt=""
+          src="/icons/pwa/app-icon-384.png"
+          alt="app-icon"
           width={120}
           height={120}
           data-testid="pin-logo"
@@ -119,7 +119,11 @@ export default function PinEingabe() {
         </label>
 
         <div className={felderKlassen}>
-          <div className={style.kaestchen} aria-hidden="true">
+          <div
+            className={style.kaestchen}
+            style={{ '--kaestchen-anzahl': PIN_LAENGE } as CSSProperties}
+            aria-hidden="true"
+          >
             {Array.from({ length: PIN_LAENGE }, (_, i) => (
               <span
                 key={i}

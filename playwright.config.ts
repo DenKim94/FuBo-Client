@@ -9,7 +9,8 @@ import { defineConfig, devices } from '@playwright/test'
  * **Zu den Projekten.** Ein Geraetedeskriptor emuliert Viewport, User-Agent, Touch
  * und Pixeldichte – nicht das Plattformverhalten von iOS. Die iPhone- und
  * iPad-Deskriptoren tragen `defaultBrowserType: 'webkit'`, Playwright startet
- * dafuer also seinen WebKit-Build (nicht Safari). Vor dem ersten Lauf:
+ * dafuer also seinen WebKit-Build (nicht Safari). In CI laufen alle sieben
+ * Projekte, Chromium und WebKit (seit 03.10.2026). Lokal vor dem ersten Lauf:
  *
  *   npm run e2e:browser
  *
@@ -29,6 +30,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: istCi,
   retries: istCi ? 1 : 0,
+  // In CI: Anmerkungen direkt am Commit (`github`) und ein HTML-Bericht, den der
+  // Workflow bei einem Fehlschlag als Artefakt hochlaedt. Lokal die Liste.
+  reporter: istCi ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',

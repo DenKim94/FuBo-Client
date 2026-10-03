@@ -11,6 +11,15 @@ export const beispielSitzung: components['schemas']['SitzungInfo'] = {
 }
 
 /**
+ * Beispiel-Namensliste. Neutrale Platzhalter, ein belegter Name (A6).
+ */
+export const beispielNamensliste: components['schemas']['NameOption'][] = [
+  { id: 11, name: 'Beispielspieler 01', belegt: false },
+  { id: 12, name: 'Beispielspieler 02', belegt: true },
+  { id: 13, name: 'Beispielspieler 03', belegt: false },
+]
+
+/**
  * Baut eine Fehlerantwort im Vertragsformat.
  *
  * `type` ist im Generat Pflichtfeld, weil der Kontrakt dafür einen Vorgabewert
@@ -55,6 +64,10 @@ export const handlers = [
 
   // 204 ohne Rumpf – der Fall, den 23 der 44 Operationen liefern.
   http.post('*/auth/pin/pruefen', () => new HttpResponse(null, { status: 204 })),
+
+  http.get('*/auth/users/lesen', () => HttpResponse.json(beispielNamensliste)),
+  http.post('*/auth/user/waehlen', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/auth/gast/anmelden', () => new HttpResponse(null, { status: 204 })),
 
   http.post('*/termine/rueckmeldung', () =>
     problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist geschlossen.'),

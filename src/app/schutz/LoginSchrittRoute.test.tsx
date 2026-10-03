@@ -90,4 +90,31 @@ describe('LoginSchrittRoute', () => {
     expect(router.state.location.pathname).toBe('/anmelden')
     expect(router.state.location.state).toEqual({ von: '/teams/7' })
   })
+
+  test('fuehrt nach abgeschlossener Anmeldung zur urspruenglich angesteuerten Ansicht', () => {
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <p>Dashboard</p> },
+        { path: '/teams/7', element: <p>Teams</p> },
+        { element: <LoginSchrittRoute schritt="name" />, children: [{ path: '/anmelden', element: null }] },
+      ],
+      { initialEntries: [{ pathname: '/anmelden', state: { von: '/teams/7' } }] },
+    )
+    render(<RouterProvider router={router} />)
+    expect(screen.getByText('Teams')).toBeInTheDocument()
+  })
+
+  test('folgt keinem Ziel ausserhalb der Anwendung', () => {
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <p>Dashboard</p> },
+        { element: <LoginSchrittRoute schritt="name" />, children: [{ path: '/anmelden', element: null }] },
+      ],
+      { initialEntries: [{ pathname: '/anmelden', state: { von: '//fremd.example/x' } }] },
+    )
+    render(<RouterProvider router={router} />)
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+  })
 })

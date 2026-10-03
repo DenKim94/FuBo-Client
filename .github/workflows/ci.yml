@@ -23,16 +23,37 @@ jobs:
       - run: npm run build
       - run: npm test
 
-  # End-to-End-Tests laufen bewusst noch nicht in CI: Sie brauchen entweder einen
-  # erreichbaren Server oder die Mock-Schicht. Beides kommt im naechsten Paket.
-  #
-  # Wenn sie dazukommen, gehoert vor `npx playwright test` dieser Schritt dorthin.
-  # Die iPhone- und iPad-Projekte laufen im WebKit-Build, der unter Linux
-  # zusaetzliche Systembibliotheken braucht:
-  #
-  #   - run: npx playwright install --with-deps chromium webkit
-  #
-  # Die sieben Geraeteprojekte vervielfachen die Laufzeit; fuer CI genuegt zunaechst
-  # eine Auswahl, etwa:
-  #
-  #   - run: npx playwright test --project=android-schmal --project=ios-telefon
+  e2e:
+    name: End-to-End (Chromium und WebKit)
+    # Erst wenn Lint, Typen und Unit-Tests stehen: Die E2E-Suite ist der teuerste
+    # Schritt und sagt bei einem Typfehler nichts Neues.
+    needs: pruefen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - run: npm ci
+
+      # Beide Engines: Chromium fuer die Android- und Desktop-Projekte samt
+      # Service Worker, WebKit fuer die iPhone- und iPad-Projekte. Der WebKit-Build
+      # braucht unter Linux zusaetzliche Systembibliotheken (`--with-deps`).
+      # Anlass fuer WebKit in CI: Am 03.10.2026 standen die PIN-Kaestchen nur in
+      # Safari untereinander – ein Fehler, den reine Chromium-Laeufe nicht sehen.
+      - run: npx playwright install --with-deps chromium webkit
+
+      # Alle sieben Geraeteprojekte. Ohne Server: Die Layout-Tests brauchen keine
+      # API, die Namensauswahl bildet sie im Browser nach (`page.route`).
+      - run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

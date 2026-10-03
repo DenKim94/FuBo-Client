@@ -28,7 +28,7 @@ export default defineConfig({
       injectRegister: false,
       // Nur was die Offline-Hinweisseite braucht.
       includeAssets: ['icons/no_connection_icon_red.svg'],
-      // Die Manifest-Ikonen liest das Betriebssystem beim Installieren aus dem
+      // Die Manifest-Icons liest das Betriebssystem beim Installieren aus dem
       // Manifest; die laufende Anwendung braucht sie nicht. Im Precache waeren
       // sie rund 600 kB, die bei jeder Aktualisierung erneut geprueft werden.
       includeManifestIcons: false,
@@ -50,7 +50,7 @@ export default defineConfig({
         // Muss mit <meta name="theme-color"> in index.html uebereinstimmen.
         theme_color: '#0b6b3a',
         icons: [
-          // Ohne `purpose` gilt `any`. Chrome zaehlt eine rein maskierbare Ikone
+          // Ohne `purpose` gilt `any`. Chrome zaehlt ein rein maskierbares Icon
           // fuer die Installierbarkeit nicht mit; fehlt die 512er mit `any`,
           // feuert `beforeinstallprompt` stillschweigend nicht (A25a).
           { src: 'icons/pwa/app-icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -65,7 +65,7 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        // Nur die App-Shell. Ikonen und Bilder bleiben draussen, sonst waechst
+        // Nur die App-Shell. Icons und Bilder bleiben draussen, sonst waechst
         // der Precache um rund ein Megabyte, das bei jeder Aktualisierung
         // erneut geprueft wird.
         globPatterns: ['**/*.{js,css,html,woff2}'],

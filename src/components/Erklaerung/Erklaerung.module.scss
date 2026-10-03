@@ -1,0 +1,27 @@
+@use '@/styles/globalVars';
+
+.erklaerung {
+  display: contents; // Schalter und Text ordnen sich in das Raster der Ansicht ein
+}
+
+.schalter {
+  display: inline-grid;
+  place-items: center;
+  // Das Symbol ist 24 px gross, die Trefferflaeche nicht (WCAG 2.5.5 / DESIGN.md).
+  min-inline-size: var(--tapziel-min);
+  min-block-size: var(--tapziel-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--farbe-link);
+}
+
+.text {
+  flex-basis: 100%;
+  padding: var(--abstand-s) var(--abstand-m);
+  border-inline-start: 3px solid var(--farbe-link);
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text);
+  font-size: var(--schrift-klein);
+}

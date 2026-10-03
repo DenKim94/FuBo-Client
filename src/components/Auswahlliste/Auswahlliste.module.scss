@@ -1,0 +1,155 @@
+@use '@/styles/globalVars';
+
+// Lokale Masse: gleiche Hoehe wie das Eingabefeld, Eintraege deutlich ueber
+// dem Mindestmass fuer Tap-Ziele (Prototyp: 48 px je Zeile).
+$ausloeser-hoehe: 3.5rem;
+$option-hoehe: 3rem;
+$liste-hoehe-max: 18rem;
+$pfeil-breite: 0.75rem;
+
+.auswahl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  inline-size: 100%;
+}
+
+.beschriftung {
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Bezugsrahmen fuer die aufgeklappte Liste.
+.rahmen {
+  position: relative;
+}
+
+// --- Ausloeser ----------------------------------------------------------------
+
+.ausloeser {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  inline-size: 100%;
+  min-block-size: $ausloeser-hoehe;
+  padding-inline: var(--abstand-m);
+  // Bedienbarer Rand wie beim Feld (WCAG 1.4.11).
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  font-size: var(--schrift-basis);
+  text-align: start;
+}
+
+.offen {
+  border: 2px solid var(--farbe-primaer);
+  // Ausgleich fuer den breiteren Rand, damit der Text nicht springt.
+  padding-inline: calc(var(--abstand-m) - 1px);
+}
+
+.ausloeser:disabled {
+  background: var(--farbe-flaeche-kraeftig);
+  color: var(--farbe-text-schwach);
+  cursor: not-allowed;
+}
+
+.wert,
+.platzhalter {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platzhalter {
+  color: var(--farbe-text-schwach);
+}
+
+.pfeil {
+  flex: 0 0 auto;
+  inline-size: $pfeil-breite;
+  block-size: calc($pfeil-breite / 2);
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transition: rotate 0.15s ease;
+}
+
+.offen .pfeil {
+  rotate: 180deg;
+}
+
+// --- Aufgeklappte Liste -------------------------------------------------------
+
+.liste {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--abstand-xs));
+  // Ueber der klebenden Aktionsleiste und dem Kopf.
+  z-index: var(--ebene-dialog);
+
+  max-block-size: $liste-hoehe-max;
+  overflow-y: auto;
+  overscroll-behavior: contain; // Wischen in der Liste scrollt nicht die Seite
+  padding-block: var(--abstand-xs);
+
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--farbe-text) 18%, transparent);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  min-block-size: $option-hoehe;
+  padding: var(--abstand-xs) var(--abstand-m);
+  color: var(--farbe-text);
+  cursor: pointer;
+}
+
+.option + .option {
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.optionTexte {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.optionText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zusatz {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+// Hervorgehoben per Tastatur oder Zeiger. Zusaetzlich zur Flaeche ein Balken am
+// Rand, damit die Markierung nicht allein an einem hellen Farbton haengt.
+.aktiv {
+  background: color-mix(in srgb, var(--farbe-primaer) 10%, var(--farbe-hintergrund));
+  box-shadow: inset 4px 0 0 var(--farbe-primaer);
+}
+
+// Gewaehlt: Haken und halbfette Schrift, nicht nur Farbe.
+.gewaehlt {
+  color: var(--farbe-primaer-dunkel);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.gesperrt {
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text-schwach);
+  cursor: not-allowed;
+}
+
+.hinweis {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}

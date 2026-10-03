@@ -1,9 +1,15 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, test, vi } from 'vitest'
-import { pinPruefen, sitzungLesen } from '@/api/auth/auth'
+import {
+  alsGastAnmelden,
+  nameWaehlen,
+  namenslisteLesen,
+  pinPruefen,
+  sitzungLesen,
+} from '@/api/auth/auth'
 import { ApiFehler } from '@/api/common/fehler'
 import { sitzungsendeBehandeln } from '@/app/queryClient'
-import { problem } from '@/test/mocks/handlers'
+import { beispielNamensliste, problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'
 
 /** Fängt den Fehler eines Aufrufs ab, damit ein Test seine Felder prüfen kann. */
@@ -134,5 +140,99 @@ describe('sitzungLesen', () => {
     await sitzungLesen(true)
 
     expect(koepfe).toEqual([null, 'true'])
+  })
+})
+
+describe('namenslisteLesen', () => {
+  test('liefert die Liste des Servers unveraendert', async () => {
+    await expect(namenslisteLesen()).resolves.toEqual(beispielNamensliste)
+  })
+
+  test('setzt den Kopf fuer Hintergrundabrufe nur auf Verlangen', async () => {
+    const koepfe: (string | null)[] = []
+    mockServer.use(
+      http.get('*/auth/users/lesen', ({ request }) => {
+        koepfe.push(request.headers.get('X-FuBo-Kein-Refresh'))
+        return HttpResponse.json([])
+      }),
+    )
+
+    await namenslisteLesen()
+    await namenslisteLesen(true)
+
+    // Das Polling darf das gleitende Sitzungsfenster nicht verlaengern.
+    expect(koepfe).toEqual([null, 'true'])
+  })
+})
+
+describe('nameWaehlen', () => {
+  test('sendet die Id, nicht den Namen', async () => {
+    let rumpf: unknown
+    mockServer.use(
+      http.post('*/auth/user/waehlen', async ({ request }) => {
+        rumpf = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await nameWaehlen(13)
+
+    expect(rumpf).toEqual({ spielerId: 13 })
+  })
+
+  test('wirft bei belegtem Namen einen ApiFehler mit Code', async () => {
+    mockServer.use(
+      http.post('*/auth/user/waehlen', () =>
+        problem(409, 'NAME_BELEGT', 'Dieser Name ist bereits angemeldet.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(nameWaehlen(12))
+
+    expect(fehler.code).toBe('NAME_BELEGT')
+    expect(fehler.message).toBe('Dieser Name ist bereits angemeldet.')
+  })
+})
+
+describe('alsGastAnmelden', () => {
+  test('sendet Name und Stufe ohne den Zusatz „(Gast)"', async () => {
+    let rumpf: unknown
+    mockServer.use(
+      http.post('*/auth/gast/anmelden', async ({ request }) => {
+        rumpf = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await alsGastAnmelden('Testgast', 'STARK')
+
+    expect(rumpf).toEqual({ gastName: 'Testgast', stufe: 'STARK' })
+  })
+
+  test('sendet ohne Stufe ausdruecklich null', async () => {
+    let rumpf: unknown
+    mockServer.use(
+      http.post('*/auth/gast/anmelden', async ({ request }) => {
+        rumpf = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await alsGastAnmelden('Testgast')
+
+    // Laut Kontrakt gilt dann serverseitig MITTEL.
+    expect(rumpf).toEqual({ gastName: 'Testgast', stufe: null })
+  })
+
+  test('wirft bei vollen Gastplaetzen einen ApiFehler mit Code', async () => {
+    mockServer.use(
+      http.post('*/auth/gast/anmelden', () =>
+        problem(409, 'KEIN_GAST_SLOT_FREI', 'Es sind bereits alle Gastplätze belegt.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(alsGastAnmelden('Testgast'))
+
+    expect(fehler.code).toBe('KEIN_GAST_SLOT_FREI')
   })
 })

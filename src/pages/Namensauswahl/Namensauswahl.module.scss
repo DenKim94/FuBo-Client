@@ -1,0 +1,151 @@
+@use '@/styles/globalVars';
+
+.namensauswahl {
+  // Nimmt die Resthoehe des Inhalts ein, damit die Aktionsleiste unten sitzt.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bereich {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-l);
+  padding-block: var(--abstand-m);
+}
+
+.kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-m);
+}
+
+.logo {
+  inline-size: 5rem;
+  block-size: 4.5rem;
+  border-radius: var(--radius-s);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+// --- Gastbereich --------------------------------------------------------------
+
+.gast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-l);
+  background: var(--farbe-flaeche);
+}
+
+// Umbrechende Zeile: Titel und Info-Schalter nebeneinander, der eingeblendete
+// Text der Erklaerung darunter ueber die volle Breite.
+.gastKopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--abstand-xs) var(--abstand-s);
+}
+
+.gastTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.stufen {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.stufenTitel {
+  margin-block-end: var(--abstand-xs);
+  padding: 0;
+  font-weight: var(--gewicht-halbfett);
+}
+
+.stufenReihe {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--abstand-s);
+}
+
+.stufe {
+  position: relative;
+  display: block;
+}
+
+// Der Radioknopf bleibt das bedienbare Element (Tastatur, Screenreader,
+// Pfeiltasten in der Gruppe), sichtbar ist nur sein Etikett.
+.stufeEingabe {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.stufeText {
+  display: grid;
+  place-items: center;
+  min-block-size: var(--tapziel-primaer);
+  padding-inline: var(--abstand-s);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  text-align: center;
+}
+
+// Gewaehlt: Rand, Flaeche **und** Schriftgewicht – nicht allein die Farbe.
+.stufeEingabe:checked + .stufeText {
+  border: 2px solid var(--farbe-primaer);
+  background: color-mix(in srgb, var(--farbe-primaer) 10%, var(--farbe-hintergrund));
+  color: var(--farbe-primaer-dunkel);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Der Fokus liegt auf dem unsichtbaren Radioknopf; der Ring gehoert an sein Etikett.
+.stufeEingabe:focus-visible + .stufeText {
+  outline: var(--fokus-rand) solid var(--farbe-fokus);
+  outline-offset: 2px;
+}
+
+.stufen:disabled .stufeText {
+  background: var(--farbe-flaeche-kraeftig);
+  color: var(--farbe-text-schwach);
+}
+
+// --- Meldungen ----------------------------------------------------------------
+
+.meldung,
+.meldungText {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--abstand-s);
+}
+
+.meldung {
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-fehler);
+  border-radius: var(--radius-m);
+  background: var(--farbe-fehler-flaeche);
+  color: var(--farbe-fehler);
+}
+
+.ladefehler {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--abstand-m);
+  color: var(--farbe-fehler);
+}

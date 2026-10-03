@@ -43,7 +43,7 @@ test.describe('PWA-Grundgeruest', () => {
     expect(manifestInhalt.short_name).toBe('GUT-KICK')
     expect(manifestInhalt.short_name.length).toBeLessThanOrEqual(12)
 
-    // Ohne eine 512er-Ikone mit `any` zaehlt Chrome die Anwendung nicht als
+    // Ohne ein 512er-Icon mit `any` zaehlt Chrome die Anwendung nicht als
     // installierbar, und `beforeinstallprompt` feuert stillschweigend nicht.
     const hat512Any = manifestInhalt.icons.some(
       (i) => i.sizes === '512x512' && (i.purpose === undefined || i.purpose === 'any'),
@@ -51,8 +51,8 @@ test.describe('PWA-Grundgeruest', () => {
     const hat512Maskable = manifestInhalt.icons.some(
       (i) => i.sizes === '512x512' && i.purpose === 'maskable',
     )
-    expect(hat512Any, '512er-Ikone mit purpose "any" fehlt').toBe(true)
-    expect(hat512Maskable, 'maskierbare 512er-Ikone fehlt').toBe(true)
+    expect(hat512Any, '512er-Icon mit purpose "any" fehlt').toBe(true)
+    expect(hat512Maskable, 'maskierbares 512er-Icon fehlt').toBe(true)
 
     const worker = await page.request.get('/sw.js')
     expect(worker.status()).toBe(200)

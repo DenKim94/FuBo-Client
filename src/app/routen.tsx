@@ -5,6 +5,7 @@ import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
+import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
 import PinEingabe from '@/pages/PinEingabe/PinEingabe'
 
 /** Login-Schritte haben kein sinnvolles „Zurück" (siehe `RoutenAngaben`). */
@@ -47,7 +48,7 @@ export const routen = createBrowserRouter([
         children: [
           {
             path: 'anmelden',
-            element: <Platzhalter titel="Namensauswahl" paket="C3" />,
+            element: <Namensauswahl />,
             handle: LOGIN_SCHRITT,
           },
         ],
