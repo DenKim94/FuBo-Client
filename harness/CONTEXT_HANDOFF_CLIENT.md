@@ -127,7 +127,7 @@ CI-Job `e2e`. Die Safari-Darstellung der PIN-Kästchen hat der Entwickler von Ha
 - Titel „MONTAGS-KICKER" bricht unter 360 px Breite um (320 px: zwei Zeilen).
 - `alt` des Logos auf der PIN-Seite: das Bild ist schmückend (Titel folgt), `alt=""` wäre korrekt.
 - `npm audit`: drei moderate Befunde in `@vitest/mocker` (nur Entwicklung, Behebung verlangt Vitest 5).
-- Die Trennlinie der Aktionsleiste ist auskommentiert (Entscheidung des Entwicklers vom 03.10.2026).
+- Die Trennlinie der Aktionsleiste ist entfernt (Entscheidung des Entwicklers vom 03.10.2026).
 
 ## 7. Nächste Schritte
 1. **Push auf `dev_client`** und den ersten CI-Lauf mit WebKit prüfen.
