@@ -48,12 +48,13 @@ function abonnieren(benachrichtigen: () => void): () => void {
  * anzuzeigen.
  */
 export function useVerbindung(): { verbunden: boolean } {
-  // Bekannte Optimismus-Luecke (Handoff 6.3): Solange kein Aufruf
-  // fehlgeschlagen ist, steht der beobachtete Zustand auf „intakt", und
-  // `navigator.onLine` meldet auch im WLAN ohne Weg ins Internet `true` – der
-  // Hook sagt dann „verbunden", ohne es zu wissen. Den Gegenbeweis liefert
-  // erst ein Aufruf, und `/anmelden` loest bis C3 keinen aus. Der dritte
-  // Parameter ist nur der Serverschnappschuss (kein SSR im Projekt).
+  // Vor dem ersten Aufruf steht der beobachtete Zustand auf „intakt", und
+  // `navigator.onLine` meldet auch im WLAN ohne Weg ins Internet `true`. Die
+  // Luecke ist seit dem 03.10.2026 auf den Bruchteil einer Sekunde begrenzt:
+  // Jede Ansicht liest beim Start ueber ihren Guard die Sitzung
+  // (`GET /auth/session/lesen`), und dessen Ergebnis – Antwort oder Netzfehler –
+  // landet ueber `aufrufen` in diesem Zustand. Der dritte Parameter ist nur der
+  // Serverschnappschuss (kein SSR im Projekt).
   const verbunden = useSyncExternalStore(abonnieren, lesen, () => true)
   return { verbunden }
 }

@@ -1,4 +1,5 @@
-import { Outlet, useLocation, useNavigate } from 'react-router'
+import { Outlet, useLocation, useMatches, useNavigate } from 'react-router'
+import type { RoutenAngaben } from '@/app/routenAngaben'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
 import AktualisierungsHinweis from '@/components/AktualisierungsHinweis/AktualisierungsHinweis'
 import OfflineHinweis from '@/components/OfflineHinweis/OfflineHinweis'
@@ -19,6 +20,8 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const istStartseite = pathname === '/'
+  // Eine Route kann die Schaltflaeche ueber ihr `handle` abbestellen (Login-Schritte).
+  const ohneZurueck = useMatches().some((treffer) => (treffer.handle as RoutenAngaben | undefined)?.ohneZurueck)
 
   return (
     <div className={style.rahmen} data-testid="app-layout">
@@ -26,7 +29,7 @@ export default function AppLayout() {
       <SitzungsWaechter />
 
       <header className={style.kopf}>
-        {!istStartseite && (
+        {!istStartseite && !ohneZurueck && (
           <button
             type="button"
             className={style.zurueck}

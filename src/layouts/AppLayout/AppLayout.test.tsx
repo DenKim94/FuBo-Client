@@ -13,6 +13,7 @@ function layoutRendern(startpfad: string) {
         children: [
           { index: true, element: <p>Start</p> },
           { path: 'anmelden', element: <p>Anmeldung</p> },
+          { path: 'pin/pruefen', element: <p>PIN-Eingabe</p>, handle: { ohneZurueck: true } },
         ],
       },
     ],
@@ -31,5 +32,12 @@ describe('AppLayout', () => {
   test('zeigt auf einer Unterseite eine Zurueck-Schaltflaeche', () => {
     layoutRendern('/anmelden')
     expect(screen.getByTestId('layout-zurueck')).toBeInTheDocument()
+  })
+
+  test('blendet die Zurueck-Schaltflaeche aus, wenn die Route sie abbestellt', () => {
+    // Login-Schritte: Hinter der PIN-Eingabe gibt es kein sinnvolles Zurueck.
+    layoutRendern('/pin/pruefen')
+    expect(screen.getByText('PIN-Eingabe')).toBeInTheDocument()
+    expect(screen.queryByTestId('layout-zurueck')).not.toBeInTheDocument()
   })
 })

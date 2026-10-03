@@ -24,6 +24,32 @@ export function sitzungsendeBehandeln(rueckruf: () => void) {
 }
 
 /**
+ * Erkennt, ob ein Fehler das Ende der Sitzung meldet.
+ *
+ * **Nicht jeder `401` ist ein Sitzungsende.** Der Kontrakt antwortet auch auf
+ * falsche Zugangsdaten mit `401`: `PIN_FALSCH`, `ADMIN_PASSWORT_FALSCH` und
+ * `RESET_PIN_FALSCH`. `ADMIN_PASSWORT_FALSCH` kommt dabei auch beim
+ * Passwortwechsel vor, also mitten in einer gültigen Sitzung. Würden diese Fälle
+ * als Sitzungsende behandelt, löste eine vertippte PIN die Abmeldung aus, und
+ * ein falsches Admin-Passwort leitete von `/admin/anmelden` auf `/anmelden` um.
+ *
+ * Verzweigt wird deshalb über `code`, nicht über den Status allein:
+ * `SESSION_UNGUELTIG` ist der Code des Vertrags für eine fehlende oder
+ * abgelaufene Sitzung. `UNBEKANNT` zählt mit, weil ein `401` ohne lesbaren Rumpf
+ * nicht vom Server selbst stammt (etwa von einem vorgeschalteten Proxy) und
+ * die Sitzung dann ebenso wenig belegt ist.
+ *
+ * @param fehler Der Fehler einer Abfrage oder Mutation.
+ */
+function istSitzungsende(fehler: unknown): boolean {
+  return (
+    fehler instanceof ApiFehler &&
+    fehler.status === 401 &&
+    (fehler.code === 'SESSION_UNGUELTIG' || fehler.code === 'UNBEKANNT')
+  )
+}
+
+/**
  * Behandelt den Sitzungsablauf an genau einer Stelle (A14).
  *
  * `401` steht im Kontrakt an allen 44 Operationen. Ohne zentrale Behandlung
@@ -35,7 +61,7 @@ export function sitzungsendeBehandeln(rueckruf: () => void) {
  * kein theoretischer Fall.
  */
 function pruefeSitzung(fehler: unknown) {
-  if (fehler instanceof ApiFehler && fehler.status === 401) {
+  if (istSitzungsende(fehler)) {
     queryClient.clear()
     beiSitzungsende()
   }

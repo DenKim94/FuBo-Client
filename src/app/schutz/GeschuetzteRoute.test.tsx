@@ -22,7 +22,8 @@ function zustand(teil: Partial<SitzungZustand> = {}): SitzungZustand {
 function startseiteOeffnen() {
   const router = createMemoryRouter(
     [
-      { path: '/anmelden', element: <p>Anmeldung</p> },
+      { path: '/pin/pruefen', element: <p>PIN-Eingabe</p> },
+      { path: '/anmelden', element: <p>Namensauswahl</p> },
       { element: <GeschuetzteRoute />, children: [{ path: '/', element: <p>Dashboard</p> }] },
     ],
     { initialEntries: ['/'] },
@@ -33,11 +34,12 @@ function startseiteOeffnen() {
 describe('GeschuetzteRoute', () => {
   beforeEach(() => sitzungMock.mockReset())
 
-  test('rendert nichts, solange der Sitzungszustand unbekannt ist', () => {
+  test('leitet nicht um, solange der Sitzungszustand unbekannt ist', () => {
     sitzungMock.mockReturnValue(zustand({ laedt: true }))
     startseiteOeffnen()
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
-    expect(screen.queryByText('Anmeldung')).not.toBeInTheDocument()
+    expect(screen.queryByText('PIN-Eingabe')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
   test('gibt die Ansicht bei abgeschlossener Anmeldung frei', () => {
@@ -46,17 +48,17 @@ describe('GeschuetzteRoute', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
 
-  test('leitet ohne Sitzung zur Anmeldung um', () => {
+  test('leitet ohne Sitzung zur PIN-Eingabe um', () => {
     sitzungMock.mockReturnValue(zustand())
     startseiteOeffnen()
-    expect(screen.getByText('Anmeldung')).toBeInTheDocument()
+    expect(screen.getByText('PIN-Eingabe')).toBeInTheDocument()
   })
 
-  test('leitet auch in der Stufe PIN_VERIFIED zur Anmeldung um', () => {
+  test('leitet in der Stufe PIN_VERIFIED zur Namensauswahl um', () => {
     // Die PIN allein genuegt nicht: Serverseitig sind in dieser Stufe nur die
     // Namensliste und die Namensauswahl erlaubt, alles andere liefert 403.
     sitzungMock.mockReturnValue(zustand({ pinGeprueft: true, angemeldet: false }))
     startseiteOeffnen()
-    expect(screen.getByText('Anmeldung')).toBeInTheDocument()
+    expect(screen.getByText('Namensauswahl')).toBeInTheDocument()
   })
 })

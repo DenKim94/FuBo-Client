@@ -1,0 +1,75 @@
+@use '@/styles/globalVars';
+
+.spinner {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--abstand-s);
+}
+
+// Lokale Variable: die Kantenlaenge, aus der sich auch die Strichstaerke ergibt.
+.klein {
+  --spinner-groesse: 1.25rem;
+}
+
+.mittel {
+  --spinner-groesse: 2rem;
+}
+
+.gross {
+  --spinner-groesse: 3rem;
+}
+
+.primaer {
+  color: var(--farbe-primaer);
+}
+
+.erben {
+  color: inherit;
+}
+
+.zentriert {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  padding-block: var(--abstand-xl);
+}
+
+.kreis {
+  flex: 0 0 auto;
+  inline-size: var(--spinner-groesse);
+  block-size: var(--spinner-groesse);
+  border-radius: 50%;
+  // Die Spur ist dieselbe Farbe, nur blass – so passt sie auf Weiss wie auf der
+  // gruenen Primaerflaeche, ohne eigenes Token je Untergrund.
+  border: calc(var(--spinner-groesse) / 8) solid color-mix(in srgb, currentColor 20%, transparent);
+  border-block-start-color: currentColor;
+  animation: drehen 0.8s linear infinite;
+}
+
+.text {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+// Karenz vor dem Erscheinen: `both` haelt die Deckkraft waehrend der
+// Verzoegerung bei 0 und danach bei 1.
+.verzoegert {
+  animation: erscheinen 0.01s linear 150ms both;
+}
+
+@keyframes drehen {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes erscheinen {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

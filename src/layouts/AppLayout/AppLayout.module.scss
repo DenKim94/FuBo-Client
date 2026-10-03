@@ -36,6 +36,11 @@
 
 .inhalt {
   flex: 1;
+  // Spalte statt Block: Eine Ansicht kann mit `flex: 1` die Resthoehe
+  // einnehmen, und ihre Aktionsleiste sitzt auch auf kurzen Ansichten unten in
+  // Daumenreichweite (A2) statt direkt unter dem Inhalt.
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: var(--breite-inhalt); // Tablet und Desktop: Zeilen bleiben lesbar (nachrangig, A2)
   margin: 0 auto;

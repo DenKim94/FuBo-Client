@@ -30,6 +30,11 @@
   --farbe-primaer: #1b7a33; /* Weiss darauf 5.41:1 */
   --farbe-primaer-dunkel: #145c26; /* gedrueckter Zustand, Weiss darauf 8.11:1 */
 
+  /* --- Verweise ---
+     Eigener Ton und nicht --farbe-fokus: Ein Link ist kein Fokuszustand, auch
+     wenn beide blau sind. Wert aus dem Prototyp (Link "Als Admin anmelden"). */
+  --farbe-link: #1a5ba8; /* 6.76:1 auf Weiss, 6.23:1 auf --farbe-flaeche */
+
   /* --- Bedeutungen ---
      Die Aussage darf nie allein an der Farbe haengen (DESIGN.md); diese Werte
      begleiten immer einen Text oder ein Symbol. */
@@ -87,6 +92,10 @@
   /* --- Bedienbarkeit ---
      Mindestmass fuer Tap-Ziele aus DESIGN.md (WCAG 2.1 AA). */
   --tapziel-min: 44px;
+  /* Primaeraktion in der Aktionsleiste: 64 px laut Prototyp ("primaer 64 px").
+     Die wichtigste Schaltflaeche einer Ansicht soll auch mit dem Daumen der
+     haltenden Hand sicher getroffen werden (A2). */
+  --tapziel-primaer: 4rem;
   --fokus-rand: 3px;
 
   /* --- Vollbildmodus (A25a) ---

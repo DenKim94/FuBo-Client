@@ -1,0 +1,175 @@
+@use '@/styles/globalVars';
+
+// Lokale Masse der Kaestchen (nur hier gebraucht, deshalb kein globales Token).
+$kasten-breite: 3.5rem;
+$kasten-hoehe: 4rem;
+
+.pinEingabe {
+  // Nimmt die Resthoehe des Inhalts ein, damit die Aktionsleiste unten sitzt.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bereich {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--abstand-m);
+  padding-block: var(--abstand-l);
+  text-align: center;
+}
+
+.logo {
+  inline-size: 8rem;
+  block-size: 8rem;
+  border-radius: var(--radius-l);
+}
+
+.titel {
+  font-size: var(--schrift-titel);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.beschriftung {
+  font-size: var(--schrift-basis);
+}
+
+// --- Kaestchen mit dem Eingabefeld darueber --------------------------------
+
+// So breit wie die Kaestchen, nicht wie die Spalte: Das Eingabefeld liegt
+// darueber, und der Fokusring soll die Kaestchen umschliessen, nicht die Zeile.
+.felder {
+  position: relative;
+  inline-size: fit-content;
+  max-inline-size: min(100%, 20rem);
+}
+
+.kaestchen {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--abstand-s);
+}
+
+.kasten {
+  display: grid;
+  place-items: center;
+  // Feste Breite statt schrumpfbarer Basis: Die Breite des Feldes ergibt sich
+  // aus den Kaestchen (`fit-content`), und leere Kaestchen haben keinen Inhalt,
+  // aus dem sich eine Breite ableiten liesse. Mehr als fuenf brechen bei 360 px um.
+  flex: 0 0 $kasten-breite;
+  block-size: $kasten-hoehe;
+  // Bedienbarer Rand: Die Kaestchen sind die sichtbare Grenze des Feldes (1.4.11).
+  border: 2px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+}
+
+.gefuellt {
+  border-color: var(--farbe-primaer);
+}
+
+// Ein Punkt statt der Ziffer: Die PIN steht auf einem Bildschirm, den am
+// Spielfeldrand auch andere sehen.
+.gefuellt::after {
+  content: '';
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border-radius: 50%;
+  background: var(--farbe-text);
+}
+
+// Das naechste freie Kaestchen zeigt, wo die Eingabe weitergeht – nur solange
+// das Feld den Fokus hat.
+.felder:focus-within .naechstes {
+  border-style: dashed;
+  border-color: var(--farbe-primaer);
+}
+
+// Im Fehlerfall sind alle Kaestchen rot, auch das naechste freie – sonst
+// stuende ein gruenes Kaestchen neben drei roten und widerspraeche der Meldung.
+.fehlerhaft .kasten,
+.fehlerhaft:focus-within .naechstes {
+  border-color: var(--farbe-fehler);
+}
+
+// Das echte Eingabefeld liegt unsichtbar ueber den Kaestchen: Ein Tipp irgendwo
+// darauf oeffnet die Zifferntastatur. Durchsichtig statt `opacity: 0`, damit es
+// auf iOS sicher antippbar und fokussierbar bleibt. Den Fokusring zeichnet die
+// globale `:focus-visible`-Regel um das ganze Feld.
+.eingabe {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  // Mindestens 16 px: Darunter vergroessert iOS die Seite beim Fokussieren.
+  font-size: var(--schrift-basis);
+  text-align: center;
+}
+
+.eingabe::selection {
+  background: transparent;
+}
+
+// --- Hinweis und Fehler -----------------------------------------------------
+
+.hinweis {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+.fehler {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--abstand-s);
+  inline-size: 100%;
+  max-inline-size: var(--breite-text);
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-fehler);
+  border-radius: var(--radius-m);
+  background: var(--farbe-fehler-flaeche);
+  color: var(--farbe-fehler); // 6.65:1 auf der Fehlerflaeche
+  text-align: start;
+}
+
+// Als Maske, damit das Symbol der Textfarbe folgt; die Datei selbst traegt
+// eine feste Fuellfarbe (C2, Abschnitt 6).
+.fehlerSymbol {
+  flex: 0 0 auto;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  background-color: currentColor;
+  -webkit-mask: url('/icons/error_circle_icon.svg') no-repeat center / contain;
+  mask: url('/icons/error_circle_icon.svg') no-repeat center / contain;
+}
+
+// --- Aktionen ---------------------------------------------------------------
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--abstand-xs);
+}
+
+.adminLink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-s);
+  color: var(--farbe-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

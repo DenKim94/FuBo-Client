@@ -2,12 +2,16 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import { ApiFehler } from '@/api/common/fehler'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 
-/** Erzeugt eine Abfrage, die mit dem gewuenschten Status scheitert. */
-function fehlschlagendeAbfrage(status: number, schluessel: string[]) {
+/** Erzeugt eine Abfrage, die mit dem gewuenschten Status und Code scheitert. */
+function fehlschlagendeAbfrage(
+  status: number,
+  schluessel: string[],
+  code: ApiFehler['code'] = 'SESSION_UNGUELTIG',
+) {
   return queryClient.fetchQuery({
     queryKey: schluessel,
     queryFn: () => {
-      throw new ApiFehler(status, 'SESSION_UNGUELTIG', 'Die Sitzung ist abgelaufen.')
+      throw new ApiFehler(status, code, 'Abgelehnt.')
     },
   })
 }
@@ -58,6 +62,33 @@ describe('globale 401-Behandlung', () => {
     // Ein 403 heisst „angemeldet, aber nicht berechtigt". Wer deswegen
     // abgemeldet wuerde, verlöre seine Sitzung an einer falschen Schaltflaeche.
     expect(abmelden).not.toHaveBeenCalled()
+  })
+
+  test.each(['PIN_FALSCH', 'ADMIN_PASSWORT_FALSCH', 'RESET_PIN_FALSCH'] as const)(
+    'wertet 401 mit %s nicht als Sitzungsende',
+    async (code) => {
+      // Falsche Zugangsdaten sind eine Eingabe, kein Ablauf: Eine vertippte PIN
+      // darf weder den Cache leeren noch auf /anmelden umleiten.
+      const abmelden = vi.fn()
+      sitzungsendeBehandeln(abmelden)
+      queryClient.setQueryData(['bestand'], 1)
+
+      await fehlschlagendeAbfrage(401, ['zugangsdaten'], code).catch(() => {})
+
+      expect(abmelden).not.toHaveBeenCalled()
+      expect(queryClient.getQueryData(['bestand'])).toBe(1)
+    },
+  )
+
+  test('wertet 401 ohne lesbaren Code als Sitzungsende', async () => {
+    // Ein 401 ohne Problem-JSON stammt nicht vom Server selbst; eine gueltige
+    // Sitzung belegt er ebenso wenig.
+    const abmelden = vi.fn()
+    sitzungsendeBehandeln(abmelden)
+
+    await fehlschlagendeAbfrage(401, ['ohne-code'], 'UNBEKANNT').catch(() => {})
+
+    expect(abmelden).toHaveBeenCalledOnce()
   })
 })
 

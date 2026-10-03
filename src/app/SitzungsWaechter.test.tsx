@@ -11,7 +11,7 @@ afterEach(() => {
 })
 
 describe('SitzungsWaechter', () => {
-  test('fuehrt bei einem 401 zurueck zur Anmeldung, ohne die Seite neu zu laden', async () => {
+  test('fuehrt bei einem Sitzungsende zur PIN-Eingabe, ohne die Seite neu zu laden', async () => {
     const router = createMemoryRouter(
       [
         {
@@ -23,7 +23,7 @@ describe('SitzungsWaechter', () => {
           ),
           children: [{ path: '/teams/1', element: null }],
         },
-        { path: '/anmelden', element: <p>Anmeldung</p> },
+        { path: '/pin/pruefen', element: <p>PIN-Eingabe</p> },
       ],
       { initialEntries: ['/teams/1'] },
     )
@@ -42,6 +42,6 @@ describe('SitzungsWaechter', () => {
         .catch(() => {})
     })
 
-    expect(screen.getByText('Anmeldung')).toBeInTheDocument()
+    expect(screen.getByText('PIN-Eingabe')).toBeInTheDocument()
   })
 })

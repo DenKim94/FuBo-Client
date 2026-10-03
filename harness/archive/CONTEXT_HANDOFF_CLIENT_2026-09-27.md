@@ -9,9 +9,8 @@
 > Arbeitsbranch `dev_client`. **Kein Monorepo.** Das Backend liegt in einem getrennten Repository
 > (`FuBo-Server`, Ordner `server/`). Der übergeordnete Ordner `PRJ_FuBo/` sowie `PRJ_FuBo/harness/`
 > sind bewusst **nicht** versioniert; `client/harness/tmp/` ebenfalls nicht (Entscheidung 25.09.2026).
-> Stand: 03.10.2026 (nach C2 Schritte 1 bis 5 und dem ersten Teil von C3: PIN-Eingabe, Routing nach
-> Login-Stufe, Domäne `auth`).
-> Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-27.md`.
+> Stand: 27.09.2026 (nach C1, nach dem Struktur-Umbau und den Schritten 1 bis 5 von C2).
+> Vorfassung: `archive/CONTEXT_HANDOFF_CLIENT_2026-09-26.md`.
 
 ---
 
@@ -71,19 +70,6 @@ Vollständige Liste in `/PRJ_FuBo/harness/CONTEXT_HANDOFF.md`, Abschnitt 3. Fron
   - **Der Offline-Zustand wird aus zwei Quellen gebildet**: `navigator.onLine` **und** dem Ergebnis
     des letzten Aufrufs (`src/api/common/verbindungsStatus.ts`). Der Browserwert meldet auch im WLAN ohne
     Weg ins Internet `true` – dem Alltagsfall am Sportplatz.
-- **Entscheidungen vom 03.10.2026** (Begründungen in Abschnitt 6.6):
-  - **Nicht jeder `401` ist ein Sitzungsende.** Die globale Behandlung in `queryClient.ts` greift nur
-    bei `SESSION_UNGUELTIG` oder einem `401` ohne lesbaren Code. `PIN_FALSCH`,
-    `ADMIN_PASSWORT_FALSCH` und `RESET_PIN_FALSCH` sind Eingabefehler.
-  - **Eine Domäne `auth`** für alle `/auth/*`-Endpunkte; `src/api/sitzung/` ist darin aufgegangen.
-  - **Routing nach Login-Stufe:** ohne Sitzung `/pin/pruefen`, in `PIN_VERIFIED` `/anmelden`, angemeldet
-    `/`. Die Abbildung steht einmal in `src/app/schutz/zielpfad.ts`.
-  - **Die PIN-Eingabe ist auf vier Zeichen begrenzt** (Entscheidung des Entwicklers). Der Vertrag
-    schreibt beim Prüfen kein Format vor; der Betrieb muss deshalb eine vierstellige Anfangs-PIN
-    (`FUBO_INITIAL_PIN`) setzen.
-  - **Der Startaufruf `GET /auth/session/lesen` bleibt, auch ohne Sitzung.** Der `401` ist laut
-    Vertrag korrekt; der rote Eintrag in der Browserkonsole ist kosmetisch und aus JavaScript nicht
-    unterdrückbar. Eine Vertragsänderung (`200` ohne Sitzung) wurde erwogen und verworfen.
 
 ## 4. Schnittstelle zum Server (Vertrag)
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kernpunkte: REST/JSON gegen `api.<domain>`,
@@ -112,8 +98,8 @@ Begründung steht in Abschnitt 5.1.
 |---|---|---|---|
 | C0 | Projektfundament: Vorlagenreste, tsconfig/`strict`, Ordnerstruktur, SCSS inkl. `_globalVars.scss` und Safe-Area, Routing mit Zurück-Navigation, TanStack Query, PWA-Basis (`injectManifest`), `_headers`/`_redirects`, Dev-Proxy, Testwerkzeuge, CI | 14 | **abgeschlossen**: umgesetzt 25.09.2026, Abnahme auf dem Entwicklungsrechner erfolgreich, committet als `e6f8bad`, nachgeprüft und korrigiert am 26.09.2026 (Abschnitt 6.1) |
 | C1 | Vertrag, Datenzugriff, Mocks: `openapi-typescript`, fetch-Schicht, Fehlerübersetzung, globales `401`, MSW, Offline-Hinweis | 10 | **abgeschlossen**: umgesetzt 26.09.2026 nach `harness/tmp/C1_UMSETZUNG.md`, verifiziert (Abschnitt 6.2) |
-| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | **in Arbeit**: Schritte 1 bis 5 umgesetzt am 27.09.2026 (Abschnitt 6.5); am 03.10.2026 vorgezogen `CustomButton` (7.1) und `Ladespinner` (Teil von 7.7, Abschnitt 6.6); offen sind 6, der Rest von 7 sowie 8 bis 13 – Anleitung: `harness/tmp/C2_UMSETZUNG.md` |
-| C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | **in Arbeit**: PIN-Eingabe, Routing nach Login-Stufe und `usePinPruefen` am 03.10.2026 (Abschnitt 6.6); offen sind Namensauswahl, Gast, Countdown, Erneuerung, Abmelden |
+| C2 | Design-System & Basis-Layout: Tokens, Raster, Basis-Komponenten (Button, Dropdown, Balken, Info-Icon, Dialog, Lade-/Leer-/Fehlerzustand) | 12 | **in Arbeit**: Schritte 1 bis 5 umgesetzt am 27.09.2026 (Abschnitt 6.5); offen sind 6 bis 13 – Anleitung: `harness/tmp/C2_UMSETZUNG.md` |
+| C3 | Sitzung & Spieler-Login: PIN, Namensauswahl mit Polling und Ausgrauen, Gast + Info-Icon + „(Gast)", Countdown, Erneuerung, Auto-Logout, Routen-Schutz | 14 | offen |
 | C4 | Admin-Zugang: Login (zwei Pflichtfelder, zeichengenau), dreistufiger Passwort-Reset, Passwortwechsel | 8 | offen |
 | C5 | Termin & Teilnahme: User-Dashboard, Zu-/Absage, Teilnehmerliste mit Balken und Warteschlange, Bilanz | 14 | offen |
 | C6 | Teams & Ergebnis: Teamansicht inkl. Generierung, Kontingent, Veraltet-Kennzeichnung, Auswechselspieler, Ergebniseintrag | 12 | offen |
@@ -198,17 +184,52 @@ Einzelnen:
 
 ### 6.1 Nachprüfung und Korrekturen vom 26.09.2026
 
-Gekürzt am 03.10.2026; die ausführliche Fassung steht in `archive/CONTEXT_HANDOFF_CLIENT_2026-09-27.md`.
-Sechs Punkte wurden korrigiert, zwei davon sachlich:
+Der abgeschlossene C0-Stand wurde gegen `harness/tmp/C0_UMSETZUNG.md` und die Vorgaben geprüft. Sechs
+Punkte wurden korrigiert; die ersten beiden sind sachlich, die übrigen betreffen Vorgabentreue und
+Dokumentation.
 
-1. **`npm ci` schlug fehl** (`Missing: sass@1.103.1 from lock file` nach `npm uninstall sass`).
-   Behoben mit `npm install --package-lock-only`. **Lehre:** `npm install` schreibt die Sperrdatei
-   stillschweigend zurecht, nur `npm ci` prüft sie – nach jeder Abhängigkeitsänderung `npm ci` in
-   einem frischen Baum.
-2. **`public/_headers` erreichte die Wurzel `/` nicht** – Cloudflare Pages wertet den angefragten Pfad
-   aus, nicht die ausgelieferte Datei. Block für `/` ergänzt.
-3. Manifest-`short_name` `FuBo` → **`GUT-KICK`**; Stil-Importe `stile` → `style`; „Zurueck" → „Zurück";
-   Zahlenangaben in der Dokumentation nachgezogen.
+1. **`npm ci` schlug fehl – und damit jeder CI-Lauf.** `package-lock.json` war nicht mit
+   `package.json` synchron: Fehlermeldung `Missing: sass@1.103.1 from lock file`. Ursache ist das
+   `npm uninstall sass` aus C0, Schritt 2.3. Die Plattform-Rückfallpakete
+   `sass-embedded-all-unknown` und `sass-embedded-unknown-all` hängen hart an `sass`; npm hat den
+   Eintrag `node_modules/sass` beim Deinstallieren aber aus der Sperrdatei entfernt. Behoben mit
+   `npm install --package-lock-only`; der Eintrag steht jetzt als `optional: true, dev: true` darin
+   und wird auf bekannten Plattformen nicht mitinstalliert. Nebenbei hat npm vierzehn veraltete
+   `"peer": true`-Vermerke bereinigt.
+   **Warum das durch die Abnahme fiel:** Auf dem Entwicklungsrechner wurde `npm install` gefahren,
+   und das schreibt die Sperrdatei stillschweigend zurecht, statt sie zu prüfen. Nur `npm ci`
+   vergleicht beide Dateien – und genau das tut CI als ersten Schritt. Nach jedem `npm uninstall`
+   gehört deshalb ein `npm ci` in einem frischen Baum dazu.
+2. **`public/_headers` erreichte die Wurzel nicht.** Es gab eine Regel für `/index.html`, aber keine
+   für `/`. Cloudflare Pages wertet den **angefragten Pfad** aus, nicht die ausgelieferte Datei – der
+   Einstieg in die Anwendung blieb damit ohne ausdrückliche `Cache-Control`-Vorgabe. Block für `/`
+   ergänzt.
+3. **Manifest-`short_name` war `FuBo`.** Das widersprach zwei Vorgaben zugleich: „`name` und
+   `short_name` sind `MONTAGS-KICKER`" und „FuBo erscheint nicht in der Oberfläche" – der
+   `short_name` ist genau die Beschriftung unter dem Symbol auf dem Startbildschirm. Neu:
+   **`GUT-KICK`**, acht Zeichen und damit unterhalb der Kürzungsgrenze. `e2e/pwa.spec.ts` prüft den
+   Wert und die Länge jetzt mit, damit er nicht unbemerkt zurückfällt.
+4. **Stil-Importe hießen teils `stile`.** `AGENT_CLIENT.md` schreibt `style` vor
+   (`import style from './Platzhalter.module.scss'`). In `AppLayout.tsx` und `Platzhalter.tsx`
+   umbenannt; `AktualisierungsHinweis.tsx` war bereits richtig.
+5. **Sichtbarer Text ohne Umlaut.** Die Zurück-Schaltfläche beschriftete sich mit „Zurueck". Die
+   Umlautfreiheit gilt für Bezeichner, nicht für Oberflächentext – jetzt „Zurück".
+6. **Zahlenangaben in der Dokumentation stimmten nicht mehr.** `playwright.config.ts` führt **sieben**
+   Projekte (drei Chromium, vier WebKit), nicht acht; die Unit-Tests sind neun, nicht zwei. Die Zahlen
+   in diesem Dokument, in `AGENT_CLIENT.md`, in `playwright.config.ts` und im CI-Kommentar wurden
+   nachgezogen. Ausserdem nannte `AGENT_CLIENT.md` für die Offline-Seite `no_connection_icon.svg`,
+   während `vite.config.ts` die rote Fassung vorhält; die Doku folgt jetzt dem Code.
+
+**Verifiziert am 26.09.2026** in einer sauberen Linux-Umgebung gegen einen frischen `npm ci`:
+Typprüfung über vier Teilprojekte, ESLint, **neun Unit-Tests**, vollständiger Bau (sechs
+Precache-Einträge, Manifest mit `short_name: GUT-KICK` und vier Ikonen) und **27 E2E-Tests über die
+drei Chromium-Projekte**, darunter die tatsächliche Registrierung des Service Workers und die Prüfung
+des Inhaltstyps von `sw.js`. Die geprüfte `package-lock.json` ist byteweise identisch mit der im
+Arbeitsbaum.
+
+**Nicht erneut geprüft:** die vier WebKit-Projekte (der WebKit-Download ist in der Prüfumgebung durch
+die Netzrichtlinie gesperrt) sowie die Handprüfungen auf einem echten Gerät. Beides ist bei der
+Abnahme am 25./26.09.2026 auf dem Entwicklungsrechner gelaufen.
 
 ### 6.2 C1 – Vertrag, Datenzugriff und Mocks (26.09.2026)
 
@@ -271,11 +292,11 @@ Umleitungspfad bei `401` ist stattdessen über `SitzungsWaechter.test.tsx` abged
 
 - **`navigate(-1)` in `AppLayout`.** Wird die Anwendung direkt auf einer Unterseite geöffnet – Deeplink
   oder Start der installierten PWA –, hat der Verlauf keinen Vorgänger, und die Schaltfläche tut
-  nichts. Der Fall ist in C2 zu lösen, wenn die Schaltfläche eine optionale Zielangabe bekommt. Die
-  Login-Schritte blenden die Schaltfläche seit dem 03.10.2026 ganz aus (`handle.ohneZurueck`).
-- ~~Die Anmeldeseite löst von sich aus keinen Aufruf aus.~~ **Erledigt am 03.10.2026:** Jede Ansicht
-  liest beim Start über ihren Guard die Sitzung; Antwort oder Netzfehler dieses Aufrufs speisen den
-  Verbindungszustand. Der Offline-Hinweis erscheint damit auch auf der PIN-Eingabe.
+  nichts. Der Fall ist in C2 zu lösen, wenn die Schaltfläche eine optionale Zielangabe bekommt.
+- **Die Anmeldeseite löst von sich aus keinen Aufruf aus.** Solange `/anmelden` nur einen Platzhalter
+  zeigt, bleibt der Offline-Hinweis dort aus, wenn der Browser ein Netz sieht – es gibt keinen
+  fehlschlagenden Aufruf, der das Gegenteil belegen könnte. Mit der PIN-Prüfung in C3 erledigt sich
+  das; der harte Fall (`navigator.onLine === false`) wird schon heute überall angezeigt.
 - **Der Personenkreis der Query-Schlüssel ist vorläufig.** `src/api/common/schluessel.ts` führt die absehbaren
   Einträge; jedes fachliche Paket ergänzt seine eigenen dort und nirgends sonst.
 - **`npm audit` meldet drei moderate Befunde** in `@vitest/mocker` (Pfad-Traversal, nur
@@ -371,83 +392,25 @@ Chromium. Die E2E-Suite gehört auf den Entwicklungsrechner.
 hat noch kein Ziel – die Leiste wird von keiner Ansicht eingebunden, die erste kommt in C3. Entweder
 zieht der Test nach C3 um, oder Schritt 9 bindet die Leiste versuchsweise in den `Platzhalter` ein.
 
-### 6.6 Anmeldung: Domäne `auth`, `401`-Regel, Routing nach Stufe, PIN-Eingabe (03.10.2026)
-
-**Datenzugriff**
-- **`src/api/auth/auth.ts`** bündelt alle `/auth/*`-Aufrufe: `sitzungLesen` (aus `src/api/sitzung/`
-  umgezogen, samt Tests) und neu **`pinPruefen(pin)`** (`POST /auth/pin/pruefen`, `204`, Fehler als
-  `ApiFehler`). Die PIN geht unverändert hinaus.
-- **`queryClient.ts` – `istSitzungsende`:** Nur `401` mit `SESSION_UNGUELTIG` oder ohne lesbaren Code
-  leert den Cache und leitet um. Vorher löste eine vertippte PIN die Abmeldung aus, und ein falsches
-  Admin-Passwort hätte von `/admin/anmelden` auf `/anmelden` umgeleitet (`ADMIN_PASSWORT_FALSCH`
-  kommt auch beim Passwortwechsel in gültiger Sitzung vor).
-- **`src/hooks/usePinPruefen.ts`** (Mutation). Nach Erfolg: Daten der früheren Identität entfernen
-  (der Server widerruft eine bestehende Sitzung), **einen laufenden Sitzungsabruf abbrechen** und die
-  Sitzung neu lesen; `isSuccess` erst danach. Den Abbruch hat ein Test aufgedeckt: Lief beim Absenden
-  der erste Sitzungsabruf noch, hängte sich das Neulesen an ihn an und lieferte den Stand von vorher.
-  Beide Absicherungen sind durch Gegenprobe belegt (ohne sie schlägt genau ihr Test fehl).
-
-**Routing nach Login-Stufe**
-- `src/app/schutz/zielpfad.ts`: `LOGIN_PFADE` und `zielFuerStufe` – die einzige Abbildung Stufe → Pfad.
-- **`LoginSchrittRoute`** (neu) bindet `/pin/pruefen` an „ohne Sitzung" und `/anmelden` an
-  `PIN_VERIFIED`. Nach erfolgreicher PIN leitet sie von selbst zur Namensauswahl; die Ansicht
-  navigiert nicht. Der Navigationszustand (`von`) wird mitgenommen.
-- **`GeschuetzteRoute`** leitet über `zielFuerStufe` um (ohne Sitzung zur PIN statt zu `/anmelden`).
-- **Guards zeigen den Ladespinner,** solange die Sitzung unbekannt ist (vorher: nichts). Eine
-  Umleitung auf Verdacht gibt es weiterhin nicht.
-- **`SitzungsWaechter`** leitet auf `/pin/pruefen`. Abgrenzung zum Guard: Der Guard prüft beim
-  Betreten einer Route; der Wächter reagiert auf ein Sitzungsende **während** der Nutzung, das
-  `queryClient.ts` an einem beliebigen Aufruf erkennt (dort gibt es kein `useNavigate`).
-- `src/app/routenAngaben.ts`: `handle.ohneZurueck` blendet die Zurück-Schaltfläche aus (Login-Schritte).
-  `AppLayout` liest es über `useMatches`; `.inhalt` ist jetzt eine Flex-Spalte, damit Ansichten mit
-  `flex: 1` die Aktionsleiste nach unten schieben.
-
-**Komponenten**
-- **`src/pages/PinEingabe/`** (erste Seite unter `pages/`; zuvor als Komponente angelegt und gemäss
-  Ordnermuster verschoben). Vier Kästchen als Darstellung, darüber ein durchsichtiges natives
-  `<input inputMode="numeric">` – die Zifferntastatur kommt vom Gerät. `maxLength` 4,
-  `autoComplete="off"` (nicht `one-time-code`: iOS böte SMS-Codes an). Fehlerkasten mit `detail` des
-  Servers; bei abgelehnter PIN leeres Feld mit Fokus, bei Netzfehler bleibt die Eingabe; bei `429`
-  bleibt „Zutritt" für `wartesekunden` gesperrt, danach verschwindet die Meldung. Titel
-  „MONTAGS-KICKER" statt „FuBo" wie im Prototyp. Ereignistyp `SubmitEvent` (`FormEvent` ist in
-  `@types/react` 19.2 veraltet).
-- **`src/components/Ladespinner/`**: CSS-Kreis, `farbe` `primaer`/`erben`, `role="status"` oder
-  `dekorativ`, `zentriert`, 150 ms verzögert.
-- **`src/components/CustomButton/`** nach C2 7.1: `art`, `breit`, `laedt` (Spinner vor der
-  Beschriftung, Farbe bleibt, `aria-busy`), `type="button"` vorbelegt, Vorgabe-`data-testid`.
-- Tokens neu: `--farbe-link` (6.76:1), `--tapziel-primaer` (64 px laut Prototyp).
-
-**Verifiziert am 03.10.2026:** `npm run typecheck`, `npm run lint`, **72 Unit-Tests** in 14 Dateien,
-`npm run build` (weiterhin sechs Precache-Einträge), kein Hexwert ausserhalb von `_globalVars.scss`,
-`npm ci` in frischem Baum, **39 E2E-Tests** in den drei Chromium-Projekten (neu: Start auf
-`/pin/pruefen`, keine Zurück-Schaltfläche dort, Primäraktion unten und 64 px hoch, Aktionsleiste
-verbraucht `--sicher-unten`) sowie eine Sichtprüfung der gebauten Fassung bei 360 px.
-**Nicht geprüft:** WebKit-Projekte, echtes Gerät, Ablauf gegen eine laufende Serverinstanz.
-
 ## 7. Nächste Schritte
 
 1. **Handprüfung zu C1 gegen eine laufende Serverinstanz** (Prüfpunkte 9 und 11 aus
    `harness/tmp/C1_UMSETZUNG.md`): `npm run dev` gegen den Server, im Netzwerkfenster prüfen, dass
    jeder Aufruf das Sitzungscookie trägt; anschliessend die Sitzung serverseitig beenden und eine
-   Aktion auslösen – erwartet wird die Umleitung auf `/pin/pruefen` ohne Neuladen der Seite. Dabei
-   auch die PIN-Eingabe gegen den echten Server prüfen (richtige, falsche PIN, Sperre).
-2. **C3 fortsetzen:** Namensauswahl unter `/anmelden` (Polling des Belegtstatus mit
-   `X-FuBo-Kein-Refresh`, belegte Namen ausgegraut, Gast mit Info-Icon), danach Countdown,
-   Erneuerung und Abmelden. Die Weiterleitung nach der PIN steht bereits (`LoginSchrittRoute`).
-3. **C2 fortsetzen** ab Schritt 6 von `harness/tmp/C2_UMSETZUNG.md`: Ikonen als CSS-Maske (Schritt 6),
-   die Basis-Komponenten Feld, Auswahlliste, Fortschrittsbalken, Erklärung und Dialog samt Leer-
-   und Fehlerzustand (Schritt 7; Schaltfläche und Ladespinner stehen seit dem 03.10.2026), die Nacharbeiten aus C0 und C1 – Zielangabe für die
+   Aktion auslösen – erwartet wird die Umleitung auf `/anmelden` ohne Neuladen der Seite.
+2. **C2 fortsetzen** ab Schritt 6 von `harness/tmp/C2_UMSETZUNG.md`: Ikonen als CSS-Maske (Schritt 6),
+   die Basis-Komponenten Schaltfläche, Feld, Auswahlliste, Fortschrittsbalken, Erklärung und Dialog
+   samt Lade-, Leer- und Fehlerzustand (Schritt 7), die Nacharbeiten aus C0 und C1 – Zielangabe für die
    Zurück-Schaltfläche und endgültige Gestaltung des Offline-Hinweises (Schritt 8) – sowie Tests,
    Abnahme und Nachdokumentation (Schritte 9 bis 11). Die Farbwelt steht seit dem 27.09.2026
    (Abschnitt 6.5) und ist nicht mehr Platzhalter.
-4. **Vor jedem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts
+3. **Vor jedem Commit** prüfen, dass weder `.env`-Inhalte noch reale Personennamen mitgehen. Nichts
    nach `main`.
-5. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
+4. **`npm ci` in einem frischen Baum** nach jeder Änderung an den Abhängigkeiten – nicht nur
    `npm install` (Begründung in Abschnitt 6.1, Punkt 1).
-6. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
+5. **Betriebsaufgabe ohne Code:** Custom Domain `app.<domain>` in Cloudflare Pages einrichten,
    Rocket Loader und Auto-Minify für diese Domain abschalten. Die Adresse erst an die Spieler
-   verteilen, wenn sie die endgültige ist. `FUBO_INITIAL_PIN` muss vierstellig sein (PIN-Eingabe
-   nimmt nur vier Zeichen an).
+   verteilen, wenn sie die endgültige ist.
 
 ## 8. Weitere Anweisungen
 - **Repository-Konventionen:** Repo-Wurzel ist `client/`. Branch-Namen mit `dev_xxx` (initial `dev_client`).

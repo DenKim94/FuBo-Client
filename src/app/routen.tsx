@@ -1,8 +1,14 @@
 import { createBrowserRouter } from 'react-router'
 import AppLayout from '@/layouts/AppLayout/AppLayout'
+import type { RoutenAngaben } from '@/app/routenAngaben'
 import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
+import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
+import PinEingabe from '@/pages/PinEingabe/PinEingabe'
+
+/** Login-Schritte haben kein sinnvolles „Zurück" (siehe `RoutenAngaben`). */
+const LOGIN_SCHRITT: RoutenAngaben = { ohneZurueck: true }
 
 /**
  * Routenbaum der Anwendung.
@@ -15,7 +21,9 @@ import Platzhalter from '@/components/Platzhalter/Platzhalter'
  *
  * 1. **Oeffentlich** – alles, was ohne Sitzung erreichbar sein muss. Dazu
  *    gehoert ausdruecklich auch `/admin/anmelden`: Der Admin muss sich anmelden
- *    koennen, bevor er Admin ist.
+ *    koennen, bevor er Admin ist. Die beiden Login-Schritte sind ebenfalls
+ *    oeffentlich, aber an ihre Stufe gebunden (`LoginSchrittRoute`): ohne
+ *    Sitzung die PIN-Eingabe, in `PIN_VERIFIED` die Namensauswahl.
  * 2. **`GeschuetzteRoute`** – verlangt eine abgeschlossene Anmeldung
  *    (`stage = PROFILE_AUTHENTICATED`).
  * 3. **`AdminRoute`** – verlangt zusaetzlich die Rolle ADMIN.
@@ -29,7 +37,21 @@ export const routen = createBrowserRouter([
     element: <AppLayout />,
     children: [
       // --- Oeffentlich ---------------------------------------------------
-      { path: 'anmelden', element: <Platzhalter titel="Anmeldung" paket="C3" /> },
+      // Beim Start ohne Sitzung fuehrt `GeschuetzteRoute` von `/` hierher.
+      {
+        element: <LoginSchrittRoute schritt="pin" />,
+        children: [{ path: 'pin/pruefen', element: <PinEingabe />, handle: LOGIN_SCHRITT }],
+      },
+      {
+        element: <LoginSchrittRoute schritt="name" />,
+        children: [
+          {
+            path: 'anmelden',
+            element: <Platzhalter titel="Namensauswahl" paket="C3" />,
+            handle: LOGIN_SCHRITT,
+          },
+        ],
+      },
       { path: 'admin/anmelden', element: <Platzhalter titel="Admin-Anmeldung" paket="C4" /> },
 
       // --- Nur mit abgeschlossener Anmeldung ------------------------------

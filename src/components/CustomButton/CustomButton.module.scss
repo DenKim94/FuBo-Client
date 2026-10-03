@@ -1,0 +1,87 @@
+@use '@/styles/globalVars';
+
+.schaltflaeche {
+  // 44 px sind das Mindestmass aus DESIGN.md (WCAG 2.1 AA).
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-l);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--abstand-s);
+
+  border: 1px solid transparent;
+  border-radius: var(--radius-m);
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.primaer {
+  // Die Primaeraktion liegt in der Aktionsleiste und ist die am haeufigsten
+  // getroffene Flaeche einer Ansicht: 64 px laut Prototyp.
+  min-block-size: var(--tapziel-primaer);
+  background: var(--farbe-primaer);
+  color: var(--farbe-primaer-kontrast);
+}
+
+.primaer:active:not(:disabled) {
+  background: var(--farbe-primaer-dunkel);
+}
+
+.sekundaer {
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  // Der bedienbare Rand, nicht der dekorative: Ohne ihn ist die Flaeche vom
+  // Hintergrund nicht zu unterscheiden (WCAG 1.4.11).
+  border-color: var(--farbe-rand-bedienbar);
+}
+
+.sekundaer:active:not(:disabled) {
+  background: color-mix(in srgb, var(--farbe-hintergrund) 88%, var(--farbe-text));
+}
+
+.gefahr {
+  background: var(--farbe-fehler);
+  // Kein Hexwert: Das Token ist die Schrift auf farbigen Flaechen (7.30:1 hier).
+  color: var(--farbe-primaer-kontrast);
+}
+
+.gefahr:active:not(:disabled) {
+  background: color-mix(in srgb, var(--farbe-fehler) 85%, var(--farbe-text));
+}
+
+// Hover nur auf Geraeten, die ihn haben: Auf Touch bliebe der Zustand sonst
+// nach dem Antippen haengen.
+@media (hover: hover) {
+  .primaer:hover:not(:disabled) {
+    background: var(--farbe-primaer-dunkel);
+  }
+
+  .sekundaer:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--farbe-hintergrund) 94%, var(--farbe-text));
+  }
+
+  .gefahr:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--farbe-fehler) 90%, var(--farbe-text));
+  }
+}
+
+.breit {
+  inline-size: 100%;
+}
+
+// Nicht verfuegbar – aber nicht, solange sie laedt: Dann behaelt sie ihre
+// Farbe, und nur der Zeiger zeigt an, dass gerade nichts anzunehmen ist.
+.schaltflaeche:disabled:not(.laedt) {
+  // Nicht ueber die Deckkraft: Das naehme auch der Beschriftung den Kontrast.
+  background: var(--farbe-flaeche-kraeftig);
+  color: var(--farbe-text-schwach);
+  border-color: var(--farbe-rand);
+  cursor: not-allowed;
+}
+
+.laedt {
+  cursor: progress;
+}

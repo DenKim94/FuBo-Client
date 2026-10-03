@@ -108,11 +108,21 @@ eine zentrale PIN, danach Identifikation über den hinterlegten Namen. Rollen: A
 - **Routen-Schutz in drei Ebenen** über pfadlose Layout-Routen in `src/app/schutz/`: öffentlich,
   `GeschuetzteRoute` (`stage = PROFILE_AUTHENTICATED`) und darin `AdminRoute` (`rolle = ADMIN`).
   `/admin/anmelden` bleibt ausdrücklich öffentlich – der Admin muss sich anmelden können, bevor er
-  Admin ist. Solange der Sitzungszustand unbekannt ist, rendern die Guards nichts, statt auf Verdacht
-  umzuleiten. **Sie sind Bedienkomfort, keine Sicherheitsmassnahme:** Wer sie umginge, sähe eine
+  Admin ist. **Die Login-Schritte sind an ihre Stufe gebunden** (`LoginSchrittRoute`, seit
+  03.10.2026): ohne Sitzung `/pin/pruefen`, in `PIN_VERIFIED` `/anmelden`, angemeldet `/`. Die
+  Abbildung Stufe → Pfad steht ausschliesslich in `src/app/schutz/zielpfad.ts`. Solange der
+  Sitzungszustand unbekannt ist, zeigen die Guards den Ladespinner, statt auf Verdacht umzuleiten. **Sie sind Bedienkomfort, keine Sicherheitsmassnahme:** Wer sie umginge, sähe eine
   Ansicht voller `403`-Antworten und keine Daten. Die Rolle kommt aus `useSitzung`
   (`GET /auth/session/lesen`), nie aus lokal gehaltenem Zustand.
 - **Server-State** über TanStack Query (Caching, Polling, Invalidierung), lokaler UI-State getrennt davon.
+- **Sitzungsende nur bei `401 SESSION_UNGUELTIG`** (oder `401` ohne lesbaren Code). `PIN_FALSCH`,
+  `ADMIN_PASSWORT_FALSCH` und `RESET_PIN_FALSCH` antworten ebenfalls mit `401`, sind aber
+  Eingabefehler; die zentrale Behandlung in `queryClient.ts` (`istSitzungsende`) lässt sie durch.
+  Auf ein Sitzungsende während der Nutzung reagiert der `SitzungsWaechter` (Umleitung zur PIN).
+- **Der Startaufruf `GET /auth/session/lesen` bleibt auch ohne Sitzung** – das Cookie ist HttpOnly, nur
+  der Server kennt die Stufe (F5, PIN-Neustart). Der `401` ist vertragsgemäss; sein Eintrag in der
+  Browserkonsole ist kosmetisch. Nebenbei liefert der Aufruf den ersten Beleg für die Erreichbarkeit
+  des Servers (Offline-Hinweis).
 - **Der Service Worker cacht keine API-Antworten.** Für `/api/*` gilt `NetworkOnly`. Der Cache
   Storage ist wie `localStorage` von jedem Skript des Origins lesbar und überlebt den Logout; eine
   zwischengespeicherte Admin-Antwort liesse Skillwerte auf dem Gerät zurück und verletzte die Regel
@@ -131,7 +141,7 @@ Quellbaum": **Ordnernamen sind englisch**, Bezeichner und Oberflächentext bleib
 
 | Ort | Muster | Beispiele |
 |---|---|---|
-| Datenzugriff | `src/api/<domaene>/<domaene>.ts` | `src/api/sitzung/sitzung.ts`, künftig `src/api/admin/admin.ts` |
+| Datenzugriff | `src/api/<domaene>/<domaene>.ts` | `src/api/auth/auth.ts` (Anmeldung und Sitzung, alle `/auth/*`-Endpunkte), künftig `src/api/admin/admin.ts` |
 | Querschnitt des Datenzugriffs | `src/api/common/` | `httpService.ts`, `fehler.ts`, `schluessel.ts`, `verbindungsStatus.ts` |
 | Vertragstypen (Generat) | `src/api/common/types/schema.d.ts` | einzige Quelle der Typen, nie von Hand bearbeitet |
 | Komponenten | `src/components/<Name>/<Name>.{tsx,module.scss,test.tsx}` | `src/components/OfflineHinweis/` |
@@ -428,6 +438,15 @@ Beispiel: `import style from './Platzhalter.module.scss'`
   Zurück-Schaltfläche damit im Fokus von 8 px auf 0 px. Den Umriss rundet der Browser von sich aus.
   **Zustände über eigene Tokens bei der Primäraktion, sonst `color-mix`**; die globalen Sass-Funktionen
   `darken()`/`lighten()`/`mix()` sind abgekündigt und nicht zu benutzen.
+- **Festlegungen vom 03.10.2026 (Beginn C3):** Alle `/auth/*`-Aufrufe in der Domäne `src/api/auth/`.
+  Seiten liegen unter `src/pages/` (erste: `PinEingabe`). **Basis-Schaltfläche ist `CustomButton`**
+  (`art`, `breit`, `laedt`, `type="button"` vorbelegt), **Ladeanzeige ist `Ladespinner`** (150 ms
+  verzögert, `role="status"`, in Schaltflächen `dekorativ`) – keine Ansicht baut eigene. Neue Tokens
+  `--farbe-link` und `--tapziel-primaer` (64 px). PIN-Eingabe als natives
+  `<input inputMode="numeric">` unter vier Kästchen, `maxLength` 4; kein nachgebauter Ziffernblock.
+  Formular-Ereignisse mit `SubmitEvent`/`ChangeEvent` typisieren, nicht mit dem veralteten
+  `FormEvent`. Eine Mutation, die die Sitzung ändert, bricht laufende Sitzungsabrufe ab, bevor sie
+  neu liest (`cancelQueries` vor `invalidateQueries`).
 - Zugehörige Dokumente: `/PRJ_FuBo/harness/AGENT.md` (Gesamtspezifikation), `/PRJ_FuBo/harness/assets/Design/DESIGN.md` (UI-Vorgaben), `CONTEXT_HANDOFF_CLIENT.md` (Stand/Meilensteine Frontend). 
   Nach Abschluss eines Arbeitspakets sind die Dokumentationen in `CONTEXT_HANDOFF_CLIENT.md`, `AGENT_CLIENT.md` und ggf. `/PRJ_FuBo/harness/AGENT.md` zu aktualisieren.
 - Falls diese Datei die Länge von **500 Zeilen** überschreitet, ist diese auf die wesentlichen Punkte zusammen zu fassen.      
