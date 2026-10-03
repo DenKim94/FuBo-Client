@@ -125,36 +125,12 @@ $kasten-hoehe: 4rem;
   background: transparent;
 }
 
-// --- Hinweis und Fehler -----------------------------------------------------
+// --- Hinweis ------------------------------------------------------------------
+// Der Fehlerkasten ist die Komponente `Fehlermeldung`.
 
 .hinweis {
   color: var(--farbe-text-schwach);
   font-size: var(--schrift-klein);
-}
-
-.fehler {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--abstand-s);
-  inline-size: 100%;
-  max-inline-size: var(--breite-text);
-  padding: var(--abstand-s) var(--abstand-m);
-  border: 1px solid var(--farbe-fehler);
-  border-radius: var(--radius-m);
-  background: var(--farbe-fehler-flaeche);
-  color: var(--farbe-fehler); // 6.65:1 auf der Fehlerflaeche
-  text-align: start;
-}
-
-// Als Maske, damit das Symbol der Textfarbe folgt; die Datei selbst traegt
-// eine feste Fuellfarbe (C2, Abschnitt 6).
-.fehlerSymbol {
-  flex: 0 0 auto;
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
-  background-color: currentColor;
-  -webkit-mask: url('/icons/error_circle_icon.svg') no-repeat center / contain;
-  mask: url('/icons/error_circle_icon.svg') no-repeat center / contain;
 }
 
 // --- Aktionen ---------------------------------------------------------------

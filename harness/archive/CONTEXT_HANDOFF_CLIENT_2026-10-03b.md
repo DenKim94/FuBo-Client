@@ -7,10 +7,9 @@
 > Repository: **eigenständig mit Wurzel in `client/`** (GitHub, öffentlich, `FuBo-Client`), Branch
 > `dev_client`. **Kein Monorepo**; das Backend liegt in `FuBo-Server` (`server/`). `PRJ_FuBo/`,
 > `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
-> **Stand: 03.10.2026, abends** (C0, C1 abgeschlossen; **C2 umgesetzt**, Abnahme bis auf Hand- und
-> WebKit-Prüfungen erledigt; C3 in Arbeit: PIN-Eingabe und Namensauswahl stehen).
+> **Stand: 03.10.2026** (C0, C1 abgeschlossen; C2 und C3 in Arbeit: PIN-Eingabe und Namensauswahl stehen).
 > Gestraffte Fassung. Vorfassungen mit allen Herleitungen in `archive/`, zuletzt
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-03b.md` (Stand vor dem Abschluss von C2).
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-03.md`.
 
 ---
 
@@ -54,29 +53,6 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
   untereinander.
 - **WebKit in CI:** E2E-Job mit allen sieben Geräteprojekten (Chromium und WebKit).
 
-**Abschluss C2 (03.10.2026, abends)**
-- **Dialog auf Basis von `<dialog>`/`showModal()`**, gesteuert über `offen`, Titel über `useId`.
-  `festhalten` weist Escape ab **und** öffnet den Dialog wieder, falls der Browser ihn trotzdem
-  schliesst: Seit Chrome 122 (Close Watcher) darf `cancel` ohne vorherige Nutzeraktivierung
-  übersprungen werden – auch bei der Zurück-Geste unter Android.
-- **Abdunkelung als eigene Regel `::backdrop { --farbe-abdunkelung }`** in `_globalVars.scss`:
-  `::backdrop` erbt erst ab Chrome 122/Firefox 120/Safari 17.4 vom Dialog; auf iOS 16.4–17.3 wäre
-  ein `var(--farbe-text)` dort leer.
-- **Fehlertext an einem Ort:** `fehlertextBilden` und `istWiederholbar` in `src/api/common/fehler.ts`
-  (neben `istNetzfehler`). Zwei Komponenten: `Fehlermeldung` (Kasten neben einer bedienbaren Ansicht)
-  und `Fehlerzustand` (ersetzt den Inhalt; „Erneut versuchen" nur bei Netzfehler und `≥ 500`).
-  Die Kopien `fehlertextBilden` in `PinEingabe` und `Namensauswahl` sind entfernt.
-- **Zurück-Ziel:** `handle.zurueck` (innerste Route gilt) → sonst `navigate(-1)` → beim
-  Direkteinstieg (`history.state.idx` ≤ 0) zur Startseite. `location.key === 'default'` verworfen,
-  weil eine Umleitung mit `replace` einen neuen Schlüssel vergibt, `idx` aber 0 bleibt. Die
-  Schaltfläche ist jetzt `CustomButton art="sekundaer"` (Test-ID unverändert).
-- **Seite „nicht gefunden"** (`NichtGefunden`, erster Verbraucher von `Leerzustand`) ersetzt den
-  C2-Platzhalter der Route `*`; ohne Zurück-Schaltfläche, die Ansicht führt selbst zur Startseite.
-- **Fortschrittsbalken** als `div` mit `role="progressbar"` (kein `<progress>`), Zustand vom Server.
-- **Korrektur `playwright.config.ts`:** Das Muster `NUR_CHROMIUM` (`/\.pwa\.spec\.ts$/`) erfasste
-  `e2e/pwa.spec.ts` nicht; die PWA-Tests wären im CI auch in WebKit gelaufen. Neues Muster
-  `/(^|[/\\.])pwa\.spec\.ts$/`, nachgeprüft mit `playwright test --list` (WebKit-Projekte: 0).
-
 ## 4. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kontrakt-Kopie
 `client/harness/assets/fubo-api.json` (44 Operationen, zuletzt am 26.09.2026 byteweise gegen
@@ -94,7 +70,7 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026, Beg
 |---|---|---|---|
 | C0 | Projektfundament, PWA-Basis, Testwerkzeuge, CI | 14 | **abgeschlossen** (`e6f8bad`, nachgeprüft 26.09.) |
 | C1 | Vertrag, Datenzugriff, Mocks, Offline-Hinweis | 10 | **abgeschlossen** (26.09.) |
-| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari) sowie der Dialog-E2E-Test mit dem ersten echten Dialog (C3) |
+| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **in Arbeit:** Tokens, Fokus, Aktionsleiste, `CustomButton`, `Ladespinner`, `Icon`, `Feld`, `Auswahlliste`, `Erklaerung` stehen; offen Fortschrittsbalken, Dialog, Leer-/Fehlerzustand als Komponenten, Zurück-Ziel, Offline-Hinweis mit `Icon` |
 | C3 | Sitzung & Spieler-Login | 14 | **in Arbeit:** PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe; offen Countdown, Erneuerung, Ablauf-Dialog, Abmelden |
 | C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | offen |
 | C5 | Termin & Teilnahme, User-Dashboard | 14 | offen |
@@ -122,30 +98,19 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   (Auswahlliste mit belegten Namen, Hinweis bei zwischenzeitlicher Belegung, Gastbereich mit Name,
   Stufe, Info-Icon und „(Gast)"; Fehler am Feld bzw. im Kasten).
 - **Komponenten:** `Aktionsleiste`, `AktualisierungsHinweis`, `Auswahlliste`, `CustomButton`,
-  `Dialog`, `Erklaerung`, `Fehlermeldung`, `Fehlerzustand`, `Feld`, `Fortschrittsbalken`, `Icon`,
-  `Ladespinner`, `Leerzustand`, `OfflineHinweis` (Symbol über `Icon`), `Platzhalter`.
-- **Fehlertexte:** `fehlertextBilden`, `istWiederholbar`, `TEXT_NICHT_ERREICHBAR` in
-  `src/api/common/fehler.ts`.
-- **Seiten zusätzlich:** `NichtGefunden` (Route `*`).
-- **Layout:** `AppLayout` mit Safe-Area, Zurück-Navigation (Ziel aus `handle.zurueck`, sonst ein
-  Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
-- **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
+  `Erklaerung`, `Feld`, `Icon`, `Ladespinner`, `OfflineHinweis`, `Platzhalter`.
+- **Layout:** `AppLayout` mit Safe-Area, Zurück-Navigation (abbestellbar) und Inhalt als Flex-Spalte.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 135 Unit-Tests in 28 Dateien; E2E in `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
-  gefunden", Fokusring), `namensauswahl.spec.ts`
+- **Tests:** 113 Unit-Tests in 22 Dateien; E2E in `layout.spec.ts`, `namensauswahl.spec.ts`
   (API per `page.route`) und `pwa.spec.ts` (nur Chromium). CI: Job `pruefen` (Lint, Typen, Bau,
   Unit-Tests) und Job `e2e` (alle sieben Projekte, Chromium und WebKit).
 
-### 6.2 Verifikation (Stand 03.10.2026, Abschluss C2)
-`npm run typecheck`, `npm run lint`, **135 Unit-Tests**, Bau (sechs Precache-Einträge), kein Hexwert
-ausserhalb der Tokendatei, kein `darken(`/`lighten(`/`@import`, `npm ci` in frischem Baum, **72
-E2E-Tests in den drei Chromium-Projekten**. Gegenproben (Test rot ohne Absicherung): Wiederöffnen
-im Modus `festhalten`, Direkteinstieg (Unit und E2E – ohne Absicherung landete „Zurück" auf
-`about:blank`), kein „Erneut versuchen" bei `409`. Sichtprüfung bei 360 px über eine nur in der
-Prüfumgebung angelegte Demo-Route: Fortschrittsbalken, Leerzustand, Dialog als Bottom Sheet
-(Fokusfalle hält, Escape schliesst, Fokus kehrt zurück), „nicht gefunden", Ladefehler der
-Namensauswahl, Offline-Hinweis mit Netzfehler an der PIN. **Nicht geprüft:** die vier
-WebKit-Projekte (Browser-Download gesperrt) – sie laufen im CI-Job `e2e`.
+### 6.2 Verifikation (Stand 03.10.2026)
+`npm run typecheck`, `npm run lint`, 113 Unit-Tests, `npm run build` (sechs Precache-Einträge), kein
+Hexwert ausserhalb der Tokendatei, `npm ci` in frischem Baum, **57 E2E-Tests in den drei
+Chromium-Projekten**, Sichtprüfungen bei 320/360/390 px. **Nicht lokal geprüft:** die vier
+WebKit-Projekte (Download in der Prüfumgebung gesperrt) – sie laufen ab dem nächsten Push im
+CI-Job `e2e`. Die Safari-Darstellung der PIN-Kästchen hat der Entwickler von Hand bestätigt.
 
 ### 6.3 Fallen, die aufgetreten sind
 - **`npm install` repariert die Sperrdatei stillschweigend**, nur `npm ci` prüft sie (26.09.).
@@ -156,20 +121,9 @@ WebKit-Projekte (Browser-Download gesperrt) – sie laufen im CI-Job `e2e`.
 - **Playwright klickt nicht auf `aria-disabled`-Elemente** (wartet); im Test `force: true`.
 - **Umbenennen per Suchen und Ersetzen** traf Kommentare, Doku und Archive („Iconn"); korrigiert, Archive
   aus Git wiederhergestellt, Ordner `AppIcon` → `Icon`.
-- **jsdom kennt `showModal` nicht** – Stub in `setup.ts`; Tests prüfen `dialog.open`.
-- **`::backdrop` erbte früher nichts** – eigenes Token direkt auf `::backdrop`.
-- **`cancel` am Dialog ist nicht garantiert** (Close Watcher, Chrome 122) – Wiederöffnen in `onClose`.
-- **Im verbundenen Ordner ist Löschen standardmässig gesperrt:** `vite build` scheitert beim Leeren
-  von `dist/`, und ein Git-Aufruf hinterliess eine leere `.git/index.lock` (entfernt). Gilt nur für
-  die Agentenumgebung, nicht für das lokale Terminal.
 
 ### 6.4 Bewusst offen
-- Zielangabe mit Parameter (`teams/:terminId` → Termin) kennt `RoutenAngaben` noch nicht (C6).
-- `/admin/anmelden` und „nicht gefunden" lesen beim Direkteinstieg keine Sitzung; der
-  Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
-- Dialog-E2E (Fokusfalle, Escape) braucht den ersten echten Dialog – folgt mit dem Ablauf-Dialog (C3).
-- Tab auf Links/Schaltflächen ist in WebKit ohne Systemeinstellung nicht möglich; der E2E-Test dazu
-  läuft nur in Chromium, WebKit bleibt Handprüfung.
+- `navigate(-1)` ohne Vorgänger beim Direkteinstieg (Zielangabe für die Zurück-Schaltfläche, C2 8.1).
 - Titel „MONTAGS-KICKER" bricht unter 360 px Breite um (320 px: zwei Zeilen).
 - `alt` des Logos auf der PIN-Seite: das Bild ist schmückend (Titel folgt), `alt=""` wäre korrekt.
 - `npm audit`: drei moderate Befunde in `@vitest/mocker` (nur Entwicklung, Behebung verlangt Vitest 5).
@@ -180,9 +134,9 @@ WebKit-Projekte (Browser-Download gesperrt) – sie laufen im CI-Job `e2e`.
 2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
    gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
 3. **C3 fortsetzen:** Restlaufzeit-Anzeige (`gueltigBis`, `absolutGueltigBis`), Erneuerung,
-   Ablauf-Dialog (mit `Dialog festhalten` aus C2, dazu der Dialog-E2E-Test), Abmelden.
-4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
-   CI-Lauf mit WebKit.
+   Ablauf-Dialog (braucht `Dialog` aus C2), Abmelden.
+4. **C2 abschliessen:** Fortschrittsbalken, Dialog (jsdom-Stub für `showModal`), Leer- und
+   Fehlerzustand als Komponenten, Zurück-Ziel, Offline-Hinweis mit `Icon`.
 5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).
 6. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus,
    `FUBO_INITIAL_PIN` vierstellig.

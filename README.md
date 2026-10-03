@@ -48,7 +48,7 @@ Server-State, React Router, `vite-plugin-pwa` mit eigenem Service Worker
 ```
 src/api/common/          Querschnitt des Datenzugriffs (httpService, fehler, schluessel)
 src/api/common/types/    schema.d.ts – Generat aus harness/assets/fubo-api.json
-src/api/<domaene>/       fachlicher Datenzugriff je Domäne, z. B. sitzung/
+src/api/<domaene>/       fachlicher Datenzugriff je Domäne, z. B. auth/
 src/app/                 Routen, Guards (schutz/), Query-Client
 src/components/<Name>/   Komponente, Stil und Test in einem Ordner
 src/context/             React-Kontexte (noch leer)

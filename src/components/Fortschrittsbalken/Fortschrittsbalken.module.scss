@@ -1,0 +1,45 @@
+@use '@/styles/globalVars';
+
+// Lokale Hoehe der Spur: dick genug, um im Sonnenlicht als Balken erkennbar zu
+// sein (DESIGN.md), aber kein Bedienelement.
+$spur-hoehe: 0.75rem;
+
+.behaelter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.spur {
+  overflow: hidden;
+  block-size: $spur-hoehe;
+  border-radius: var(--radius-l);
+  background: var(--farbe-flaeche-kraeftig);
+}
+
+.fuellung {
+  // Breite ueber eine Variable statt eines Inline-`inline-size`: Die Komponente
+  // setzt nur den Anteil, die Darstellung bleibt im Stylesheet.
+  inline-size: var(--fuellung-anteil, 0%);
+  block-size: 100%;
+  border-radius: inherit;
+  transition: inline-size 0.3s ease-out;
+}
+
+// Rot meint hier „noch zu wenige“, nicht „Fehler“ – deshalb steht der Satz
+// daneben. Kontraste gegen die Spur: Erfolg 4.68:1, Fehler 6.30:1 (WCAG 1.4.11).
+.offen {
+  background: var(--farbe-fehler);
+}
+
+.erreicht {
+  background: var(--farbe-erfolg);
+}
+
+.text {
+  font-size: var(--schrift-basis);
+}
+
+.zahl {
+  font-weight: var(--gewicht-halbfett);
+}

@@ -22,18 +22,6 @@
   border-bottom: 1px solid var(--farbe-rand);
 }
 
-.zurueck {
-  min-height: var(--tapziel-min);
-  min-width: var(--tapziel-min);
-  padding: 0 var(--abstand-m);
-  // Bedienbarer Rand, nicht der dekorative: Die Flaeche hebt sich kaum vom
-  // Hintergrund ab, erst der Rand zeigt die Grenze der Schaltflaeche
-  // (WCAG 1.4.11, 3:1). Der dekorative Wert erreichte 1.43:1.
-  border: 1px solid var(--farbe-rand-bedienbar);
-  border-radius: var(--radius-m);
-  background: var(--farbe-flaeche);
-}
-
 .inhalt {
   flex: 1;
   // Spalte statt Block: Eine Ansicht kann mit `flex: 1` die Resthoehe

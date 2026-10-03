@@ -14,16 +14,16 @@
 
   padding: var(--abstand-s) var(--abstand-m);
   border-bottom: 1px solid var(--farbe-fehler);
-  background: var(--farbe-flaeche);
+  background: var(--farbe-fehler-flaeche);
+  // Text in Textfarbe statt in Fehlerrot: Der Streifen ist ein Zustand, kein
+  // Eingabefehler, und muss im Sonnenlicht gut lesbar sein.
   color: var(--farbe-text);
   font-size: var(--schrift-klein);
 }
 
+// Das Symbol traegt die Signalfarbe, der Text nicht (7.30:1 bzw. 6.65:1 auf
+// der Fehlerflaeche).
 .symbol {
-  flex: 0 0 auto;
-  width: 1.5rem;
-  height: 1.5rem;
-  // Das Symbol traegt eine feste fill-Farbe und folgt deshalb keinem
-  // Farb-Token (AGENT_CLIENT.md). Es liegt ueber `includeAssets` im Precache.
-  background: url('/icons/no_connection_icon_red.svg') no-repeat center / contain;
+  display: inline-flex;
+  color: var(--farbe-fehler);
 }

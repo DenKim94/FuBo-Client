@@ -1,0 +1,15 @@
+@use '@/styles/globalVars';
+
+.meldung {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--abstand-s);
+  inline-size: 100%;
+  max-inline-size: var(--breite-text);
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-fehler);
+  border-radius: var(--radius-m);
+  background: var(--farbe-fehler-flaeche);
+  color: var(--farbe-fehler); // 6.65:1 auf der Fehlerflaeche
+  text-align: start;
+}

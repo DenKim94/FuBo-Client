@@ -13,4 +13,15 @@ export type RoutenAngaben = {
    * `PIN_VERIFIED` dorthin gehört.
    */
   ohneZurueck?: boolean
+  /**
+   * Übergeordnete Ansicht, zu der die Zurück-Schaltfläche führt (C2, Abschnitt 6.1).
+   *
+   * „Einen Schritt zurück" und „zur übergeordneten Ansicht" sind verschiedene
+   * Dinge: Aus der Ergebniserfassung zur Teamansicht und von dort wieder
+   * zurück landete man mit `navigate(-1)` erneut in der Ergebniserfassung. Die
+   * Zielangabe ist deshalb die Regel, der Schritt im Verlauf die Abkürzung für
+   * Routen ohne eindeutige übergeordnete Ansicht. Bei verschachtelten Routen
+   * gilt die Angabe der innersten.
+   */
+  zurueck?: string
 }

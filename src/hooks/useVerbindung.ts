@@ -50,11 +50,16 @@ function abonnieren(benachrichtigen: () => void): () => void {
 export function useVerbindung(): { verbunden: boolean } {
   // Vor dem ersten Aufruf steht der beobachtete Zustand auf „intakt", und
   // `navigator.onLine` meldet auch im WLAN ohne Weg ins Internet `true`. Die
-  // Luecke ist seit dem 03.10.2026 auf den Bruchteil einer Sekunde begrenzt:
-  // Jede Ansicht liest beim Start ueber ihren Guard die Sitzung
-  // (`GET /auth/session/lesen`), und dessen Ergebnis – Antwort oder Netzfehler –
-  // landet ueber `aufrufen` in diesem Zustand. Der dritte Parameter ist nur der
-  // Serverschnappschuss (kein SSR im Projekt).
-  const verbunden = useSyncExternalStore(abonnieren, lesen, () => true)
+  // Luecke ist auf den Bruchteil einer Sekunde begrenzt, weil die Ansichten
+  // hinter den Guards beim Start die Sitzung lesen (`GET /auth/session/lesen`);
+  // dessen Ergebnis – Antwort oder Netzfehler – landet ueber `aufrufen` in
+  // diesem Zustand. **Ausnahme:** Die oeffentlichen Routen ohne Guard
+  // (`/admin/anmelden`, „nicht gefunden") rufen beim Direkteinstieg nichts auf;
+  // dort erscheint der Hinweis erst mit dem ersten Aufruf der Ansicht oder beim
+  // Browserereignis `offline`.
+  //
+  // Ohne dritten Parameter: Er waere nur der Schnappschuss fuer das
+  // Server-Rendering, das es in diesem Projekt nicht gibt.
+  const verbunden = useSyncExternalStore(abonnieren, lesen)
   return { verbunden }
 }

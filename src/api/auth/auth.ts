@@ -19,8 +19,8 @@ export type Rolle = components['schemas']['Rolle']
  *
  * **Zugleich darf dieser eine Aufruf die globale Abmeldung nicht auslösen.**
  * Täte er es, liefe der Startaufruf jedes nicht angemeldeten Besuchers in die
- * Behandlung aus `queryClient.ts`, die auf `/anmelden` umleitet – wo derselbe
- * Aufruf wieder stattfindet. Der `401` wird deshalb hier abgefangen, bevor er
+ * Behandlung aus `queryClient.ts`, die den Cache leert und zur PIN-Eingabe
+ * umleitet – wo derselbe Aufruf wieder stattfindet. Der `401` wird deshalb hier abgefangen, bevor er
  * den Query-Cache erreicht.
  *
  * @param keinRefresh Bei zyklischen Abrufen `true` setzen (Countdown ab C3),

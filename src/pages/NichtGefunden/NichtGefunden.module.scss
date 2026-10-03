@@ -1,0 +1,8 @@
+@use '@/styles/globalVars';
+
+.nichtGefunden {
+  // Nimmt die Resthoehe des Inhalts ein, damit der Leerzustand mittig steht.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

@@ -20,8 +20,14 @@ import { defineConfig, devices } from '@playwright/test'
  * sonst waeren sie in vier von sieben Projekten rot, ohne dass etwas kaputt ist.
  */
 
-/** Tests, die einen Chromium-Unterbau brauchen (Service Worker, Manifest-Pruefung). */
-const NUR_CHROMIUM = /\.pwa\.spec\.ts$/
+/**
+ * Tests, die einen Chromium-Unterbau brauchen (Service Worker, Manifest-Pruefung):
+ * `pwa.spec.ts` und jede `*.pwa.spec.ts`. Bis zum 03.10.2026 lautete das Muster
+ * `/\.pwa\.spec\.ts$/` und erfasste die vorhandene Datei `pwa.spec.ts` nicht – vor
+ * „pwa" steht dort ein `/`, kein Punkt. Die PWA-Tests waeren im CI damit auch in
+ * den vier WebKit-Projekten gelaufen (nachgeprueft mit `playwright test --list`).
+ */
+const NUR_CHROMIUM = /(^|[/\\.])pwa\.spec\.ts$/
 
 const istCi = Boolean(process.env.CI)
 

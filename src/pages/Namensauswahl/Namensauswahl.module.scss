@@ -125,27 +125,3 @@
   color: var(--farbe-text-schwach);
 }
 
-// --- Meldungen ----------------------------------------------------------------
-
-.meldung,
-.meldungText {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--abstand-s);
-}
-
-.meldung {
-  padding: var(--abstand-s) var(--abstand-m);
-  border: 1px solid var(--farbe-fehler);
-  border-radius: var(--radius-m);
-  background: var(--farbe-fehler-flaeche);
-  color: var(--farbe-fehler);
-}
-
-.ladefehler {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--abstand-m);
-  color: var(--farbe-fehler);
-}

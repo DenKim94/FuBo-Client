@@ -1,0 +1,53 @@
+@use '@/styles/globalVars';
+
+.dialog {
+  // Der Dialog liegt im Top-Layer, also ausserhalb von `AppLayout`: Dessen
+  // Safe-Area-Raender erreichen ihn nicht und stehen deshalb hier selbst.
+  //
+  // Auf dem Telefon unten angedockt (Bottom Sheet): Die Schaltflaechen liegen
+  // in Daumenreichweite (A2).
+  margin: auto auto 0;
+  inline-size: min(100%, 32rem);
+  // Die Vorgabe des Browsers (`max-width: calc(100% - 6px - 2em)`) liesse
+  // links und rechts einen Streifen frei; das Sheet soll randlos anliegen.
+  max-inline-size: 100%;
+  max-block-size: calc(100% - var(--sicher-oben) - var(--abstand-xl));
+  overflow-y: auto;
+  padding: var(--abstand-l);
+  padding-inline: calc(var(--abstand-l) + var(--sicher-links)) calc(var(--abstand-l) + var(--sicher-rechts));
+  padding-block-end: calc(var(--abstand-l) + var(--sicher-unten));
+  border: 0;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+}
+
+.dialog::backdrop {
+  // Eigenes Token, das in `_globalVars.scss` direkt auf `::backdrop` sitzt:
+  // Aeltere Browser lassen `::backdrop` nichts von `:root` erben, ein
+  // `color-mix` mit `var(--farbe-text)` waere dort unwirksam.
+  background: var(--farbe-abdunkelung);
+}
+
+.titel {
+  margin-block-end: var(--abstand-m);
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+.inhalt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+}
+
+// Ab Tablet-Breite (nachrangig, A2) mittig statt angedockt.
+@media (min-width: 40rem) {
+  .dialog {
+    margin: auto;
+    max-block-size: calc(100% - var(--abstand-xl) * 2);
+    padding: var(--abstand-l);
+    border-radius: var(--radius-l);
+  }
+}

@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type SubmitEvent } from 'react'
 import { Link } from 'react-router'
-import { ApiFehler, istNetzfehler } from '@/api/common/fehler'
+import { ApiFehler, fehlertextBilden } from '@/api/common/fehler'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
+import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import { usePinPruefen } from '@/hooks/usePinPruefen'
 import style from './PinEingabe.module.scss'
 
@@ -12,21 +13,8 @@ import style from './PinEingabe.module.scss'
  */
 const PIN_LAENGE = 4
 
-/**
- * Formuliert den Text für den Fehlerkasten.
- *
- * Bei einer Antwort des Servers ist das dessen `detail` – unverändert, denn er
- * kennt Restversuche und Wartezeit genauer als der Client. Eigene Worte nur, wo
- * gar keine Antwort kam.
- *
- * @param fehler Der Fehler der PIN-Prüfung.
- * @returns Der anzuzeigende Text.
- */
-function fehlertextBilden(fehler: Error): string {
-  if (fehler instanceof ApiFehler) return fehler.message
-  if (istNetzfehler(fehler)) return 'Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.'
-  return 'Die PIN konnte nicht geprüft werden. Bitte versuche es erneut.'
-}
+/** Rückfalltext, falls der Fehler weder vom Server stammt noch ein Netzfehler ist. */
+const FEHLER_ERSATZ = 'Die PIN konnte nicht geprüft werden. Bitte versuche es erneut.'
 
 /**
  * Erste Stufe des Logins: Eingabe der zentralen PIN (A1/A3, Screen 01 der Prototypen).
@@ -97,7 +85,9 @@ export default function PinEingabe() {
     })
   }
 
-  const fehlertext = pruefung.error ? fehlertextBilden(pruefung.error) : null
+  // Bei einer Antwort des Servers dessen `detail` – er kennt Restversuche und
+  // Wartezeit genauer als der Client.
+  const fehlertext = pruefung.error ? fehlertextBilden(pruefung.error, FEHLER_ERSATZ) : null
   const felderKlassen = [style.felder, fehlertext && pin === '' && style.fehlerhaft]
     .filter(Boolean)
     .join(' ')
@@ -170,10 +160,9 @@ export default function PinEingabe() {
         </p>
 
         {fehlertext && (
-          <p className={style.fehler} id={fehlerId} role="alert" data-testid="pin-fehler">
-            <span className={style.fehlerSymbol} aria-hidden="true" />
-            <span>{fehlertext}</span>
-          </p>
+          <Fehlermeldung id={fehlerId} data-testid="pin-fehler">
+            {fehlertext}
+          </Fehlermeldung>
         )}
       </div>
 

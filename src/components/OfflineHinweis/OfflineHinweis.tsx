@@ -1,3 +1,4 @@
+import Icon from '@/components/Icon/Icon'
 import { useVerbindung } from '@/hooks/useVerbindung'
 import style from './OfflineHinweis.module.scss'
 
@@ -14,8 +15,12 @@ import style from './OfflineHinweis.module.scss'
  * Warteschlange an. Eine lokal zwischengespeicherte Zusage widerspräche A15
  * (`teilnehmerVersion`) und A21 („der erste Eintrag gilt").
  *
- * Die Gestaltung ist vorläufig; sie wird mit dem Design-System in C2
- * nachgezogen.
+ * **Das Symbol** kommt über `Icon` (CSS-Maske in der Textfarbe des Streifens).
+ * Die Datei `no_connection_icon_red.svg` liegt weiterhin im Precache: Auch als
+ * Maske wird sie geladen, und offline gibt es sie nur von dort. Ohne aktiven
+ * Service Worker (erster Besuch) fehlt sie – dann bleibt die Maske leer, und
+ * anders als ein `<img>` erscheint kein kaputtes Bild. Die Aussage steht im
+ * Text, das Symbol trägt sie nur mit.
  */
 export default function OfflineHinweis() {
   const { verbunden } = useVerbindung()
@@ -24,11 +29,9 @@ export default function OfflineHinweis() {
 
   return (
     <div className={style.hinweis} role="status" data-testid="offline-hinweis">
-      {/* Dekorativ: Die Aussage steht im Text, das Symbol trägt sie nur mit.
-          Als CSS-Hintergrund und nicht als `img`, weil ein Symbol, das ohne
-          aktiven Service Worker noch nicht im Precache liegt, sonst als
-          kaputtes Bild erschiene – ausgerechnet im Fehlerfall. */}
-      <span className={style.symbol} aria-hidden="true" />
+      <span className={style.symbol}>
+        <Icon name="no_connection_icon_red" />
+      </span>
       <span>Keine Verbindung. Die Anwendung braucht den Server; Eingaben werden nicht gespeichert.</span>
     </div>
   )

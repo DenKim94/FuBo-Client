@@ -1,12 +1,13 @@
 import { useId, useState, type SubmitEvent } from 'react'
 import type { GastStufe } from '@/api/auth/auth'
-import { ApiFehler, istNetzfehler } from '@/api/common/fehler'
+import { ApiFehler, fehlertextBilden } from '@/api/common/fehler'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import Auswahlliste from '@/components/Auswahlliste/Auswahlliste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Erklaerung from '@/components/Erklaerung/Erklaerung'
+import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
+import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Feld from '@/components/Feld/Feld'
-import Icon from '@/components/Icon/Icon'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import { useGastAnmelden } from '@/hooks/useGastAnmelden'
 import { useNameWaehlen } from '@/hooks/useNameWaehlen'
@@ -32,21 +33,6 @@ const GAST_ERKLAERUNG =
   'Als Gast spielst du ohne eigenes Profil mit. Dein Name gilt nur für diese Sitzung und ' +
   'erscheint mit dem Zusatz „(Gast)". Deine Selbsteinschätzung hilft, die Teams ' +
   'ausgeglichen einzuteilen.'
-
-/**
- * Formuliert den Text eines fehlgeschlagenen Aufrufs.
- *
- * Bei einer Antwort des Servers dessen `detail`, sonst eigene Worte – nur dann
- * gibt es kein `detail`.
- *
- * @param fehler Der Fehler des Aufrufs.
- * @returns Der anzuzeigende Text.
- */
-function fehlertextBilden(fehler: Error): string {
-  if (fehler instanceof ApiFehler) return fehler.message
-  if (istNetzfehler(fehler)) return 'Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.'
-  return 'Die Anmeldung ist fehlgeschlagen. Bitte versuche es erneut.'
-}
 
 /**
  * Zweite Stufe des Logins: Namensauswahl für Spieler und Gäste (A4, A6, A8).
@@ -100,7 +86,7 @@ export default function Namensauswahl() {
     gast.error instanceof ApiFehler && gast.error.code === 'NAME_BELEGT' ? gast.error.message : null
   const aufrufFehler = waehlen.error ?? (gastNameFehler ? null : gast.error)
   const meldung = aufrufFehler
-    ? fehlertextBilden(aufrufFehler)
+    ? fehlertextBilden(aufrufFehler, 'Die Anmeldung ist fehlgeschlagen. Bitte versuche es erneut.')
     : gewaehltBelegt && gewaehlt
       ? `„${gewaehlt.name}" ist bereits angemeldet. Bitte wähle einen anderen Namen.`
       : null
@@ -145,15 +131,12 @@ export default function Namensauswahl() {
         {namensliste.isPending ? (
           <Ladespinner groesse="gross" zentriert text="Namen werden geladen" />
         ) : namensliste.isError ? (
-          <div className={style.ladefehler} role="alert" data-testid="namensauswahl-ladefehler">
-            <p className={style.meldungText}>
-              <Icon name="error_circle_icon" />
-              <span>{fehlertextBilden(namensliste.error)}</span>
-            </p>
-            <CustomButton onClick={() => void namensliste.refetch()} data-testid="namensauswahl-erneut">
-              Erneut versuchen
-            </CustomButton>
-          </div>
+          <Fehlerzustand
+            fehler={namensliste.error}
+            erneut={() => void namensliste.refetch()}
+            ersatz="Die Namen konnten nicht geladen werden."
+            data-testid="namensauswahl-ladefehler"
+          />
         ) : (
           <Auswahlliste
             beschriftung="Dein Name"
@@ -230,12 +213,7 @@ export default function Namensauswahl() {
           </section>
         )}
 
-        {meldung && (
-          <p className={style.meldung} role="alert" data-testid="namensauswahl-meldung">
-            <Icon name="error_circle_icon" />
-            <span>{meldung}</span>
-          </p>
-        )}
+        {meldung && <Fehlermeldung data-testid="namensauswahl-meldung">{meldung}</Fehlermeldung>}
       </div>
 
       <Aktionsleiste>

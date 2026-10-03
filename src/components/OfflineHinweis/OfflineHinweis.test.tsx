@@ -33,6 +33,8 @@ describe('OfflineHinweis', () => {
     // `role="status"` meldet den Zustand dem Screenreader, ohne den Fokus zu
     // verschieben.
     expect(hinweis).toHaveAttribute('role', 'status')
+    // Das Symbol kommt ueber `Icon` und ist schmueckend: Die Aussage steht im Text.
+    expect(screen.getByTestId('icon-no_connection_icon_red')).toHaveAttribute('aria-hidden', 'true')
   })
 
   test('erscheint auch, wenn der Browser ein Netz sieht, ein Aufruf aber ohne Antwort blieb', () => {

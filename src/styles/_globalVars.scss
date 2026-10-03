@@ -112,3 +112,15 @@
   --ebene-dialog: 100;
   --ebene-hinweis: 200;
 }
+
+// Abdunkelung hinter modalen Dialogen. Eigene Regel auf `::backdrop` statt eines
+// Tokens in `:root`: Nach der frueheren Spezifikation erbte `::backdrop` von
+// nichts, auch nicht von `:root`; erst neuere Browser (u. a. Chrome 122,
+// Safari 17.4) lassen es vom Dialog erben. Auf iOS 16.4 bis 17.3 – innerhalb der
+// Spanne, die A25b abdeckt – waere ein `var(--farbe-text)` dort unwirksam und
+// der Hintergrund durchsichtig. Der Wert ist --farbe-text mit 45 % Deckkraft.
+// Eine eigene Regel und keine Selektorliste `:root, ::backdrop`: Ein Browser,
+// der `::backdrop` nicht kennt, verwuerfe sonst die ganze Liste samt aller Tokens.
+::backdrop {
+  --farbe-abdunkelung: #11150f73;
+}

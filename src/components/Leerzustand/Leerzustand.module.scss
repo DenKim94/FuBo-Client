@@ -1,0 +1,32 @@
+@use '@/styles/globalVars';
+
+.zustand {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--abstand-s);
+  padding-block: var(--abstand-l);
+  text-align: center;
+}
+
+.symbol {
+  display: inline-flex;
+  color: var(--farbe-text-schwach);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+.text {
+  max-inline-size: var(--breite-text);
+  color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
+}
+
+.aktion {
+  margin-block-start: var(--abstand-s);
+}

@@ -4,12 +4,22 @@ import type { RoutenAngaben } from '@/app/routenAngaben'
 import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
+import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
+import NichtGefunden from '@/pages/NichtGefunden/NichtGefunden'
 import PinEingabe from '@/pages/PinEingabe/PinEingabe'
 
 /** Login-Schritte haben kein sinnvolles „Zurück" (siehe `RoutenAngaben`). */
 const LOGIN_SCHRITT: RoutenAngaben = { ohneZurueck: true }
+
+/**
+ * Ansichten direkt unter dem Dashboard: „Zurück" führt dorthin, nicht einen
+ * Schritt im Verlauf (C2, Abschnitt 6.1). Routen ohne eindeutige übergeordnete
+ * Ansicht – die Admin-Anmeldung, die man von der PIN-Eingabe wie vom Dashboard
+ * aus erreicht – bleiben ohne Angabe und gehen einen Schritt zurück.
+ */
+const ZUM_DASHBOARD: RoutenAngaben = { zurueck: LOGIN_PFADE.start }
 
 /**
  * Routenbaum der Anwendung.
@@ -60,12 +70,22 @@ export const routen = createBrowserRouter([
         element: <GeschuetzteRoute />,
         children: [
           { index: true, element: <Platzhalter titel="Start" paket="C5" /> },
-          { path: 'termine/:terminId', element: <Platzhalter titel="Termin" paket="C5" /> },
+          {
+            path: 'termine/:terminId',
+            element: <Platzhalter titel="Termin" paket="C5" />,
+            handle: ZUM_DASHBOARD,
+          },
+          // Ziel offen bis C6: Die übergeordnete Ansicht ist voraussichtlich der
+          // Termin – eine Zielangabe mit Parameter kennt `RoutenAngaben` noch nicht.
           { path: 'teams/:terminId', element: <Platzhalter titel="Teams" paket="C6" /> },
           // Die Einstellungen sind fuer jede angemeldete Person erreichbar; den
           // Benachrichtigungsbereich blendet die Ansicht fuer GAST selbst aus
           // (A25d), weil die zugehoerigen Endpunkte dort mit `403` antworten.
-          { path: 'einstellungen', element: <Platzhalter titel="Einstellungen" paket="C8" /> },
+          {
+            path: 'einstellungen',
+            element: <Platzhalter titel="Einstellungen" paket="C8" />,
+            handle: ZUM_DASHBOARD,
+          },
 
           // --- Zusaetzlich nur fuer die Rolle ADMIN -------------------------
           {
@@ -78,8 +98,9 @@ export const routen = createBrowserRouter([
       },
 
       // Bewusst oeffentlich: Ein Tippfehler in der Adresse soll die Seite
-      // „nicht gefunden" zeigen und nicht zur Anmeldung umleiten.
-      { path: '*', element: <Platzhalter titel="Seite nicht gefunden" paket="C2" /> },
+      // „nicht gefunden" zeigen und nicht zur Anmeldung umleiten. Ohne
+      // Zurueck-Schaltflaeche: Die Ansicht fuehrt selbst zur Startseite.
+      { path: '*', element: <NichtGefunden />, handle: { ohneZurueck: true } satisfies RoutenAngaben },
     ],
   },
 ])

@@ -50,6 +50,60 @@ test.describe('Rahmen und Navigation', () => {
     await expect(page.getByTestId('layout-zurueck')).toBeVisible()
   })
 
+  test('fuehrt beim Direkteinstieg mit Zurueck zur Startseite statt aus der Anwendung', async ({ page }) => {
+    // Direkteinstieg: Vor diesem Eintrag liegt im Tab nur `about:blank`. Ein
+    // `navigate(-1)` fuehrte dorthin und verliesse die Anwendung.
+    await page.goto('/admin/anmelden')
+    await page.getByTestId('layout-zurueck').click()
+    // Ohne Sitzung leitet die Startseite zur PIN-Eingabe weiter.
+    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+  })
+
+  test('geht nach einem Schritt innerhalb der Anwendung mit Zurueck dorthin zurueck', async ({ page }) => {
+    await page.goto('/pin/pruefen')
+    await page.getByTestId('pin-admin-link').click()
+    await expect(page).toHaveURL(/\/admin\/anmelden$/)
+    await page.getByTestId('layout-zurueck').click()
+    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+  })
+
+  test('zeigt fuer eine unbekannte Adresse die Seite „nicht gefunden"', async ({ page }) => {
+    await page.goto('/gibt-es-nicht')
+    // Kein Guard: Ein Tippfehler leitet nicht zur Anmeldung um.
+    await expect(page).toHaveURL(/\/gibt-es-nicht$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Seite nicht gefunden' })).toBeVisible()
+    await page.getByTestId('nicht-gefunden-start').click()
+    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+  })
+
+  test('zeigt den Fokusring am fokussierten Eingabefeld', async ({ page }) => {
+    await page.goto('/pin/pruefen')
+    const feld = page.getByTestId('pin-feld')
+    await expect(feld).toBeFocused()
+    // Regel aus `_reset.scss`: 3 px in --farbe-fokus. Ein Textfeld erfuellt
+    // `:focus-visible` auch nach programmatischem Fokus.
+    await expect(feld).toHaveCSS('outline-style', 'solid')
+    await expect(feld).toHaveCSS('outline-width', '3px')
+  })
+
+  test('zeigt den Fokusring bei Tastaturbedienung', async ({ page, browserName }) => {
+    // Safari und WebKit erreichen Links und Schaltflaechen per Tab nur mit der
+    // Systemeinstellung „Mit Tab-Taste alle Objekte hervorheben". Der Ring
+    // selbst ist oben am Feld in allen Engines geprueft; das Weiterspringen per
+    // Tab bleibt fuer WebKit eine Handpruefung (C2-Abnahme, Punkt 9).
+    test.skip(browserName === 'webkit', 'WebKit springt per Tab ohne Systemeinstellung nicht auf Links.')
+    await page.goto('/pin/pruefen')
+    await expect(page.getByTestId('pin-feld')).toBeFocused()
+
+    await page.keyboard.press('Tab')
+
+    // „Absenden" ist bei leerem Feld gesperrt und wird uebersprungen.
+    const link = page.getByTestId('pin-admin-link')
+    await expect(link).toBeFocused()
+    await expect(link).toHaveCSS('outline-style', 'solid')
+    await expect(link).toHaveCSS('outline-width', '3px')
+  })
+
   test('haelt das Mindestmass fuer Tap-Ziele ein', async ({ page }) => {
     await page.goto('/admin/anmelden')
     const kasten = await page.getByTestId('layout-zurueck').boundingBox()

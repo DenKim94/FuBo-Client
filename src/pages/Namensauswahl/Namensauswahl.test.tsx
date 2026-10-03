@@ -191,7 +191,7 @@ describe('Namensauswahl', () => {
       </QueryUmgebung>,
     )
     // Die Wiederholungsregel versucht einen 500 einmal selbst – erst danach steht der Fehler.
-    const erneut = await screen.findByTestId('namensauswahl-erneut', {}, { timeout: 4000 })
+    const erneut = await screen.findByTestId('namensauswahl-ladefehler-erneut', {}, { timeout: 4000 })
     expect(screen.getByRole('alert')).toHaveTextContent('Unerwarteter Fehler.')
 
     fireEvent.click(erneut)

@@ -49,3 +49,45 @@ export class ApiFehler extends Error {
 export function istNetzfehler(fehler: unknown): boolean {
   return fehler instanceof TypeError
 }
+
+/** Eigene Worte für den einzigen Fall, in dem kein `detail` des Servers vorliegt: keine Antwort. */
+export const TEXT_NICHT_ERREICHBAR = 'Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.'
+
+/**
+ * Bildet den Anzeigetext eines fehlgeschlagenen Aufrufs.
+ *
+ * **Keine Übersetzungstabelle:** Hat der Server geantwortet, ist der Text sein
+ * `detail` – unverändert, denn er kennt Restversuche, Wartezeiten und Namen
+ * genauer als der Client. Eigene Worte gibt es nur, wo gar keine Antwort kam
+ * (Netzfehler), und als letzter Rückfall für Fehler, die nicht aus `aufrufen`
+ * stammen.
+ *
+ * Steht hier neben {@link istNetzfehler} und nicht in einer Komponente: Die
+ * Unterscheidung „Antwort oder keine Antwort“ gehört zur API-Schicht, und
+ * `Fehlermeldung` wie `Fehlerzustand` brauchen denselben Text. Vorher trugen
+ * `PinEingabe` und `Namensauswahl` je eine eigene Kopie.
+ *
+ * @param fehler Der Fehler einer Abfrage oder Mutation, beliebigen Typs.
+ * @param ersatz Text für Fehler, die weder `ApiFehler` noch Netzfehler sind.
+ * @returns Der anzuzeigende Text.
+ */
+export function fehlertextBilden(fehler: unknown, ersatz = 'Unbekannter Fehler.'): string {
+  if (fehler instanceof ApiFehler) return fehler.message
+  if (istNetzfehler(fehler)) return TEXT_NICHT_ERREICHBAR
+  return ersatz
+}
+
+/**
+ * Sagt, ob ein zweiter Versuch etwas ändern kann.
+ *
+ * Ja bei einem Netzfehler und bei `≥ 500` – dieselbe Grenze, die die
+ * Wiederholungsregel in `queryClient.ts` zieht. Nein bei jeder anderen Antwort:
+ * `403`, `404` oder `409` sind fachliche Ablehnungen, ein neuer Versuch liefert
+ * dieselbe Antwort, und eine angebotene Schaltfläche wäre ein leeres Versprechen.
+ *
+ * @param fehler Der Fehler einer Abfrage oder Mutation, beliebigen Typs.
+ */
+export function istWiederholbar(fehler: unknown): boolean {
+  if (istNetzfehler(fehler)) return true
+  return fehler instanceof ApiFehler && fehler.status >= 500
+}

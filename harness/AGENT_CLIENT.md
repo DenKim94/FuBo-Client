@@ -4,6 +4,7 @@
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`. Gestraffte Fassung vom 03.10.2026; die
 > ausführliche Vorfassung mit allen Herleitungen liegt unter `archive/AGENT_CLIENT_2026-10-03.md`.
+> Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2.
 
 ### Rolle
 Senior-Frontend-Entwickler mit Schwerpunkt TypeScript und React (ab 19). Achtet auf Testbarkeit,
@@ -79,7 +80,9 @@ und erscheint **nirgends** in der Oberfläche.
   ein `fetch(`. `204` liefert `undefined` (23 von 44 Operationen), jede Fehlerantwort wird `ApiFehler`.
 - **Anzeigetext ist `detail` vom Server, Programmlogik verzweigt über `code`.** Keine Übersetzungstabelle
   `Fehlercode → Text`. Eigene Worte nur, wo keine Antwort kam oder die Oberfläche mehr weiss (Fehler am
-  Formularfeld statt im Kasten).
+  Formularfeld statt im Kasten). Text immer über `fehlertextBilden(fehler, ersatz)` aus
+  `src/api/common/fehler.ts`, nie über eine eigene Funktion in der Ansicht; ob ein neuer Versuch
+  angeboten wird, entscheidet `istWiederholbar` (Netzfehler, `≥ 500`).
 - **Sitzungsende nur bei `401 SESSION_UNGUELTIG`** (oder `401` ohne lesbaren Code); `PIN_FALSCH`,
   `ADMIN_PASSWORT_FALSCH`, `RESET_PIN_FALSCH` sind Eingabefehler (`istSitzungsende` in `queryClient.ts`).
   Ein Sitzungsende während der Nutzung leitet der `SitzungsWaechter` zur PIN.
@@ -187,7 +190,22 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art`, `breit`, `laedt`,
   `type="button"` vorbelegt), `Ladespinner` (150 ms verzögert, `role="status"`, in Schaltflächen
   `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden benutzten Namen),
-  `Feld`, `Auswahlliste`, `Erklaerung`, `Aktionsleiste`.
+  `Feld`, `Auswahlliste`, `Erklaerung`, `Aktionsleiste`, `Dialog`, `Fortschrittsbalken`,
+  `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`.
+- **Dialog (03.10.2026):** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über
+  `useId`. Unterbrechungsfeindliche Dialoge mit `festhalten` – die Komponente weist Escape ab und
+  öffnet sich wieder, wenn der Browser `cancel` überspringt (Close Watcher, Chrome 122; auch die
+  Zurück-Geste unter Android). Auf dem Telefon unten angedockt, Safe-Area im Dialog selbst (Top-Layer).
+  Abdunkelung über `--farbe-abdunkelung`, das direkt auf `::backdrop` sitzt (älteres `::backdrop`
+  erbt nichts von `:root`). jsdom-Stub für `showModal`/`close` in `src/test/setup.ts`; Unit-Tests
+  prüfen `dialog.open`, Fokusfalle und Escape gehören in Playwright.
+- **Fehler- und Leerzustand:** `Fehlermeldung` steht neben einer bedienbaren Ansicht (Kasten,
+  `role="alert"`, optionale `id` für `aria-describedby`); `Fehlerzustand` ersetzt den Inhalt, wenn
+  ohne Daten nichts zu bedienen ist (Test-ID der Schaltfläche: `<test-id>-erneut`). `Leerzustand`
+  nennt immer Grund und nächsten Schritt (`titel` und `text` Pflicht), ohne `role`.
+- **Zurück-Navigation:** Übergeordnete Ansicht als `handle.zurueck` (`RoutenAngaben`, innerste Route
+  gilt); ohne Angabe ein Schritt zurück, beim Direkteinstieg (`history.state.idx` ≤ 0) zur Startseite.
+  `history.length` und `location.key` taugen zur Erkennung nicht.
 - **`Auswahlliste` ist eine gestaltete Combobox, kein natives `<select>`** (03.10.2026, ersetzt C2 7.3):
   Dessen aufgeklappte Liste zeichnet das Betriebssystem. Nachgebildet nach WAI-ARIA APG
   („Select-only Combobox"): `aria-activedescendant`, Pfeiltasten, Pos1/Ende, Enter/Leertaste, Escape,
@@ -203,7 +221,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   gilt erst, wenn ihr Test ohne sie rot wird (Gegenprobe).
 - **End-to-End:** sieben Geräteprojekte gegen die gebaute Fassung, **drei Chromium und vier WebKit**;
   lokal vorher `npm run e2e:browser`, in **CI laufen alle sieben** (Job `e2e`, `--with-deps chromium
-  webkit`). PWA-Tests in `e2e/*.pwa.spec.ts` nur in Chromium. API ohne Server über `page.route`
+  webkit`). PWA-Tests in `e2e/*.pwa.spec.ts` nur in Chromium. Tab-Navigation auf Links und
+  Schaltflächen ist in WebKit ohne Systemeinstellung nicht möglich; solche Tests mit `test.skip` für
+  `webkit` und als Handprüfung führen. API ohne Server über `page.route`
   nachbilden. Klick auf `aria-disabled`-Elemente mit `force: true`. Safe-Area, `beforeinstallprompt`
   und Web Push auf iOS bleiben Handprüfungen.
 - Validierung: `npm run lint`, `typecheck`, `test`, `build`, `test:e2e`. Nach Abhängigkeitsänderungen
