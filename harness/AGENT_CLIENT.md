@@ -5,7 +5,7 @@
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`. Gestraffte Fassung vom 03.10.2026; die
 > ausführliche Vorfassung mit allen Herleitungen liegt unter `archive/AGENT_CLIENT_2026-10-03.md`.
 > Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2, am 04.10.2026 um den
-> Ablauf-Dialog der Sitzung (C3).
+> Ablauf-Dialog der Sitzung und den Abschluss von C3 (verlängernde Abrufe nur bei Bedienung).
 
 ### Rolle
 Senior-Frontend-Entwickler mit Schwerpunkt TypeScript und React (ab 19). Achtet auf Testbarkeit,
@@ -95,7 +95,9 @@ und erscheint **nirgends** in der Oberfläche.
   Guards sind **Bedienkomfort, keine Sicherheitsmassnahme**; die Rolle kommt aus `useSitzung`.
 - **Restlaufzeit und Ablauf-Dialog (04.10.2026):** Der Countdown hat einen **eigenen Abruf und Schlüssel**
   (`sitzungFristLesen`, `schluessel.sitzungFrist`, immer mit `X-FuBo-Kein-Refresh`), der bei `401` wirft;
-  `useSitzung` bleibt der verlängernde Abruf. Ende der Sitzung = früherer der beiden Serverzeitpunkte;
+  `useSitzung` bleibt der verlängernde Abruf, aber **nur bei Bedienung** (Start, Neuladen, Navigation,
+  Stufenwechsel): kein Neulesen bei Fokus oder Wiederverbindung, ausser es liegt noch kein Stand vor
+  (`ohneStand`). Gilt für jeden Abruf ohne `X-FuBo-Kein-Refresh`. Ende der Sitzung = früherer der beiden Serverzeitpunkte;
   „verlängerbar" heisst `gueltigBis < absolutGueltigBis`. Die Geräteuhr ist nur Darstellung, abgemeldet
   wird nur auf Anweisung des Servers. Abmelden und Ablauf räumen über **eine** Funktion auf
   (`sitzungsendeAusloesen`); erst der Server (`useAbmelden`), bei Fehler bleibt die Person angemeldet.

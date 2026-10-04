@@ -22,6 +22,12 @@ type Sitzung = {
   /** Aufrufe von `/auth/session/erneuern` und `/auth/session/beenden`. */
   erneuert: number
   beendet: number
+  /**
+   * Abrufe von `/auth/session/lesen` **ohne** `X-FuBo-Kein-Refresh`. Der echte
+   * Server verschiebt bei jedem davon das Leerlauf-Fenster; die Nachbildung
+   * zaehlt sie nur, damit ein Test unbeabsichtigte Verlaengerungen sieht.
+   */
+  verlaengernd: number
 }
 
 /** Bildet die Sitzungs-Endpunkte nach und gibt den veraenderbaren Zustand zurueck. */
@@ -32,9 +38,11 @@ async function sitzungNachbilden(page: Page, anfang: Partial<Sitzung> = {}): Pro
     angemeldet: true,
     erneuert: 0,
     beendet: 0,
+    verlaengernd: 0,
     ...anfang,
   }
   await page.route('**/api/v1/auth/session/lesen', (route) => {
+    if (route.request().headers()['x-fubo-kein-refresh'] !== 'true') sitzung.verlaengernd += 1
     if (!sitzung.angemeldet) {
       return route.fulfill({
         status: 401,
@@ -193,6 +201,34 @@ test.describe('Ablauf-Dialog der Sitzung', () => {
       await expect(dialog).toBeVisible()
     }
     await expect(page.getByTestId('sitzung-ablauf-verlaengern')).toBeVisible()
+  })
+
+  test('die Rueckkehr in den Tab verlaengert die Sitzung nicht', async ({ page }) => {
+    // Handpruefung vom 04.10.2026: Jede Rueckkehr las `useSitzung` ohne
+    // `X-FuBo-Kein-Refresh` neu, der Server schob das Fenster nach hinten, und
+    // der Dialog erschien nie. Chrome unter macOS meldet schon ein verdecktes
+    // Fenster als `hidden`.
+    const sitzung = await sitzungNachbilden(page, { leerlaufSek: 600 })
+    // Die Uhr laeuft normal weiter, laesst sich aber vorstellen.
+    await page.clock.install()
+    await page.goto('/')
+    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    // Der Startaufruf zaehlt als Aktivitaet (Neuladen), das ist gewollt.
+    expect(sitzung.verlaengernd).toBe(1)
+
+    // Ueber die `staleTime` von `useSitzung` (10 s) hinaus, sonst laese sie
+    // ohnehin nicht neu und der Test bewiese nichts.
+    await page.clock.fastForward(15_000)
+    const fristAbruf = page.waitForRequest(
+      (anfrage) =>
+        anfrage.url().endsWith('/auth/session/lesen') &&
+        anfrage.headers()['x-fubo-kein-refresh'] === 'true',
+    )
+    await neuLesen(page)
+    // Der Frist-Abruf liest den aktuellen Stand, ohne das Fenster zu verschieben.
+    await fristAbruf
+
+    expect(sitzung.verlaengernd).toBe(1)
   })
 
   test('verlaengert, schliesst und gibt den Fokus an das Feld zurueck', async ({ page }) => {

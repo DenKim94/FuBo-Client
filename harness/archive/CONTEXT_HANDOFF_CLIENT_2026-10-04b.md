@@ -8,12 +8,9 @@
 > `dev_client`. **Kein Monorepo**; das Backend liegt in `FuBo-Server` (`server/`). `PRJ_FuBo/`,
 > `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
 > **Stand: 04.10.2026** (C0, C1 abgeschlossen; **C2 umgesetzt**, Abnahme bis auf Hand- und
-> WebKit-Prüfungen erledigt; **C3 abgeschlossen**: PIN-Eingabe, Namensauswahl, Gast, Ablauf-Dialog,
-> „Abmelden" in der Kopfzeile; Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E bestanden).
-> Nächster Meilenstein: **C4** (Admin-Zugang, Passwort-Reset und -wechsel).
+> WebKit-Prüfungen erledigt; C3 in Arbeit: PIN-Eingabe, Namensauswahl und **Ablauf-Dialog** stehen).
 > Gestraffte Fassung. Vorfassungen mit allen Herleitungen in `archive/`, zuletzt
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04c.md` (Stand vor dem Abschluss von C3) und
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04b.md` (Stand vor der Korrektur).
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04.md` (Stand vor dem Ablauf-Dialog).
 
 ---
 
@@ -81,7 +78,7 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
 - **Zeitquelle ist der Server, die Uhr nur Darstellung.** Eigener Abruf `sitzungFristLesen`
   (`GET /auth/session/lesen` mit `X-FuBo-Kein-Refresh`) unter dem **eigenen Schlüssel**
   `schluessel.sitzungFrist` (`['sitzung','frist']`), getrennt von `useSitzung`, dessen Abruf bewusst eine
-  Aktivität ist (Start, Neuladen, Navigation, Stufenwechsel – **nicht** die Rückkehr in den Tab, siehe unten). Der Frist-Abruf **wirft bei `401`** (anders als `sitzungLesen`):
+  Aktivität ist (Neuladen, Rückkehr). Der Frist-Abruf **wirft bei `401`** (anders als `sitzungLesen`):
   So bemerkt er den Ablauf einer untätigen Person, und die globale Behandlung führt zur PIN.
   Abstand 30 s, in den letzten drei Minuten 5 s (`useRestlaufzeit`).
 - **Zwei Fälle** (DESIGN.md): *verlängerbar* (Dialog „Sitzung läuft ab", `festhalten`, Optionen
@@ -111,23 +108,6 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
 - **Abweichungen vom Prototyp:** kein Griff am Sheet (verspräche Wegwischen), kein Satz „Eingaben werden
   zwischengespeichert" (stimmt nicht), Balken zeigt den Rest der **Warnzeit**, nicht des Fensters (dessen
   Länge kennt der Client nicht).
-
-**Korrektur aus der Handprüfung: Rückkehr verlängert nicht (04.10.2026, abends)**
-- **Fehlerbild:** Leerlauf 3 Minuten, angemeldeter Spieler, kein Ablauf-Dialog. Gegen den echten Server
-  nachgestellt: `gueltigBis` sprang bei jedem Wechsel `hidden` → `visible` um drei Minuten nach hinten.
-- **Ursache:** `useSitzung` erbte `refetchOnWindowFocus: true` (Vorgabe in `queryClient.ts`) und liest
-  bewusst **ohne** `X-FuBo-Kein-Refresh`. Jede Rückkehr in den Tab war damit eine Verlängerung. Chrome
-  unter macOS meldet schon ein verdecktes Fenster als `hidden`; wer zwischendurch nachsah, verlängerte
-  jedes Mal, und der Dialog kam nie. Auf dem Telefon hätte das Entsperren die Sitzung verlängert – genau
-  das „misst den offenen Tab statt den Nutzer", das der Server mit dem Kopf vermeiden will.
-- **Festlegung:** `useSitzung` liest bei Fokus und Wiederverbindung **nicht** neu
-  (`refetchOnWindowFocus`/`refetchOnReconnect` über `ohneStand`). Ausnahme: Es liegt noch kein Stand vor
-  (Start ohne Verbindung); sonst bliebe eine angemeldete Person nach der Wiederverbindung auf der PIN.
-  Den aktuellen Stand bei Rückkehr liest der Frist-Abruf (mit Kopf, `refetchOnWindowFocus` bleibt dort).
-  Ersetzt die frühere Festlegung „Rückkehr ist Aktivität".
-- **Warum die Tests grün waren:** Die Nachbildung in `sitzung-ablauf.spec.ts` antwortete unabhängig vom
-  Kopf mit derselben Restzeit; eine Verlängerung durch einen Abruf kam nicht vor. Sie zählt jetzt
-  verlängernde Abrufe (`verlaengernd`), ein neuer E2E-Fall prüft die Rückkehr.
 
 **Meldungen ohne Verbindung (04.10.2026, Rückmeldung des Entwicklers)**
 - Vorher standen offline zwei Meldungen da (Streifen und Fehlerzustand), der Fehlerzustand ersetzte
@@ -172,9 +152,9 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026, Beg
 |---|---|---|---|
 | C0 | Projektfundament, PWA-Basis, Testwerkzeuge, CI | 14 | **abgeschlossen** (`e6f8bad`, nachgeprüft 26.09.) |
 | C1 | Vertrag, Datenzugriff, Mocks, Offline-Hinweis | 10 | **abgeschlossen** (26.09.) |
-| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari). Der Dialog-E2E-Test kam mit dem Ablauf-Dialog (C3) |
-| C3 | Sitzung & Spieler-Login | 14 | **abgeschlossen** (04.10.): PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, Ablauf-Dialog mit Verlängern/Abmelden, „Abmelden" in der Kopfzeile, Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E-Tests vom Entwickler bestätigt. **Entfallen:** dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf) |
-| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **als Nächstes** |
+| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari) sowie der Dialog-E2E-Test mit dem ersten echten Dialog (C3) |
+| C3 | Sitzung & Spieler-Login | 14 | **in Arbeit:** PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, **Ablauf-Dialog mit Verlängern/Abmelden** (04.10.); **„Abmelden" in der Kopfzeile** (04.10.); **entfällt**: dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf), Handprüfung |
+| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | offen |
 | C5 | Termin & Teilnahme, User-Dashboard | 14 | offen |
 | C6 | Teams & Ergebnis | 12 | offen |
 | C7 | Admin-Verwaltung | 20 | offen |
@@ -210,7 +190,7 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 197 Unit-Tests in 33 Dateien (Stand 04.10.2026 abends, nach der Korrektur „Rückkehr verlängert nicht“); E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
+- **Tests:** 193 Unit-Tests in 32 Dateien (Stand 04.10.2026, nach Ablauf-Dialog und Abmelden in der Kopfzeile); E2E in `sitzung-ablauf.spec.ts` (14 Fälle, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
   gefunden", Fokusring), `namensauswahl.spec.ts`
   (API per `page.route`) und `pwa.spec.ts` (nur Chromium). CI: Job `pruefen` (Lint, Typen, Bau,
   Unit-Tests) und Job `e2e` (alle sieben Projekte, Chromium und WebKit).
@@ -235,14 +215,6 @@ tatsächlich), `show()` statt `showModal()` (Fokusfalle), Erkennung „nicht ver
 „Weiterarbeiten", `cancelQueries`, dichter Abstand, `dataUpdatedAt`, Kopf `X-FuBo-Kein-Refresh`,
 Einbindung in `GeschuetzteRoute`. Sichtprüfung bei 360 px: beide Fälle und Fehlerzustand. **Nicht
 geprüft:** WebKit/iOS, echtes Telefon.
-
-**Korrektur „Rückkehr verlängert nicht“ (04.10.2026, abends):** `lint`, `typecheck`, **197 Unit-Tests**,
-Bau (sechs Precache-Einträge), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, **126 E2E-Läufe
-grün in den drei Chromium-Projekten** (Kopie in der Cloud-Umgebung). Gegenproben: Unit (`useSitzung.test.tsx`,
-Fokus und Wiederverbindung je rot ohne Fix; Nachholen ohne Stand rot ohne `ohneStand`) und E2E (zwei
-verlängernde Abrufe statt einem). **Handprüfung gegen den echten Server** (Leerlauf 3 Minuten, eingebauter
-Browser der Desktop-App, Chromium): Login über PIN und Name, Dialog nach rund 60 s, bleibt bei acht
-Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" setzt 3 Minuten neu.
 
 ### 6.3 Fallen, die aufgetreten sind
 - **`npm install` repariert die Sperrdatei stillschweigend**, nur `npm ci` prüft sie (26.09.).
@@ -269,12 +241,6 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 - **Im verbundenen Ordner ist Löschen standardmässig gesperrt:** `vite build` scheitert beim Leeren
   von `dist/`, und ein Git-Aufruf hinterliess eine leere `.git/index.lock` (entfernt). Gilt nur für
   die Agentenumgebung, nicht für das lokale Terminal.
-- **Eine Nachbildung, die den Kopf `X-FuBo-Kein-Refresh` ignoriert, kann Verlängerungen nicht zeigen**
-  (04.10.2026): Alle E2E-Tests grün, im Betrieb kam der Ablauf-Dialog nie. Mocks für Sitzungsabrufe
-  zählen seither die Aufrufe ohne Kopf.
-- **Vorgaben des Query-Clients gelten auch für verlängernde Abrufe:** `refetchOnWindowFocus` und
-  `refetchOnReconnect` sind Abrufe ohne Bedienung. Wer einen Abruf ohne `X-FuBo-Kein-Refresh` anlegt,
-  schaltet beides ab (Muster: `useSitzung`).
 - **WebKit rundet die Breite des Fokusrings auf ganze Gerätepixel ab:** Bei Pixeldichte 2,5 (`iPad (gen 11)`)
   meldet `getComputedStyle` 2.8px statt 3px, Chromium 3px (CI, 04.10.2026). Die E2E-Prüfung erwartet daher
   einen Wert zwischen abgerundeter Breite und 3 px (`pruefeFokusringBreite` in `layout.spec.ts`).
@@ -283,13 +249,15 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 - Zielangabe mit Parameter (`teams/:terminId` → Termin) kennt `RoutenAngaben` noch nicht (C6).
 - `/admin/anmelden` und „nicht gefunden" lesen beim Direkteinstieg keine Sitzung; der
   Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
-- Dialog-E2E (Fokusfalle, Escape) ist mit dem Ablauf-Dialog da (WebKit im CI, Tab-Teil dort ohne
-  Systemeinstellung übersprungen).
+- Dialog-E2E (Fokusfalle, Escape) ist mit dem Ablauf-Dialog da (nur Chromium geprüft; WebKit im CI,
+  Tab-Teil dort ohne Systemeinstellung übersprungen).
 - **Leerlauf-Fenster ≤ 2 Minuten (Admin-Konfiguration erlaubt ab 1):** Der Dialog erschiene nach jedem
   Verlängern sofort wieder. Vorschlag: Mindestwert im Server anheben (z. B. 5 Minuten) oder die Warnzeit
   als Anteil des Fensters führen.
 - **Die Geräteuhr bestimmt, wann der Dialog erscheint** (der Server gibt nur Zeitpunkte, keine „jetzt"-Angabe).
   Abgemeldet wird nur auf Anweisung des Servers. Verbesserung möglich über den `Date`-Header der Antwort.
+- Beim Zurückkehren in die Anwendung liest `useSitzung` (verlängernd) und der Frist-Abruf gleichzeitig; im
+  Grenzfall zeigt der Dialog bis zu 5 s einen Stand, der schon überholt ist.
 - Tab auf Links/Schaltflächen ist in WebKit ohne Systemeinstellung nicht möglich; der E2E-Test dazu
   läuft nur in Chromium, WebKit bleibt Handprüfung.
 - Titel „MONTAGS-KICKER" bricht unter 360 px Breite um (320 px: zwei Zeilen).
@@ -315,9 +283,8 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 1. **Push auf `dev_client`** und den ersten CI-Lauf mit WebKit prüfen.
 2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
    gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
-3. **C4 beginnen:** Admin-Anmeldung (`/admin/anmelden`, heute Platzhalter), Passwort-Reset (PIN anfordern,
-   eingeben, neues Passwort) und Passwortwechsel. Auf die Regel achten: `ADMIN_PASSWORT_FALSCH` ist ein
-   Eingabefehler, kein Sitzungsende (`istSitzungsende`); die Admin-Anmeldung läuft über `useSitzungswechsel`.
+3. **C3 abschliessen:** Handprüfung des Ablauf-Dialogs gegen
+   den echten Server (Leerlauf auf 2 Minuten stellen, Verlängern, harte Obergrenze, zwei Tabs).
 4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
    CI-Lauf mit WebKit.
 5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).

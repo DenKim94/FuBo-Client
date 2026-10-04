@@ -8,12 +8,10 @@
 > `dev_client`. **Kein Monorepo**; das Backend liegt in `FuBo-Server` (`server/`). `PRJ_FuBo/`,
 > `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
 > **Stand: 04.10.2026** (C0, C1 abgeschlossen; **C2 umgesetzt**, Abnahme bis auf Hand- und
-> WebKit-Prüfungen erledigt; **C3 abgeschlossen**: PIN-Eingabe, Namensauswahl, Gast, Ablauf-Dialog,
-> „Abmelden" in der Kopfzeile; Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E bestanden).
-> Nächster Meilenstein: **C4** (Admin-Zugang, Passwort-Reset und -wechsel).
+> WebKit-Prüfungen erledigt; C3 in Arbeit: PIN-Eingabe, Namensauswahl und **Ablauf-Dialog** stehen;
+> abends Korrektur aus der Handprüfung: Rückkehr in den Tab verlängert die Sitzung nicht mehr).
 > Gestraffte Fassung. Vorfassungen mit allen Herleitungen in `archive/`, zuletzt
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04c.md` (Stand vor dem Abschluss von C3) und
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04b.md` (Stand vor der Korrektur).
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04b.md` (Stand vor dieser Korrektur).
 
 ---
 
@@ -172,9 +170,9 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026, Beg
 |---|---|---|---|
 | C0 | Projektfundament, PWA-Basis, Testwerkzeuge, CI | 14 | **abgeschlossen** (`e6f8bad`, nachgeprüft 26.09.) |
 | C1 | Vertrag, Datenzugriff, Mocks, Offline-Hinweis | 10 | **abgeschlossen** (26.09.) |
-| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari). Der Dialog-E2E-Test kam mit dem Ablauf-Dialog (C3) |
-| C3 | Sitzung & Spieler-Login | 14 | **abgeschlossen** (04.10.): PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, Ablauf-Dialog mit Verlängern/Abmelden, „Abmelden" in der Kopfzeile, Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E-Tests vom Entwickler bestätigt. **Entfallen:** dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf) |
-| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **als Nächstes** |
+| C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari) sowie der Dialog-E2E-Test mit dem ersten echten Dialog (C3) |
+| C3 | Sitzung & Spieler-Login | 14 | **in Arbeit:** PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, **Ablauf-Dialog mit Verlängern/Abmelden** (04.10.); **„Abmelden" in der Kopfzeile** (04.10.); **entfällt**: dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf), Handprüfung |
+| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | offen |
 | C5 | Termin & Teilnahme, User-Dashboard | 14 | offen |
 | C6 | Teams & Ergebnis | 12 | offen |
 | C7 | Admin-Verwaltung | 20 | offen |
@@ -283,8 +281,8 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 - Zielangabe mit Parameter (`teams/:terminId` → Termin) kennt `RoutenAngaben` noch nicht (C6).
 - `/admin/anmelden` und „nicht gefunden" lesen beim Direkteinstieg keine Sitzung; der
   Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
-- Dialog-E2E (Fokusfalle, Escape) ist mit dem Ablauf-Dialog da (WebKit im CI, Tab-Teil dort ohne
-  Systemeinstellung übersprungen).
+- Dialog-E2E (Fokusfalle, Escape) ist mit dem Ablauf-Dialog da (nur Chromium geprüft; WebKit im CI,
+  Tab-Teil dort ohne Systemeinstellung übersprungen).
 - **Leerlauf-Fenster ≤ 2 Minuten (Admin-Konfiguration erlaubt ab 1):** Der Dialog erschiene nach jedem
   Verlängern sofort wieder. Vorschlag: Mindestwert im Server anheben (z. B. 5 Minuten) oder die Warnzeit
   als Anteil des Fensters führen.
@@ -315,9 +313,8 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 1. **Push auf `dev_client`** und den ersten CI-Lauf mit WebKit prüfen.
 2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
    gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
-3. **C4 beginnen:** Admin-Anmeldung (`/admin/anmelden`, heute Platzhalter), Passwort-Reset (PIN anfordern,
-   eingeben, neues Passwort) und Passwortwechsel. Auf die Regel achten: `ADMIN_PASSWORT_FALSCH` ist ein
-   Eingabefehler, kein Sitzungsende (`istSitzungsende`); die Admin-Anmeldung läuft über `useSitzungswechsel`.
+3. **C3 abschliessen:** Restliche Handprüfung des Ablauf-Dialogs gegen den echten Server (erledigt am
+   04.10.: Erscheinen, Rückkehr in den Tab, Verlängern in Chromium; offen: harte Obergrenze, zwei Tabs, Safari/iOS).
 4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
    CI-Lauf mit WebKit.
 5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).

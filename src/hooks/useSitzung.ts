@@ -1,6 +1,14 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type Query } from '@tanstack/react-query'
 import { sitzungLesen, type SitzungInfo } from '@/api/auth/auth'
 import { schluessel } from '@/api/common/schluessel'
+
+/**
+ * `true`, solange der Server noch keine Auskunft gegeben hat (`data` fehlt,
+ * etwa nach einem Netzfehler beim Start). `null` ist eine Auskunft: keine Sitzung.
+ */
+function ohneStand(abfrage: Query<SitzungInfo | null, Error>): boolean {
+  return abfrage.state.data === undefined
+}
 
 /** Rueckgabe von {@link useSitzung}. */
 export type SitzungZustand = {
@@ -29,6 +37,18 @@ export type SitzungZustand = {
  * `retry: false`: Ein `401` liefert hier `null` und ist kein Fehler; bleibt der
  * Server stumm, hilft ein zweiter Versuch nicht und verzoegert nur die
  * Umleitung zur Anmeldung.
+ *
+ * **Dieser Abruf zählt als Aktivität** (ohne `X-FuBo-Kein-Refresh`) und
+ * verschiebt das gleitende Leerlauf-Fenster. Er darf deshalb nur laufen, wenn
+ * die Person etwas tut: Start, Neuladen, Wechsel der Ansicht (Mount nach
+ * `staleTime`) oder ein Stufenwechsel (Invalidierung). **Nicht** bei der
+ * Rückkehr in den Tab (`refetchOnWindowFocus`) und nicht nach einem
+ * Verbindungsausfall (`refetchOnReconnect`): Beides geschieht ohne Bedienung.
+ * Ausnahme: Es liegt noch kein Stand vor (Start ohne Verbindung, {@link ohneStand}).
+ * Chrome unter macOS meldet ein verdecktes Fenster sogar als `hidden`; jeder
+ * Blick zurück verlängerte die Sitzung, und der Ablauf-Dialog erschiene nie
+ * (Fehler aus der Handprüfung vom 04.10.2026). Den aktuellen Stand bei Rückkehr
+ * liest der Frist-Abruf (`useRestlaufzeit`), der das Fenster nicht verschiebt.
  */
 export function useSitzung(): SitzungZustand {
   const abfrage = useQuery({
@@ -40,6 +60,12 @@ export function useSitzung(): SitzungZustand {
     queryFn: () => sitzungLesen(),
     retry: false,
     staleTime: 10_000,
+    // Rückkehr und Wiederverbindung sind keine Bedienung (siehe oben). Einzige
+    // Ausnahme: Es liegt noch gar kein Stand vor, weil der Startaufruf ohne
+    // Verbindung scheiterte. Dann muss der Client die Stufe erst erfahren, sonst
+    // bliebe eine angemeldete Person nach der Wiederverbindung auf der PIN-Eingabe.
+    refetchOnWindowFocus: ohneStand,
+    refetchOnReconnect: ohneStand,
   })
 
   const sitzung = abfrage.data ?? null
