@@ -2,7 +2,7 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 import style from './AktualisierungsHinweis.module.scss'
 
 /**
- * Zeigt einen unaufdringlichen Hinweis, sobald eine neue Fassung bereitsteht.
+ * Zeigt einen unaufdringlichen Hinweis, sobald eine neue App-Version bereitsteht.
  *
  * Der Neuladevorgang bleibt ausdruecklich beim Nutzer (`registerType: 'prompt'`):
  * Bei `autoUpdate` laedt die Seite neu, sobald ein neuer Service Worker aktiv

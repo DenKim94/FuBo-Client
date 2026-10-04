@@ -1,8 +1,11 @@
 @use '@/styles/globalVars';
 
+// Angelehnt an den OfflineHinweis: Fehlerflaeche, Rand in Fehlerrot, Text in
+// Textfarbe. Anders als der Streifen ein Kasten mit vollem Rand und Radius,
+// weil er im Inhalt steht und nicht am Rand der Anwendung.
 .meldung {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--abstand-s);
   inline-size: 100%;
   max-inline-size: var(--breite-text);
@@ -10,6 +13,27 @@
   border: 1px solid var(--farbe-fehler);
   border-radius: var(--radius-m);
   background: var(--farbe-fehler-flaeche);
-  color: var(--farbe-fehler); // 6.65:1 auf der Fehlerflaeche
+  // Textfarbe statt Fehlerrot: im Sonnenlicht besser lesbar; die Bedeutung
+  // tragen Flaeche, Rand und Symbol.
+  color: var(--farbe-text);
+  // Dieselbe Groesse wie im OfflineHinweis (04.10.2026): Beide sind
+  // Zustandsmeldungen und sollen gleich aussehen. Zugleich bleibt die
+  // Standardmeldung „Der Server ist nicht erreichbar. / Bitte versuche es
+  // spaeter erneut.“ bei 360 px zweizeilig – mit --schrift-basis waeren es drei
+  // Zeilen, und die Namensauswahl mit Gastbereich scrollte.
+  font-size: var(--schrift-klein);
   text-align: start;
+}
+
+.text {
+  // Zeilenumbrueche (`\n`) im Text bleiben erhalten, etwa in
+  // TEXT_NICHT_ERREICHBAR. `pre-line` statt `pre`/`pre-wrap`: Mehrfache
+  // Leerzeichen werden weiter zusammengefasst, und lange Zeilen brechen
+  // normal um. Gilt auch fuer ein `detail` vom Server, das `\n` enthaelt.
+  white-space: pre-line;
+}
+
+.symbol {
+  display: inline-flex;
+  color: var(--farbe-fehler); // 6.65:1 auf der Fehlerflaeche
 }

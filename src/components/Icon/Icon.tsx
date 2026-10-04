@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { EINGEBETTETE_ICONS } from './eingebettet'
 import style from './Icon.module.scss'
 
 /** Eigenschaften des Icons. */
@@ -24,6 +25,10 @@ type IconEigenschaften = {
  *
  * Fehlt die Datei, verschwindet das Symbol lautlos. Deshalb prüft
  * `Icon.test.tsx`, dass jeder im Quellbaum benutzte Name in `public/icons/` liegt.
+ *
+ * **Symbole für Fehlermeldungen sind eingebettet** (`eingebettet.ts`): Sie
+ * kommen aus dem Bündel statt aus einem Abruf und erscheinen deshalb auch,
+ * wenn der Server der Anwendung nicht erreichbar ist.
  */
 export default function Icon({ name, groesse = 1.5, beschriftung }: IconEigenschaften) {
   return (
@@ -31,7 +36,7 @@ export default function Icon({ name, groesse = 1.5, beschriftung }: IconEigensch
       className={style.icon}
       style={
         {
-          '--icon-quelle': `url('/icons/${name}.svg')`,
+          '--icon-quelle': EINGEBETTETE_ICONS[name] ?? `url('/icons/${name}.svg')`,
           '--icon-groesse': `${groesse}rem`,
         } as CSSProperties
       }

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type SubmitEvent } from 'react'
 import { Link } from 'react-router'
-import { ApiFehler, fehlertextBilden } from '@/api/common/fehler'
+import { ApiFehler } from '@/api/common/fehler'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
@@ -85,10 +85,8 @@ export default function PinEingabe() {
     })
   }
 
-  // Bei einer Antwort des Servers dessen `detail` – er kennt Restversuche und
-  // Wartezeit genauer als der Client.
-  const fehlertext = pruefung.error ? fehlertextBilden(pruefung.error, FEHLER_ERSATZ) : null
-  const felderKlassen = [style.felder, fehlertext && pin === '' && style.fehlerhaft]
+  const fehlerhaft = pruefung.error !== null
+  const felderKlassen = [style.felder, fehlerhaft && pin === '' && style.fehlerhaft]
     .filter(Boolean)
     .join(' ')
 
@@ -149,8 +147,8 @@ export default function PinEingabe() {
             // Während der Prüfung nur lesbar statt gesperrt: `disabled` nähme
             // dem Feld den Fokus und schlösse auf dem Telefon die Tastatur.
             readOnly={pruefung.isPending}
-            aria-invalid={fehlertext ? true : undefined}
-            aria-describedby={fehlertext ? `${hinweisId} ${fehlerId}` : hinweisId}
+            aria-invalid={fehlerhaft || undefined}
+            aria-describedby={fehlerhaft ? `${hinweisId} ${fehlerId}` : hinweisId}
             data-testid="pin-feld"
           />
         </div>
@@ -159,10 +157,11 @@ export default function PinEingabe() {
           Die PIN erhältst du von den Admins.
         </p>
 
-        {fehlertext && (
-          <Fehlermeldung id={fehlerId} data-testid="pin-fehler">
-            {fehlertext}
-          </Fehlermeldung>
+        {/* Bei einer Antwort des Servers dessen `detail` – er kennt Restversuche
+            und Wartezeit genauer als der Client. Ein Netzfehler ersetzt hier den
+            Offline-Hinweis. */}
+        {fehlerhaft && (
+          <Fehlermeldung id={fehlerId} fehler={pruefung.error} ersatz={FEHLER_ERSATZ} data-testid="pin-fehler" />
         )}
       </div>
 

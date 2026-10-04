@@ -189,7 +189,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   sonst `color-mix`. Fokusregel einmal in `_reset.scss`, ohne `border-radius: inherit`.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art`, `breit`, `laedt`,
   `type="button"` vorbelegt), `Ladespinner` (150 ms verzögert, `role="status"`, in Schaltflächen
-  `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden benutzten Namen),
+  `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden benutzten Namen;
+  Symbole, die ohne Verbindung erscheinen müssen, sind über `Icon/eingebettet.ts` per `?raw` ins
+  Bündel eingebettet – derzeit `error_circle_icon` und `no_connection_icon_red`),
   `Feld`, `Auswahlliste`, `Erklaerung`, `Aktionsleiste`, `Dialog`, `Fortschrittsbalken`,
   `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`.
 - **Dialog (03.10.2026):** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über
@@ -199,9 +201,20 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Abdunkelung über `--farbe-abdunkelung`, das direkt auf `::backdrop` sitzt (älteres `::backdrop`
   erbt nichts von `:root`). jsdom-Stub für `showModal`/`close` in `src/test/setup.ts`; Unit-Tests
   prüfen `dialog.open`, Fokusfalle und Escape gehören in Playwright.
-- **Fehler- und Leerzustand:** `Fehlermeldung` steht neben einer bedienbaren Ansicht (Kasten,
-  `role="alert"`, optionale `id` für `aria-describedby`); `Fehlerzustand` ersetzt den Inhalt, wenn
-  ohne Daten nichts zu bedienen ist (Test-ID der Schaltfläche: `<test-id>-erneut`). `Leerzustand`
+- **Fehler- und Leerzustand:** `Fehlermeldung` steht neben einer bedienbaren Ansicht (Kasten im
+  Stil des `OfflineHinweis`: Fehlerfläche, roter Rand, Text in Textfarbe; `role="alert"`, optionale
+  `id`). Sie nimmt `fehler` (Text über `fehlertextBilden`) oder eigenen Text als `children`.
+  `Fehlerzustand` = `Fehlermeldung` plus „Erneut versuchen“, kompakt (kein `flex: 1`), nur wenn noch
+  keine Daten da sind; scheitert ein späterer Abruf, bleibt der Inhalt stehen und die Ansicht meldet
+  `failureReason` (Test-IDs: `<test-id>-meldung`, `<test-id>-erneut`).
+- **„Nicht erreichbar“ hat einen Text:** `TEXT_NICHT_ERREICHBAR` („Der Server ist nicht erreichbar.
+  Bitte versuche es später erneut.“) gilt für Netzfehler und für Antworten ohne JSON (Proxy-Fehlerseite);
+  die `Fehlermeldung` zeigt immer `error_circle_icon` und setzt in `--schrift-klein` wie der Streifen.
+- **Immer nur eine Meldung (04.10.2026):** Zeigt eine `Fehlermeldung` einen Netzfehler, blendet sich
+  der `OfflineHinweis` aus (`useNetzfehlerMelden`/`useNetzfehlerGemeldet`). Der Streifen ist nur
+  Rückfall, liegt `fixed` über der Kopfzeile (beansprucht keinen Platz) und lässt sich wegklicken
+  (bis zum nächsten Ausfall). Meldungen dürfen auf vollen Ansichten kein Scrollen auslösen: lieber
+  einen Hinweis ersetzen als eine Zeile anhängen. Die Kopfzeile erscheint nur mit Zurück-Schaltfläche. `Leerzustand`
   nennt immer Grund und nächsten Schritt (`titel` und `text` Pflicht), ohne `role`.
 - **Zurück-Navigation:** Übergeordnete Ansicht als `handle.zurueck` (`RoutenAngaben`, innerste Route
   gilt); ohne Angabe ein Schritt zurück, beim Direkteinstieg (`history.state.idx` ≤ 0) zur Startseite.

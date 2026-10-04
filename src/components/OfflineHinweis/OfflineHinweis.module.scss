@@ -1,19 +1,25 @@
 @use '@/styles/globalVars';
 
 .hinweis {
-  // Klebt unter dem Kopf statt unten zu schweben: Der Aktualisierungshinweis
-  // liegt bereits am unteren Rand, und die Daumenreichweite gehoert nach A2 den
-  // primaeren Aktionen, nicht einem Zustandshinweis.
-  position: sticky;
-  top: 0;
-  z-index: var(--ebene-kopf);
+  // Ueber der Kopfzeile statt im Fluss (Entscheidung vom 04.10.2026): Der
+  // Streifen schiebt den Inhalt nicht nach unten und loest auf Ansichten, die
+  // den Bildschirm genau fuellen, kein Scrollen aus. `fixed` statt `absolute`,
+  // damit er auch nach dem Scrollen sichtbar bleibt.
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--ebene-hinweis);
 
   display: flex;
   align-items: center;
   gap: var(--abstand-s);
 
-  padding: var(--abstand-s) var(--abstand-m);
-  border-bottom: 1px solid var(--farbe-fehler);
+  // Mindestens so hoch wie die Kopfzeile (Tap-Ziel plus Innenabstand), damit
+  // er sie vollstaendig abdeckt; die Safe Area oben liegt innerhalb.
+  min-block-size: calc(var(--tapziel-min) + 2 * var(--abstand-s) + var(--sicher-oben));
+  padding-block: calc(var(--abstand-xs) + var(--sicher-oben)) var(--abstand-xs);
+  padding-inline: calc(var(--abstand-m) + var(--sicher-links)) calc(var(--abstand-xs) + var(--sicher-rechts));
+  border-block-end: 1px solid var(--farbe-fehler);
   background: var(--farbe-fehler-flaeche);
   // Text in Textfarbe statt in Fehlerrot: Der Streifen ist ein Zustand, kein
   // Eingabefehler, und muss im Sonnenlicht gut lesbar sein.
@@ -26,4 +32,42 @@
 .symbol {
   display: inline-flex;
   color: var(--farbe-fehler);
+}
+
+.text {
+  flex: 1;
+}
+
+// Tap-Ziel 44 px; das Kreuz besteht aus zwei gedrehten Balken in der
+// Textfarbe – ohne Datei, die ohne Verbindung fehlen koennte.
+.schliessen {
+  position: relative;
+  flex: 0 0 auto;
+  inline-size: var(--tapziel-min);
+  block-size: var(--tapziel-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--farbe-text);
+}
+
+.schliessen::before,
+.schliessen::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: 1.125rem;
+  block-size: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.schliessen::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.schliessen::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }

@@ -1,25 +1,8 @@
 @use '@/styles/globalVars';
 
 .zustand {
-  // Nimmt die Resthoehe der Ansicht ein und steht mittig – wie der
-  // Ladespinner mit `zentriert`, an dessen Stelle der Zustand tritt.
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--abstand-m);
-  padding-block: var(--abstand-l);
-  text-align: center;
-}
-
-.symbol {
-  display: inline-flex;
-  color: var(--farbe-fehler);
-}
-
-.text {
-  max-inline-size: var(--breite-text);
-  // Die Aussage steht in Textfarbe (18.45:1); das Symbol traegt die Bedeutung.
-  color: var(--farbe-text);
+  gap: var(--abstand-s);
 }

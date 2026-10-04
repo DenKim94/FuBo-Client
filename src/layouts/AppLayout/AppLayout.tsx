@@ -40,6 +40,9 @@ function istDirekteinstieg(): boolean {
  * 2. sonst einen Schritt im Verlauf zurück,
  * 3. beim Direkteinstieg zur Startseite statt aus der Anwendung hinaus.
  *
+ * Der `OfflineHinweis` legt sich über die Kopfzeile, statt Platz im Fluss zu
+ * belegen (Entscheidung vom 04.10.2026).
+ *
  * Die Safe-Area-Raender liegen ebenfalls hier, damit sie jede Ansicht erreichen,
  * ohne dass jede Ansicht sie kennen muss.
  */
@@ -52,6 +55,7 @@ export default function AppLayout() {
   const ohneZurueck = angaben.some((angabe) => angabe?.ohneZurueck)
   // Die innerste Route mit Zielangabe gilt.
   const ziel = angaben.findLast((angabe) => angabe?.zurueck)?.zurueck
+  const mitZurueck = !istStartseite && !ohneZurueck
 
   /** Führt zur übergeordneten Ansicht, einen Schritt zurück oder zur Startseite. */
   function zurueck() {
@@ -65,13 +69,17 @@ export default function AppLayout() {
       {/* Rendert nichts; verbindet die globale 401-Behandlung mit dem Router. */}
       <SitzungsWaechter />
 
-      <header className={style.kopf}>
-        {!istStartseite && !ohneZurueck && (
+      {/* Die Kopfzeile traegt bisher nur die Zurueck-Schaltflaeche. Ohne sie
+          (Startseite, Login-Schritte) entfaellt sie ganz: Ein leeres Band mit
+          Trennlinie kostete rund 60 px Hoehe, und die Namensauswahl mit
+          Gastbereich fuellt ein 360 × 780-Telefon auch so schon vollstaendig. */}
+      {mitZurueck && (
+        <header className={style.kopf} data-testid="layout-kopf">
           <CustomButton art="sekundaer" onClick={zurueck} data-testid="layout-zurueck">
             Zurück
           </CustomButton>
-        )}
-      </header>
+        </header>
+      )}
 
       <OfflineHinweis />
 

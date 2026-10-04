@@ -24,6 +24,21 @@ describe('Icon', () => {
     expect(screen.getByRole('img', { name: 'Warnung' })).toBeInTheDocument()
   })
 
+  test('bettet die Symbole fuer Fehlermeldungen ein, statt sie nachzuladen', () => {
+    // Ohne Verbindung scheitert der Abruf von /icons/…; eingebettet braucht
+    // das Symbol keinen.
+    render(<Icon name="error_circle_icon" />)
+    const quelle = screen.getByTestId('icon-error_circle_icon').style.getPropertyValue('--icon-quelle')
+    expect(quelle).toMatch(/^url\("data:image\/svg\+xml,/)
+  })
+
+  test('laedt alle uebrigen Symbole aus public/icons', () => {
+    render(<Icon name="info_circle_icon" />)
+    expect(screen.getByTestId('icon-info_circle_icon').style.getPropertyValue('--icon-quelle')).toBe(
+      "url('/icons/info_circle_icon.svg')",
+    )
+  })
+
   test('jeder im Quellbaum benutzte Name liegt in public/icons', () => {
     // Eine Maske mit falschem Dateinamen verschwindet lautlos – ohne kaputtes
     // Bild, das den Fehler verraten wuerde.

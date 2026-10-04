@@ -15,6 +15,14 @@
   padding-block: var(--abstand-m);
 }
 
+.liste {
+  // Liste und ihre Fehlermeldung gehoeren zusammen: kleiner Abstand statt des
+  // grossen Abstands zwischen den Bereichen.
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
 .kopf {
   display: flex;
   align-items: center;
@@ -74,13 +82,26 @@
 
 .stufenReihe {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // Drei gleich breite Spalten, unabhaengig von der Textlaenge. `1fr` allein
+  // heisst `minmax(auto, 1fr)`: Die Spalte waechst mindestens auf die Breite
+  // ihres laengsten Wortes, und „Goalgetter" machte seine Stufe breiter als die
+  // anderen (gemessen bei 360 px: 97/74/107 px). Mit der Untergrenze 0 teilt
+  // das Raster den Platz strikt in Drittel, gleich welcher Text darin steht.
+  // `overflow-wrap: anywhere` in `.stufeText` senkt die Mindestbreite zwar
+  // ebenfalls; die Spaltenbreite soll aber nicht an einer Textregel haengen.
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  // Alle Stufen liegen in einer Rasterzeile und werden auf deren Hoehe
+  // gestreckt (Vorgabe `stretch`): Bricht ein Text um, wachsen alle drei mit.
   gap: var(--abstand-s);
 }
 
 .stufe {
   position: relative;
-  display: block;
+  // Raster statt Block: Nur so streckt sich das Etikett `.stufeText` auf die
+  // volle Hoehe der Stufe. Als Block bliebe es so hoch wie sein Text, und eine
+  // umgebrochene Stufe stuende hoeher da als ihre Nachbarn. Der Radioknopf ist
+  // absolut positioniert und belegt deshalb keine Rasterzelle.
+  display: grid;
 }
 
 // Der Radioknopf bleibt das bedienbare Element (Tastatur, Screenreader,
@@ -98,12 +119,21 @@
 .stufeText {
   display: grid;
   place-items: center;
+  // 64 px fassen zwei Zeilen (2 × 1.125rem × 1.45 ≈ 52 px); bis dahin bleibt
+  // die Hoehe auch bei einem Umbruch konstant.
   min-block-size: var(--tapziel-primaer);
   padding-inline: var(--abstand-s);
   border: 1px solid var(--farbe-rand-bedienbar);
   border-radius: var(--radius-m);
   background: var(--farbe-hintergrund);
   text-align: center;
+  // Lange Woerter brechen an ihrer weichen Trennstelle (`STUFEN` in der
+  // Komponente) mit Trennstrich um. Fehlt eine, bricht das Wort notfalls an
+  // beliebiger Stelle um, statt ueber den Rand zu laufen. Bewusst kein
+  // `hyphens: auto`: Ohne deutsches Trennwoerterbuch (Chromium unter Linux
+  // und Windows) wirkt es nicht, mit Woerterbuch waehlt jede Engine andere
+  // Stellen.
+  overflow-wrap: anywhere;
 }
 
 // Gewaehlt: Rand, Flaeche **und** Schriftgewicht – nicht allein die Farbe.

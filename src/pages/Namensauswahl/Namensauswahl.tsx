@@ -1,6 +1,6 @@
 import { useId, useState, type SubmitEvent } from 'react'
 import type { GastStufe } from '@/api/auth/auth'
-import { ApiFehler, fehlertextBilden } from '@/api/common/fehler'
+import { ApiFehler } from '@/api/common/fehler'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import Auswahlliste from '@/components/Auswahlliste/Auswahlliste'
 import CustomButton from '@/components/CustomButton/CustomButton'
@@ -19,13 +19,26 @@ const GAST = 'gast'
 
 /** Grenzen des Gastnamens laut Kontrakt (`GastAnmeldungRequest`). */
 const GASTNAME_MIN = 2
-const GASTNAME_MAX = 40
+const GASTNAME_MAX = 20
 
-/** Die drei Stufen der Selbsteinschätzung (A8, A17), in aufsteigender Reihenfolge. */
+/** Weiches Trennzeichen: unsichtbar, solange das Wort in die Zeile passt. */
+const TRENNSTELLE = '\u00AD'
+
+/**
+ * Die drei Stufen der Selbsteinschätzung (A8, A17), in aufsteigender Reihenfolge.
+ *
+ * Die Stufen sind gleich breit (je ein Drittel der Zeile). Lange Wörter tragen
+ * deshalb eine **feste Trennstelle**: Bei 360 px passen z.B. „Anfänger" und
+ * „Goalgetter" nicht in ein Drittel und brechen dann als „Anfän-ger" bzw.
+ * „Goal-getter" um. `hyphens: auto` allein genügte nicht – Chromium bringt
+ * unter Linux und Windows keine deutschen Trennwörterbücher mit, das Wort
+ * bräche dort ohne Trennstrich an beliebiger Stelle. Screenreader übergehen
+ * das Zeichen.
+ */
 const STUFEN: { wert: GastStufe; text: string }[] = [
-  { wert: 'SCHWACH', text: 'Schwach' },
-  { wert: 'MITTEL', text: 'Mittel' },
-  { wert: 'STARK', text: 'Stark' },
+  { wert: 'SCHWACH', text: `Anfän${TRENNSTELLE}ger` },
+  { wert: 'MITTEL', text: 'Solide' },
+  { wert: 'STARK', text: 'Goat' },
 ]
 
 /** Kurze Erklärung am Gastbereich (A8). */
@@ -47,7 +60,7 @@ const GAST_ERKLAERUNG =
  * das Absenden und sagt warum, statt einen sicheren `409` abzuwarten.
  *
  * **Gast:** Der Eintrag „Gast" steht oben in der Liste. Ist er gewählt,
- * erscheinen Name, Selbsteinschätzung (Vorgabe „Mittel") und ein Info-Symbol
+ * erscheinen Name, Selbsteinschätzung (Vorgabe „Solide", Wert `MITTEL`) und ein Info-Symbol
  * mit der Erklärung. Gesendet wird der Name ohne Zusatz; angezeigt wird er mit
  * „(Gast)" (Kontrakt: das Anhängen ist Sache der Oberfläche).
  *
@@ -85,9 +98,23 @@ export default function Namensauswahl() {
   const gastNameFehler =
     gast.error instanceof ApiFehler && gast.error.code === 'NAME_BELEGT' ? gast.error.message : null
   const aufrufFehler = waehlen.error ?? (gastNameFehler ? null : gast.error)
-  const meldung = aufrufFehler
-    ? fehlertextBilden(aufrufFehler, 'Die Anmeldung ist fehlgeschlagen. Bitte versuche es erneut.')
-    : gewaehltBelegt && gewaehlt
+  // Scheitert ein Polling-Abruf, obwohl die Liste schon geladen ist, bleibt die
+  // Liste stehen und die Ansicht bedienbar; gemeldet wird der Fehler im Kasten.
+  // `failureReason` statt `error`: Es ist schon nach dem ersten Fehlschlag
+  // gesetzt, nicht erst nach dem automatischen zweiten Versuch – sonst stünde
+  // eine Sekunde lang der Offline-Hinweis da und wiche dann dieser Meldung.
+  // Mit dem nächsten erfolgreichen Abruf wird es wieder `null`.
+  //
+  // **Immer nur eine Meldung**, in dieser Rangfolge: der Fehler der eigenen
+  // Aktion (unten), der Fehler der Liste (direkt an der Liste, an Stelle ihres
+  // Hinweises), der Hinweis auf einen zwischenzeitlich belegten Namen (unten).
+  // Die Listenmeldung ersetzt den Hinweistext, statt eine weitere Zeile
+  // anzuhängen: Mit gewähltem Gast füllt die Ansicht ein 360 × 780-Telefon
+  // bereits vollständig, und jede zusätzliche Zeile löste Scrollen aus.
+  const listenFehler =
+    !aufrufFehler && namensliste.data !== undefined ? namensliste.failureReason : null
+  const belegtHinweis =
+    !listenFehler && gewaehltBelegt && gewaehlt
       ? `„${gewaehlt.name}" ist bereits angemeldet. Bitte wähle einen anderen Namen.`
       : null
 
@@ -130,7 +157,9 @@ export default function Namensauswahl() {
 
         {namensliste.isPending ? (
           <Ladespinner groesse="gross" zentriert text="Namen werden geladen" />
-        ) : namensliste.isError ? (
+        ) : namensliste.data === undefined ? (
+          // Nur wenn noch nie eine Liste ankam – ein späterer Fehlschlag lässt
+          // die vorhandene Liste stehen (siehe `listenFehler`).
           <Fehlerzustand
             fehler={namensliste.error}
             erneut={() => void namensliste.refetch()}
@@ -138,28 +167,39 @@ export default function Namensauswahl() {
             data-testid="namensauswahl-ladefehler"
           />
         ) : (
-          <Auswahlliste
-            beschriftung="Dein Name"
-            hinweis={
-              namen.length === 0
-                ? 'Es sind noch keine Spielerprofile angelegt. Du kannst als Gast teilnehmen.'
-                : 'Belegte Namen sind ausgegraut.'
-            }
-            optionen={[
-              { wert: GAST, text: 'Gast', zusatz: 'ohne eigenes Profil' },
-              // `deaktiviert` und der Zusatz: Die Aussage hängt nicht an der Farbe (A6).
-              ...namen.map((n) => ({
-                wert: String(n.id),
-                text: n.name,
-                zusatz: n.belegt ? 'bereits angemeldet' : undefined,
-                deaktiviert: n.belegt,
-              })),
-            ]}
-            wert={auswahl}
-            beiAenderung={auswahlAendern}
-            deaktiviert={laeuft}
-            data-testid="namensauswahl-liste"
-          />
+          <div className={style.liste}>
+            <Auswahlliste
+              beschriftung="Dein Name"
+              hinweis={
+                listenFehler
+                  ? undefined
+                  : namen.length === 0
+                    ? 'Es sind noch keine Spielerprofile angelegt. Du kannst als Gast teilnehmen.'
+                    : 'Belegte Namen sind ausgegraut.'
+              }
+              optionen={[
+                { wert: GAST, text: 'Gast', zusatz: 'ohne eigenes Profil' },
+                // `deaktiviert` und der Zusatz: Die Aussage hängt nicht an der Farbe (A6).
+                ...namen.map((n) => ({
+                  wert: String(n.id),
+                  text: n.name,
+                  zusatz: n.belegt ? 'bereits angemeldet' : undefined,
+                  deaktiviert: n.belegt,
+                })),
+              ]}
+              wert={auswahl}
+              beiAenderung={auswahlAendern}
+              deaktiviert={laeuft}
+              data-testid="namensauswahl-liste"
+            />
+            {listenFehler && (
+              <Fehlermeldung
+                fehler={listenFehler}
+                ersatz="Die Namen konnten nicht aktualisiert werden."
+                data-testid="namensauswahl-listenfehler"
+              />
+            )}
+          </div>
         )}
 
         {istGast && (
@@ -177,7 +217,7 @@ export default function Namensauswahl() {
 
             <Feld
               beschriftung="Dein Name für heute"
-              hinweis={`Mindestens ${GASTNAME_MIN} bis maximal ${GASTNAME_MAX} Zeichen.`}
+              hinweis={`Mindestens ${GASTNAME_MIN} und maximal ${GASTNAME_MAX} Zeichen.`}
               fehler={gastNameFehler}
               value={gastName}
               onChange={(e) => {
@@ -213,7 +253,15 @@ export default function Namensauswahl() {
           </section>
         )}
 
-        {meldung && <Fehlermeldung data-testid="namensauswahl-meldung">{meldung}</Fehlermeldung>}
+        {aufrufFehler ? (
+          <Fehlermeldung
+            fehler={aufrufFehler}
+            ersatz="Die Anmeldung ist fehlgeschlagen. Bitte versuche es erneut."
+            data-testid="namensauswahl-meldung"
+          />
+        ) : (
+          belegtHinweis && <Fehlermeldung data-testid="namensauswahl-meldung">{belegtHinweis}</Fehlermeldung>
+        )}
       </div>
 
       <Aktionsleiste>

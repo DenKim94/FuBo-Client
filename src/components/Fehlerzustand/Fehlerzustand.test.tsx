@@ -3,6 +3,13 @@ import { describe, expect, test, vi } from 'vitest'
 import { ApiFehler, TEXT_NICHT_ERREICHBAR } from '@/api/common/fehler'
 import Fehlerzustand from './Fehlerzustand'
 
+/**
+ * Erwarteter Textinhalt der Meldung. `toHaveTextContent` normalisiert nur den
+ * Text des Elements (der Umbruch `\n` wird dort zum Leerzeichen), nicht den
+ * Vergleichswert – deshalb hier dieselbe Normalisierung.
+ */
+const ALS_TEXTINHALT = TEXT_NICHT_ERREICHBAR.replace(/\s+/g, ' ')
+
 describe('Fehlerzustand', () => {
   test('zeigt den Text des Servers unveraendert', () => {
     render(<Fehlerzustand fehler={new ApiFehler(403, 'KEINE_BERECHTIGUNG', 'Dafür fehlt dir die Berechtigung.')} />)
@@ -20,7 +27,7 @@ describe('Fehlerzustand', () => {
   test('bietet bei einem Netzfehler einen neuen Versuch an und nennt eigene Worte', () => {
     render(<Fehlerzustand fehler={new TypeError('Failed to fetch')} erneut={() => {}} />)
 
-    expect(screen.getByRole('alert')).toHaveTextContent(TEXT_NICHT_ERREICHBAR)
+    expect(screen.getByRole('alert')).toHaveTextContent(ALS_TEXTINHALT)
     expect(screen.getByTestId('fehlerzustand-erneut')).toBeInTheDocument()
   })
 

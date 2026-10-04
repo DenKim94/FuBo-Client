@@ -1,12 +1,21 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { afterEach, describe, expect, test } from 'vitest'
+import { TEXT_NICHT_ERREICHBAR } from '@/api/common/fehler'
 import { schluessel } from '@/api/common/schluessel'
+import { verbindungMelden } from '@/api/common/verbindungsStatus'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import { problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
 import Namensauswahl from './Namensauswahl'
+
+/**
+ * Erwarteter Textinhalt der Meldung. `toHaveTextContent` normalisiert nur den
+ * Text des Elements (der Umbruch `\n` wird dort zum Leerzeichen), nicht den
+ * Vergleichswert – deshalb hier dieselbe Normalisierung.
+ */
+const ALS_TEXTINHALT = TEXT_NICHT_ERREICHBAR.replace(/\s+/g, ' ')
 
 /** Rendert die Ansicht und wartet, bis die Namensliste geladen ist. */
 async function rendernUndLaden() {
@@ -16,6 +25,16 @@ async function rendernUndLaden() {
     </QueryUmgebung>,
   )
   return screen.findByTestId('namensauswahl-liste')
+}
+
+/**
+ * Vergleicht einen zugänglichen Namen ohne weiche Trennzeichen.
+ *
+ * Die Stufen tragen feste Trennstellen (`\u00AD`). Screenreader übergehen
+ * das Zeichen, die Namensberechnung im Test nicht.
+ */
+function heisst(erwartet: string) {
+  return (name: string) => name.replace(/\u00AD/g, '') === erwartet
 }
 
 /** Öffnet die Liste und wählt einen Eintrag über seinen Wert. */
@@ -119,11 +138,11 @@ describe('Namensauswahl', () => {
     expect(screen.getByTestId('namensauswahl-gast')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Was bedeutet Gast?' })).toBeInTheDocument()
     // Vorbelegung laut Kontrakt und A17.
-    expect(screen.getByRole('radio', { name: 'Mittel' })).toBeChecked()
+    expect(screen.getByRole('radio', { name: heisst('Solide') })).toBeChecked()
     expect(screen.getByTestId('namensauswahl-absenden')).toBeDisabled()
 
     fireEvent.change(screen.getByTestId('gast-name'), { target: { value: '  Testgast ' } })
-    fireEvent.click(screen.getByRole('radio', { name: 'Stark' }))
+    fireEvent.click(screen.getByRole('radio', { name: heisst('Goat') }))
     const knopf = screen.getByTestId('namensauswahl-absenden')
     expect(knopf).toHaveTextContent('Weiter als Testgast (Gast)')
     fireEvent.click(knopf)
@@ -172,6 +191,30 @@ describe('Namensauswahl', () => {
     expect(await screen.findByTestId('namensauswahl-meldung')).toHaveTextContent(
       'Es sind bereits alle Gastplätze belegt.',
     )
+  })
+
+  test('laesst die Liste stehen, wenn ein spaeterer Abruf ohne Antwort bleibt', async () => {
+    await rendernUndLaden()
+    waehlen('gast')
+    // Ab jetzt keine Verbindung: Der naechste Polling-Abruf scheitert.
+    mockServer.use(http.get('*/auth/users/lesen', () => HttpResponse.error()))
+
+    act(() => {
+      void queryClient.refetchQueries({ queryKey: schluessel.namensliste })
+    })
+
+    // Die Meldung erscheint schon nach dem ersten Fehlschlag (`failureReason`),
+    // nicht erst nach dem automatischen zweiten Versuch.
+    expect(await screen.findByTestId('namensauswahl-listenfehler', {}, { timeout: 500 })).toHaveTextContent(
+      ALS_TEXTINHALT,
+    )
+    // Liste und Gastbereich bleiben bedienbar; kein Fehlerzustand an ihrer Stelle.
+    expect(screen.getByTestId('namensauswahl-liste')).toBeInTheDocument()
+    expect(screen.getByTestId('namensauswahl-gast')).toBeInTheDocument()
+    expect(screen.queryByTestId('namensauswahl-ladefehler')).not.toBeInTheDocument()
+    // Die Meldung tritt an die Stelle des Hinweises, statt eine Zeile anzuhaengen.
+    expect(screen.queryByText('Belegte Namen sind ausgegraut.')).not.toBeInTheDocument()
+    act(() => verbindungMelden(true))
   })
 
   test('bietet bei einem Ladefehler einen neuen Versuch an', async () => {

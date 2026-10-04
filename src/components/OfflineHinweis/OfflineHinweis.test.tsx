@@ -1,6 +1,7 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, test } from 'vitest'
 import { verbindungMelden } from '@/api/common/verbindungsStatus'
+import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import OfflineHinweis from './OfflineHinweis'
 
 /** Setzt `navigator.onLine` fuer die Dauer eines Tests. */
@@ -56,5 +57,35 @@ describe('OfflineHinweis', () => {
     act(() => verbindungMelden(true))
 
     expect(screen.queryByTestId('offline-hinweis')).not.toBeInTheDocument()
+  })
+
+  test('tritt zurueck, solange eine Ansicht selbst den Verbindungsfehler meldet', () => {
+    act(() => verbindungMelden(false))
+    const { rerender } = render(
+      <>
+        <OfflineHinweis />
+        <Fehlermeldung fehler={new TypeError('Failed to fetch')} />
+      </>,
+    )
+    // Nur eine Meldung: die der Ansicht.
+    expect(screen.queryByTestId('offline-hinweis')).not.toBeInTheDocument()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+
+    // Verschwindet die Meldung, kehrt der Streifen als Rueckfall zurueck.
+    rerender(<OfflineHinweis />)
+    expect(screen.getByTestId('offline-hinweis')).toBeInTheDocument()
+  })
+
+  test('laesst sich wegklicken und kommt erst beim naechsten Ausfall wieder', () => {
+    render(<OfflineHinweis />)
+    act(() => verbindungMelden(false))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hinweis schließen' }))
+    expect(screen.queryByTestId('offline-hinweis')).not.toBeInTheDocument()
+
+    // Verbindung kurz zurueck, dann der naechste Ausfall.
+    act(() => verbindungMelden(true))
+    act(() => verbindungMelden(false))
+    expect(screen.getByTestId('offline-hinweis')).toBeInTheDocument()
   })
 })

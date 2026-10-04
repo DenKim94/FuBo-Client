@@ -104,6 +104,22 @@ test.describe('Rahmen und Navigation', () => {
     await expect(link).toHaveCSS('outline-width', '3px')
   })
 
+  test('legt den Offline-Hinweis ueber die Kopfzeile und laesst ihn wegklicken', async ({ page, context }) => {
+    await page.goto('/admin/anmelden')
+    const inhalt = page.getByTestId('platzhalter-c4')
+    const vorher = (await inhalt.boundingBox())!.y
+
+    await context.setOffline(true)
+    const hinweis = page.getByTestId('offline-hinweis')
+    await expect(hinweis).toBeVisible()
+    // Der Streifen beansprucht keinen Platz: Der Inhalt bleibt, wo er war.
+    expect((await inhalt.boundingBox())!.y).toBe(vorher)
+
+    await page.getByTestId('offline-hinweis-schliessen').click()
+    await expect(hinweis).toBeHidden()
+    await context.setOffline(false)
+  })
+
   test('haelt das Mindestmass fuer Tap-Ziele ein', async ({ page }) => {
     await page.goto('/admin/anmelden')
     const kasten = await page.getByTestId('layout-zurueck').boundingBox()

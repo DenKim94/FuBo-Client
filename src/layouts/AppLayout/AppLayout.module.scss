@@ -32,8 +32,10 @@
   width: 100%;
   max-width: var(--breite-inhalt); // Tablet und Desktop: Zeilen bleiben lesbar (nachrangig, A2)
   margin: 0 auto;
+  // Ringsum derselbe Abstand. Die fruehere Reserve unten (abstand-xl plus
+  // Safe Area) hielt Platz fuer einen Aktionsbereich frei, den es seit C2 als
+  // `Aktionsleiste` gibt; die verbraucht --sicher-unten selbst, und der Rahmen
+  // tut es ebenfalls. Die Reserve kostete auf jeder Ansicht rund 32 px und
+  // brachte die Namensauswahl mit Fehlermeldung ins Scrollen (04.10.2026).
   padding: var(--abstand-m);
-  // Reserve fuer die primaeren Aktionen in Daumenreichweite (A2);
-  // der konkrete Aktionsbereich entsteht im Design-System-Paket.
-  padding-bottom: calc(var(--abstand-xl) + var(--sicher-unten));
 }

@@ -50,8 +50,22 @@ export function istNetzfehler(fehler: unknown): boolean {
   return fehler instanceof TypeError
 }
 
-/** Eigene Worte für den einzigen Fall, in dem kein `detail` des Servers vorliegt: keine Antwort. */
-export const TEXT_NICHT_ERREICHBAR = 'Der Server ist nicht erreichbar. Bitte prüfe deine Verbindung.'
+/**
+ * Eigene Worte für die Fälle, in denen kein `detail` des Servers vorliegt.
+ *
+ * Gilt für beide Arten, „nicht erreichbar“ zu sein, mit **demselben** Text
+ * (Vorgabe vom 04.10.2026): gar keine Antwort (Netzfehler, `istNetzfehler`) und
+ * eine Antwort, die nicht vom API-Server stammt (Fehlerseite eines Proxys, siehe
+ * `httpService.ts`). Für den Nutzer ist beides dasselbe. „Prüfe deine
+ * Verbindung“ wäre irreführend: Ist der Server ausgefallen, liegt es nicht an
+ * seinem Netz.
+ *
+ * **Fester Zeilenumbruch** zwischen Befund und Handlungsaufforderung: `\n`
+ * statt eines Umbruchs im Template-Literal, damit keine Einrückung im Text
+ * landet. Sichtbar wird er nur, wo das Element `white-space: pre-line` trägt
+ * (`Fehlermeldung`); andernorts erscheint er als Leerzeichen.
+ */
+export const TEXT_NICHT_ERREICHBAR = 'Der Server ist nicht erreichbar.\nBitte versuche es später erneut.'
 
 /**
  * Bildet den Anzeigetext eines fehlgeschlagenen Aufrufs.

@@ -1,4 +1,4 @@
-import { ApiFehler, istNetzfehler, type Fehlercode } from '@/api/common/fehler'
+import { ApiFehler, istNetzfehler, TEXT_NICHT_ERREICHBAR, type Fehlercode } from '@/api/common/fehler'
 import { verbindungMelden } from '@/api/common/verbindungsStatus'
 
 /**
@@ -99,7 +99,8 @@ async function erstelleFehlerAntwort(antwort: Response): Promise<ApiFehler> {
     )
   } catch {
     // Kein JSON im Rumpf: Die Gegenstelle antwortet nicht wie vereinbart
-    // (Proxy-Fehlerseite, abgebrochene Verbindung, HTML statt JSON).
-    return new ApiFehler(antwort.status, 'UNBEKANNT', 'Der Server ist nicht erreichbar.')
+    // (Proxy-Fehlerseite, abgebrochene Verbindung, HTML statt JSON). Derselbe
+    // Text wie bei einem Netzfehler: Für den Nutzer ist beides „nicht erreichbar“.
+    return new ApiFehler(antwort.status, 'UNBEKANNT', TEXT_NICHT_ERREICHBAR)
   }
 }

@@ -73,6 +73,29 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
 - **Seite „nicht gefunden"** (`NichtGefunden`, erster Verbraucher von `Leerzustand`) ersetzt den
   C2-Platzhalter der Route `*`; ohne Zurück-Schaltfläche, die Ansicht führt selbst zur Startseite.
 - **Fortschrittsbalken** als `div` mit `role="progressbar"` (kein `<progress>`), Zustand vom Server.
+
+**Meldungen ohne Verbindung (04.10.2026, Rückmeldung des Entwicklers)**
+- Vorher standen offline zwei Meldungen da (Streifen und Fehlerzustand), der Fehlerzustand ersetzte
+  die schon geladene Namensliste beim gescheiterten Polling, und die Namensauswahl scrollte
+  (944 statt 780 px bei 360 × 780).
+- Jetzt **immer nur eine Meldung:** Die `Fehlermeldung` der Ansicht hat Vorrang und blendet den
+  `OfflineHinweis` aus (Zähler `useNetzfehlerMeldung.ts`, `useLayoutEffect` gegen ein Aufblitzen).
+  Der Streifen bleibt Rückfall, liegt `fixed` über der Kopfzeile und lässt sich wegklicken.
+- `Fehlermeldung` im Stil des Streifens; bei Netzfehler mit `no_connection_icon_red` (liegt im
+  Precache). `Fehlerzustand` kompakt und nur ohne Daten; danach meldet die Namensauswahl
+  `failureReason` **an Stelle** des Listenhinweises.
+- Platz gewonnen: Kopfzeile nur noch mit Zurück-Schaltfläche (vorher leeres Band, ca. 60 px), die
+  überholte Reserve unten in `.inhalt` (32 px plus Safe Area) entfernt. Ergebnis: 780/780 in allen
+  geprüften Offline-Fällen. Mit mehr Inhalt oder kleineren Geräten bleibt Scrollen möglich.
+- **Nachtrag (Fehlerbilder 1/2):** Fiel der Server der Anwendung aus, fehlte das Symbol (Datei nicht
+  abrufbar), und der Text wich von dem bei ausgefallenem Backend ab („… prüfe deine Verbindung" gegen
+  „Der Server ist nicht erreichbar."). Jetzt ein Text für beide Fälle (`TEXT_NICHT_ERREICHBAR`, auch in
+  `httpService.ts`), immer `error_circle_icon`, eingebettet über `Icon/eingebettet.ts`. Schriftgrösse
+  der Meldung wie im Streifen (`--schrift-klein`), damit der längere Text bei 360 px zweizeilig bleibt.
+  Andere Symbole fehlen im Entwicklungsserver ohne Verbindung weiterhin.
+- `TEXT_NICHT_ERREICHBAR` trägt einen festen Umbruch (`\n`) vor „Bitte …“; sichtbar über
+  `white-space: pre-line` am Text der `Fehlermeldung`. Bei 360 px zwei Zeilen, bei 320 px vier
+  (Namensauswahl mit Gastbereich scrollt dort um 25 px) – bewusst offen.
 - **Korrektur `playwright.config.ts`:** Das Muster `NUR_CHROMIUM` (`/\.pwa\.spec\.ts$/`) erfasste
   `e2e/pwa.spec.ts` nicht; die PWA-Tests wären im CI auch in WebKit gelaufen. Neues Muster
   `/(^|[/\\.])pwa\.spec\.ts$/`, nachgeprüft mit `playwright test --list` (WebKit-Projekte: 0).
@@ -131,7 +154,7 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 135 Unit-Tests in 28 Dateien; E2E in `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
+- **Tests:** 142 Unit-Tests in 28 Dateien (Stand 04.10.2026); E2E in `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
   gefunden", Fokusring), `namensauswahl.spec.ts`
   (API per `page.route`) und `pwa.spec.ts` (nur Chromium). CI: Job `pruefen` (Lint, Typen, Bau,
   Unit-Tests) und Job `e2e` (alle sieben Projekte, Chromium und WebKit).

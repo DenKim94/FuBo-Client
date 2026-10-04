@@ -61,7 +61,7 @@
   /* --- Typografie ---
      Gross genug fuer die Nutzung draussen bei Sonnenlicht (DESIGN.md). */
   --schrift-familie: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --schrift-klein: 1rem; /* Fusszeilen, Zeitangaben – nie fuer Aussagen */
+  --schrift-klein: 1rem; /* Fusszeilen, Zeitangaben, Zustandsmeldungen (Offline-Hinweis, Fehlermeldung) – nie fuer Fliesstext */
   --schrift-basis: 1.125rem;
   --schrift-gross: 1.5rem;
   --schrift-titel: 2rem;

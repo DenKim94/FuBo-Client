@@ -45,6 +45,8 @@ describe('AppLayout', () => {
     layoutRendern('/')
     expect(screen.getByText('Start')).toBeInTheDocument()
     expect(screen.queryByTestId('layout-zurueck')).not.toBeInTheDocument()
+    // Ohne Schaltflaeche keine leere Kopfzeile, die Hoehe kostet.
+    expect(screen.queryByTestId('layout-kopf')).not.toBeInTheDocument()
   })
 
   test('zeigt auf einer Unterseite eine Zurueck-Schaltflaeche', () => {
