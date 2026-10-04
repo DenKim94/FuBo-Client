@@ -117,4 +117,37 @@ describe('Dialog', () => {
     expect(dialogElement().open).toBe(false)
     expect(aufSchliessen).toHaveBeenCalledTimes(1)
   })
+
+  test('verweist ueber aria-describedby auf den beschreibenden Text', () => {
+    render(
+      <Dialog offen titel="Sitzung läuft ab" beschreibungId="beschreibung" aufSchliessen={() => {}}>
+        <p id="beschreibung">Deine Sitzung endet in 1:48.</p>
+      </Dialog>,
+    )
+    expect(screen.getByRole('dialog', { name: 'Sitzung läuft ab' })).toHaveAccessibleDescription(
+      'Deine Sitzung endet in 1:48.',
+    )
+  })
+
+  test('hat ohne beschreibungId keine Beschreibung', () => {
+    render(
+      <Dialog offen titel="Hinweis" aufSchliessen={() => {}}>
+        <p>Inhalt</p>
+      </Dialog>,
+    )
+    expect(dialogElement()).not.toHaveAttribute('aria-describedby')
+  })
+
+  test('zeigt ein Symbol vor dem Titel, ohne es in den Namen aufzunehmen', () => {
+    render(
+      <Dialog offen titel="Sitzung läuft ab" symbol={<span>Warnzeichen</span>} aufSchliessen={() => {}}>
+        <p>Inhalt</p>
+      </Dialog>,
+    )
+    // Das Symbol ist Schmuck: Es steht im Baum, ist fuer Screenreader aber
+    // ausgeblendet und aendert den zugaenglichen Namen nicht.
+    expect(screen.getByText('Warnzeichen').closest('[aria-hidden="true"]')).not.toBeNull()
+    expect(screen.getByRole('dialog', { name: 'Sitzung läuft ab' })).toBe(dialogElement())
+  })
 })
+

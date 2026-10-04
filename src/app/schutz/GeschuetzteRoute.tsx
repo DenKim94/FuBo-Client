@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { zielFuerStufe } from '@/app/schutz/zielpfad'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
+import SitzungAblaufDialog from '@/components/SitzungAblaufDialog/SitzungAblaufDialog'
 import { useSitzung } from '@/hooks/useSitzung'
 
 /**
@@ -18,6 +19,11 @@ import { useSitzung } from '@/hooks/useSitzung'
  * Filterchain des Servers, die nach dem Prinzip „deny by default" arbeitet. Der
  * Guard verhindert eine Ansicht, die ohnehin nur Fehlermeldungen zeigen wuerde –
  * nicht den Zugriff auf Daten.
+ *
+ * **Hier hängt auch der Ablauf-Dialog** (`SitzungAblaufDialog`): Er braucht eine
+ * abgeschlossene Anmeldung, gilt für jede Ansicht dahinter und soll beim
+ * Wechsel zwischen ihnen nicht neu entstehen. Als Nachbar des `Outlet` rendert
+ * er dessen Ansichten nicht mit – seine Uhr tickt in ihm, nicht im Baum darüber.
  */
 export default function GeschuetzteRoute() {
   const zustand = useSitzung()
@@ -36,5 +42,10 @@ export default function GeschuetzteRoute() {
     return <Navigate to={zielFuerStufe(zustand)} replace state={{ von: ort.pathname }} />
   }
 
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <SitzungAblaufDialog />
+    </>
+  )
 }

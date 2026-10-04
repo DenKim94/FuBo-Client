@@ -29,8 +29,19 @@
   background: var(--farbe-abdunkelung);
 }
 
-.titel {
+.kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
   margin-block-end: var(--abstand-m);
+}
+
+.symbol {
+  flex: none;
+  display: inline-flex;
+}
+
+.titel {
   font-size: var(--schrift-gross);
   font-weight: var(--gewicht-halbfett);
   line-height: 1.2;

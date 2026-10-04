@@ -1,13 +1,44 @@
 import { HttpResponse, http } from 'msw'
 import type { components } from '@/api/common/types/schema'
 
-/** Beispielsitzung. Keine realen Personennamen (Vorgabe AGENT_CLIENT.md). */
+/**
+ * Beispielsitzung. Keine realen Personennamen (Vorgabe AGENT_CLIENT.md).
+ *
+ * Die Zeitpunkte liegen **weit in der Zukunft**: Seit dem Ablauf-Dialog rechnet
+ * der Client mit der Uhr, und eine feste Zeit in der Vergangenheit (wie die
+ * früheren 26.09.2026) hiesse „Sitzung schon abgelaufen" und öffnete den Dialog
+ * in jedem Test. Tests, die den Ablauf prüfen, überschreiben den Handler mit
+ * Zeitpunkten relativ zu `Date.now()`.
+ */
 export const beispielSitzung: components['schemas']['SitzungInfo'] = {
   stage: 'PROFILE_AUTHENTICATED',
   rolle: 'USER',
   anzeigeName: 'Beispielspieler 03',
-  gueltigBis: '2026-09-26T16:12:00Z',
-  absolutGueltigBis: '2026-09-26T17:00:00Z',
+  gueltigBis: '2099-01-01T00:15:00Z',
+  absolutGueltigBis: '2099-01-01T01:00:00Z',
+}
+
+/**
+ * Baut die Sitzungsauskunft für Tests des Ablaufs: Enden **relativ zu jetzt**,
+ * gerechnet bei jedem Abruf neu.
+ *
+ * @param leerlaufSek Sekunden bis zum Ende des Leerlauf-Fensters (`gueltigBis`).
+ * @param obergrenzeSek Sekunden bis zur harten Obergrenze (`absolutGueltigBis`).
+ */
+export function sitzungMitRest(
+  leerlaufSek: number,
+  obergrenzeSek: number,
+): components['schemas']['SitzungInfo'] {
+  // Eine Uhrablesung für beide: Bei gleichen Sekunden sollen die Zeitpunkte
+  // **exakt** gleich sein, wie wenn der Server `gueltigBis` auf die Obergrenze
+  // klemmt. Zwei `Date.now()` wichen gelegentlich um eine Millisekunde ab, und
+  // „nicht mehr verlängerbar" wurde zufällig zu „verlängerbar".
+  const jetzt = Date.now()
+  return {
+    ...beispielSitzung,
+    gueltigBis: new Date(jetzt + leerlaufSek * 1000).toISOString(),
+    absolutGueltigBis: new Date(jetzt + obergrenzeSek * 1000).toISOString(),
+  }
 }
 
 /**
@@ -64,6 +95,9 @@ export const handlers = [
 
   // 204 ohne Rumpf – der Fall, den 23 der 44 Operationen liefern.
   http.post('*/auth/pin/pruefen', () => new HttpResponse(null, { status: 204 })),
+
+  http.post('*/auth/session/erneuern', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/auth/session/beenden', () => new HttpResponse(null, { status: 204 })),
 
   http.get('*/auth/users/lesen', () => HttpResponse.json(beispielNamensliste)),
   http.post('*/auth/user/waehlen', () => new HttpResponse(null, { status: 204 })),

@@ -36,6 +36,60 @@ export async function sitzungLesen(keinRefresh = false): Promise<SitzungInfo | n
   }
 }
 
+/**
+ * Liest die Sitzung als **Hintergrundaufruf** für die Restlaufzeit
+ * (`GET /auth/session/lesen` mit `X-FuBo-Kein-Refresh: true`).
+ *
+ * Gegenstück zu {@link sitzungLesen} für den zyklischen Abruf des Countdowns:
+ * Der Kopf verhindert, dass die Abfrage selbst das gleitende Fenster
+ * verlängert – sonst hielte allein die Anzeige der Restlaufzeit die Sitzung am
+ * Leben, und der Ablauf-Dialog käme nie.
+ *
+ * **Anders als {@link sitzungLesen} wirft dieser Aufruf bei `401`** (`ApiFehler`
+ * mit `SESSION_UNGUELTIG`). Wer die Restlaufzeit beobachtet, hatte eine Sitzung;
+ * ist sie weg, ist sie abgelaufen oder widerrufen worden. Der Fehler läuft in
+ * die globale Behandlung in `queryClient.ts`: Cache leeren, zur PIN-Eingabe.
+ * Dort ist das richtig; beim Start ohne Sitzung (`sitzungLesen`) wäre es eine
+ * Endlosschleife.
+ */
+export async function sitzungFristLesen(): Promise<SitzungInfo> {
+  return aufrufen<SitzungInfo>('GET', '/auth/session/lesen', { keinRefresh: true })
+}
+
+/**
+ * Verlängert das gleitende Leerlauf-Fenster ausdrücklich
+ * (`POST /auth/session/erneuern`, A14).
+ *
+ * Bei Erfolg (`204`) hat der Server das Fenster nach hinten geschoben und den
+ * Token getauscht; das neue Cookie setzt er selbst. **Die harte Obergrenze
+ * (`absolutGueltigBis`) wandert nicht mit** – eine Sitzung lässt sich so nicht
+ * endlos halten. Das neue Ende steht erst in der nächsten Sitzungsauskunft.
+ *
+ * Der Aufruf trägt **nicht** `X-FuBo-Kein-Refresh`: Er soll genau das
+ * bewirken, was der Kopf verhindert.
+ *
+ * Fehler als `ApiFehler`: `401 SESSION_UNGUELTIG`, wenn die Sitzung inzwischen
+ * abgelaufen ist.
+ */
+export async function sitzungErneuern(): Promise<void> {
+  await aufrufen<void>('POST', '/auth/session/erneuern')
+}
+
+/**
+ * Meldet ab (`POST /auth/session/beenden`).
+ *
+ * Der Server widerruft die Sitzung, gibt einen belegten Gastplatz frei und
+ * löscht das Cookie. **Der Widerruf ist der wirksame Teil**; das Aufräumen im
+ * Client (Cache leeren, zur PIN-Eingabe) ist Sache des Aufrufers. Auch in der
+ * Stufe `PIN_VERIFIED` erlaubt: Ein angefangener Login lässt sich abbrechen.
+ *
+ * Fehler als `ApiFehler`: `401 SESSION_UNGUELTIG`, wenn die Sitzung schon weg
+ * ist – für den Nutzer dasselbe Ergebnis wie ein Erfolg.
+ */
+export async function sitzungBeenden(): Promise<void> {
+  await aufrufen<void>('POST', '/auth/session/beenden')
+}
+
 /** Body der PIN-Prüfung laut Kontrakt (`PinLoginRequest`). */
 export type PinAnfrage = components['schemas']['PinLoginRequest']
 

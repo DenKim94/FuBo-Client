@@ -4,7 +4,8 @@
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`. Gestraffte Fassung vom 03.10.2026; die
 > ausführliche Vorfassung mit allen Herleitungen liegt unter `archive/AGENT_CLIENT_2026-10-03.md`.
-> Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2.
+> Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2, am 04.10.2026 um den
+> Ablauf-Dialog der Sitzung (C3).
 
 ### Rolle
 Senior-Frontend-Entwickler mit Schwerpunkt TypeScript und React (ab 19). Achtet auf Testbarkeit,
@@ -92,6 +93,13 @@ und erscheint **nirgends** in der Oberfläche.
   Abbildung Stufe → Pfad steht nur in `zielpfad.ts`. Unbekannter Zustand ⇒ Ladespinner, keine Umleitung
   auf Verdacht. Nach der Anmeldung zurück zum ursprünglichen Ziel (`state.von`, nur interne Pfade).
   Guards sind **Bedienkomfort, keine Sicherheitsmassnahme**; die Rolle kommt aus `useSitzung`.
+- **Restlaufzeit und Ablauf-Dialog (04.10.2026):** Der Countdown hat einen **eigenen Abruf und Schlüssel**
+  (`sitzungFristLesen`, `schluessel.sitzungFrist`, immer mit `X-FuBo-Kein-Refresh`), der bei `401` wirft;
+  `useSitzung` bleibt der verlängernde Abruf. Ende der Sitzung = früherer der beiden Serverzeitpunkte;
+  „verlängerbar" heisst `gueltigBis < absolutGueltigBis`. Die Geräteuhr ist nur Darstellung, abgemeldet
+  wird nur auf Anweisung des Servers. Abmelden und Ablauf räumen über **eine** Funktion auf
+  (`sitzungsendeAusloesen`); erst der Server (`useAbmelden`), bei Fehler bleibt die Person angemeldet.
+  Mocks für Zeitpunkte mit **einer** Uhrablesung bauen (`sitzungMitRest`).
 - **Der Startaufruf `GET /auth/session/lesen` bleibt auch ohne Sitzung** – nur der Server kennt die Stufe.
   Der `401` ist vertragsgemäss, sein Konsoleneintrag kosmetisch; nebenbei belegt er die Erreichbarkeit.
 - **Server-State über TanStack Query**, UI-State getrennt davon. Query-Schlüssel nur in
@@ -201,6 +209,10 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Abdunkelung über `--farbe-abdunkelung`, das direkt auf `::backdrop` sitzt (älteres `::backdrop`
   erbt nichts von `:root`). jsdom-Stub für `showModal`/`close` in `src/test/setup.ts`; Unit-Tests
   prüfen `dialog.open`, Fokusfalle und Escape gehören in Playwright.
+- **Dialog-Erweiterungen (04.10.2026):** `symbol` (schmückend, `aria-hidden`) und `beschreibungId`
+  (`aria-describedby`; sonst hört man beim Öffnen nur Titel und erste Schaltfläche). Eine Fokusfalle prüft
+  der E2E-Test mit einer Schaltfläche **hinter** dem Dialog. Der Ablauf-Dialog (`SitzungAblaufDialog`)
+  hängt in `GeschuetzteRoute`, bleibt im Baum und wird über `offen` gesteuert (Fokus kehrt ins Feld zurück).
 - **Fehler- und Leerzustand:** `Fehlermeldung` steht neben einer bedienbaren Ansicht (Kasten im
   Stil des `OfflineHinweis`: Fehlerfläche, roter Rand, Text in Textfarbe; `role="alert"`, optionale
   `id`). Sie nimmt `fehler` (Text über `fehlertextBilden`) oder eigenen Text als `children`.
@@ -214,7 +226,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   der `OfflineHinweis` aus (`useNetzfehlerMelden`/`useNetzfehlerGemeldet`). Der Streifen ist nur
   Rückfall, liegt `fixed` über der Kopfzeile (beansprucht keinen Platz) und lässt sich wegklicken
   (bis zum nächsten Ausfall). Meldungen dürfen auf vollen Ansichten kein Scrollen auslösen: lieber
-  einen Hinweis ersetzen als eine Zeile anhängen. Die Kopfzeile erscheint nur mit Zurück-Schaltfläche. `Leerzustand`
+  einen Hinweis ersetzen als eine Zeile anhängen. Das gilt für Fensterhöhen ab 740 px; auf kleineren Telefonen
+  (iPhone SE 667 px) scrollt der Gastbereich ohnehin, der E2E-Test prüft dort nichts (Entscheidung vom 04.10.2026). Die Kopfzeile erscheint mit Zurück-Schaltfläche und/oder „Abmelden" (rechts, nur bei abgeschlossener Anmeldung); ohne beide entfällt sie. `Leerzustand`
   nennt immer Grund und nächsten Schritt (`titel` und `text` Pflicht), ohne `role`.
 - **Zurück-Navigation:** Übergeordnete Ansicht als `handle.zurueck` (`RoutenAngaben`, innerste Route
   gilt); ohne Angabe ein Schritt zurück, beim Direkteinstieg (`history.state.idx` ≤ 0) zur Startseite.
@@ -229,6 +242,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - Formular-Ereignisse mit `SubmitEvent`/`ChangeEvent` typisieren, nicht mit `FormEvent`.
 - Jedes bedienbare Element trägt `data-testid`. Barrierefreiheit (Kontrast, Tap-Ziele, Tastatur,
   Screenreader) gehört zur Implementierung, nicht zur Abnahme.
+- **Git im verbundenen Ordner:** nur `git --no-optional-locks status`/`diff`; sonst bleibt eine leere
+  `.git/index.lock` zurück.
 - **Tests im jeweiligen Paket.** Hook-Tests mit dem echten `queryClient` (`src/test/QueryUmgebung.tsx`)
   und mit beobachteter Sitzung (`useSitzung`), sonst lädt `invalidateQueries` nicht neu. Eine Absicherung
   gilt erst, wenn ihr Test ohne sie rot wird (Gegenprobe).

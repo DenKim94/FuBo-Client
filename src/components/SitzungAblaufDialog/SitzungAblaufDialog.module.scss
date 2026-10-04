@@ -1,0 +1,45 @@
+@use '@/styles/globalVars';
+
+// Das Warnsymbol in der Hinweisfarbe (5.93:1 auf Weiss). Die Warnung steht
+// im Titel und im Text; Farbe und Symbol tragen sie nur mit (WCAG 1.4.1).
+.symbol {
+  display: inline-flex;
+  color: var(--farbe-hinweis);
+}
+
+.text {
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+}
+
+// Verbleibende Warnzeit. Dieselbe Spur wie der Fortschrittsbalken, aber ohne
+// Rolle: reiner Schmuck (siehe die Komponente).
+.spur {
+  overflow: hidden;
+  block-size: 0.5rem;
+  border-radius: var(--radius-l);
+  background: var(--farbe-flaeche-kraeftig);
+}
+
+.fuellung {
+  inline-size: var(--fuellung-anteil, 0%);
+  block-size: 100%;
+  border-radius: inherit;
+  // Hinweisfarbe auf der Spur: 5.12:1 (WCAG 1.4.11). Linear und im Takt der Uhr,
+  // damit der Balken gleichmaessig laeuft statt zu ruckeln.
+  background: var(--farbe-hinweis);
+  transition: inline-size 1s linear;
+}
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-xs);
+}
+
+.hinweis {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+  text-align: center;
+}

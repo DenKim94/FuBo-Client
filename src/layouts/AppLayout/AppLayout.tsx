@@ -4,7 +4,10 @@ import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
 import AktualisierungsHinweis from '@/components/AktualisierungsHinweis/AktualisierungsHinweis'
 import CustomButton from '@/components/CustomButton/CustomButton'
+import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import OfflineHinweis from '@/components/OfflineHinweis/OfflineHinweis'
+import { useAbmelden } from '@/hooks/useAbmelden'
+import { useSitzung } from '@/hooks/useSitzung'
 import style from './AppLayout.module.scss'
 
 /**
@@ -40,6 +43,15 @@ function istDirekteinstieg(): boolean {
  * 2. sonst einen Schritt im Verlauf zurück,
  * 3. beim Direkteinstieg zur Startseite statt aus der Anwendung hinaus.
  *
+ * **„Abmelden" steht in der Kopfzeile, rechts** (C3, Entscheidung vom 04.10.2026),
+ * solange eine Anmeldung besteht (`stage = PROFILE_AUTHENTICATED`). Die Kopfzeile
+ * erscheint deshalb auch auf der Startseite, die sonst keine „Zurück"-Schaltfläche
+ * braucht. Auf den Login-Schritten gibt es nichts abzumelden. Gegenüber „Zurück"
+ * liegt die Schaltfläche am anderen Rand, damit ein Tippen nicht die falsche trifft;
+ * eine Rückfrage gibt es nicht – das Abmelden verliert nichts, der Weg zurück ist
+ * PIN und Name. Schlägt der Aufruf fehl, bleibt die Person angemeldet und sieht
+ * den Grund unter der Kopfzeile (`useAbmelden`).
+ *
  * Der `OfflineHinweis` legt sich über die Kopfzeile, statt Platz im Fluss zu
  * belegen (Entscheidung vom 04.10.2026).
  *
@@ -56,6 +68,10 @@ export default function AppLayout() {
   // Die innerste Route mit Zielangabe gilt.
   const ziel = angaben.findLast((angabe) => angabe?.zurueck)?.zurueck
   const mitZurueck = !istStartseite && !ohneZurueck
+  const { angemeldet } = useSitzung()
+  const abmeldung = useAbmelden()
+  // Ohne beide Schaltflaechen entfaellt die Kopfzeile ganz (siehe unten).
+  const mitKopf = mitZurueck || angemeldet
 
   /** Führt zur übergeordneten Ansicht, einen Schritt zurück oder zur Startseite. */
   function zurueck() {
@@ -69,16 +85,35 @@ export default function AppLayout() {
       {/* Rendert nichts; verbindet die globale 401-Behandlung mit dem Router. */}
       <SitzungsWaechter />
 
-      {/* Die Kopfzeile traegt bisher nur die Zurueck-Schaltflaeche. Ohne sie
-          (Startseite, Login-Schritte) entfaellt sie ganz: Ein leeres Band mit
-          Trennlinie kostete rund 60 px Hoehe, und die Namensauswahl mit
+      {/* Die Kopfzeile traegt „Zurueck" (links) und „Abmelden" (rechts). Ohne
+          beide (Login-Schritte ohne Sitzung) entfaellt sie ganz: Ein leeres Band
+          mit Trennlinie kostete rund 60 px Hoehe, und die Namensauswahl mit
           Gastbereich fuellt ein 360 × 780-Telefon auch so schon vollstaendig. */}
-      {mitZurueck && (
+      {mitKopf && (
         <header className={style.kopf} data-testid="layout-kopf">
-          <CustomButton art="sekundaer" onClick={zurueck} data-testid="layout-zurueck">
-            Zurück
-          </CustomButton>
+          {mitZurueck && (
+            <CustomButton art="sekundaer" onClick={zurueck} data-testid="layout-zurueck">
+              Zurück
+            </CustomButton>
+          )}
+          {angemeldet && (
+            <CustomButton
+              art="sekundaer"
+              className={style.abmelden}
+              laedt={abmeldung.isPending}
+              onClick={() => abmeldung.mutate()}
+              data-testid="layout-abmelden"
+            >
+              Abmelden
+            </CustomButton>
+          )}
         </header>
+      )}
+
+      {abmeldung.error && (
+        <div className={style.abmeldefehler}>
+          <Fehlermeldung fehler={abmeldung.error} data-testid="layout-abmelden-fehler" />
+        </div>
       )}
 
       <OfflineHinweis />

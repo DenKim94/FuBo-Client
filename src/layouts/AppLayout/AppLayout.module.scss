@@ -22,6 +22,20 @@
   border-bottom: 1px solid var(--farbe-rand);
 }
 
+// Rechts, gegenueber von „Zurueck". Allein in der Kopfzeile (Startseite) steht
+// sie dank `auto` trotzdem am rechten Rand.
+.abmelden {
+  margin-inline-start: auto;
+}
+
+// Fehler des Abmeldens unter der Kopfzeile, im Raster des Inhalts.
+.abmeldefehler {
+  width: 100%;
+  max-width: var(--breite-inhalt);
+  margin: 0 auto;
+  padding: var(--abstand-m) var(--abstand-m) 0;
+}
+
 .inhalt {
   flex: 1;
   // Spalte statt Block: Eine Ansicht kann mit `flex: 1` die Resthoehe

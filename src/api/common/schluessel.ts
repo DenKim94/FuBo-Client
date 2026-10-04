@@ -11,6 +11,14 @@
  */
 export const schluessel = {
   sitzung: ['sitzung'] as const,
+  /**
+   * Restlaufzeit der Sitzung (Countdown, Ablauf-Dialog). **Eigener Schlüssel**, weil
+   * dieser Abruf mit `X-FuBo-Kein-Refresh` läuft und `sitzung` ohne – beide teilten
+   * sich sonst eine Abfragefunktion und damit entweder den Kopf oder dessen Fehlen.
+   * Beginnt mit `sitzung`: Der Stufenwechsel (`useSitzungswechsel`) behält und
+   * invalidiert ihn gemeinsam mit der Sitzung.
+   */
+  sitzungFrist: ['sitzung', 'frist'] as const,
   namensliste: ['namensliste'] as const,
   termine: ['termine'] as const,
   termin: (terminId: string) => ['termin', terminId] as const,

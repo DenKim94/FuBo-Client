@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 /**
  * Prueft den Rahmen der Anwendung auf allen Geraeteprojekten.
@@ -12,6 +12,26 @@ import { expect, test } from '@playwright/test'
  * Anwendung – und die Admin-Anmeldung. Die Zurueck-Schaltflaeche wird an der
  * Admin-Anmeldung geprueft, weil die Login-Schritte sie bewusst nicht zeigen.
  */
+/**
+ * Prueft die Breite des Fokusrings (Regel aus `_reset.scss`: 3 px).
+ *
+ * **Toleranz nach unten statt exakt 3 px:** WebKit rundet die Breite im
+ * berechneten Stil auf ganze Geraetepixel ab. Bei der Pixeldichte 2,5 des
+ * iPad-Profils (`ios-tablet-quer`) sind aus 3 px 7 Geraetepixel geworden, also
+ * 2,8 px (CI-Fehler vom 04.10.2026: erwartet 3px, erhalten 2.8px). Chromium
+ * meldet bei derselben Dichte 3 px; bei Dichte 2 und 3 liefern beide Engines
+ * genau 3 px. Erwartet wird deshalb ein Wert zwischen der abgerundeten Breite
+ * und 3 px. Ein fehlender oder zu duenner Ring (0, 1 oder 2 px) faellt weiter durch.
+ */
+async function pruefeFokusringBreite(page: Page, element: Locator) {
+  await expect(element).toHaveCSS('outline-style', 'solid')
+  const dichte = await page.evaluate(() => window.devicePixelRatio)
+  const untergrenze = Math.floor(3 * dichte) / dichte
+  const breite = () => element.evaluate((e) => parseFloat(getComputedStyle(e).outlineWidth))
+  await expect.poll(breite).toBeGreaterThanOrEqual(untergrenze - 0.001)
+  await expect.poll(breite).toBeLessThanOrEqual(3)
+}
+
 test.describe('Rahmen und Navigation', () => {
   test('beginnt ohne Sitzung mit der PIN-Eingabe', async ({ page }) => {
     await page.goto('/')
@@ -82,8 +102,7 @@ test.describe('Rahmen und Navigation', () => {
     await expect(feld).toBeFocused()
     // Regel aus `_reset.scss`: 3 px in --farbe-fokus. Ein Textfeld erfuellt
     // `:focus-visible` auch nach programmatischem Fokus.
-    await expect(feld).toHaveCSS('outline-style', 'solid')
-    await expect(feld).toHaveCSS('outline-width', '3px')
+    await pruefeFokusringBreite(page, feld)
   })
 
   test('zeigt den Fokusring bei Tastaturbedienung', async ({ page, browserName }) => {
@@ -100,8 +119,7 @@ test.describe('Rahmen und Navigation', () => {
     // „Absenden" ist bei leerem Feld gesperrt und wird uebersprungen.
     const link = page.getByTestId('pin-admin-link')
     await expect(link).toBeFocused()
-    await expect(link).toHaveCSS('outline-style', 'solid')
-    await expect(link).toHaveCSS('outline-width', '3px')
+    await pruefeFokusringBreite(page, link)
   })
 
   test('legt den Offline-Hinweis ueber die Kopfzeile und laesst ihn wegklicken', async ({ page, context }) => {

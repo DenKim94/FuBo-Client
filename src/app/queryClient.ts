@@ -50,21 +50,31 @@ function istSitzungsende(fehler: unknown): boolean {
 }
 
 /**
- * Behandelt den Sitzungsablauf an genau einer Stelle (A14).
- *
- * `401` steht im Kontrakt an allen 44 Operationen. Ohne zentrale Behandlung
- * stünde die Abfrage in jeder Ansicht – und fehlte irgendwann in einer.
+ * Beendet die Sitzung clientseitig: Cache leeren, zur PIN-Eingabe.
  *
  * Der Cache wird geleert und nicht nur verworfen: Er überlebt den Wechsel der
  * Route. Ohne das Leeren sähe die nächste angemeldete Person kurz die Daten der
  * vorigen – auf einem Gerät, das am Spielfeldrand herumgereicht wird, ist das
  * kein theoretischer Fall.
+ *
+ * Eine Funktion für beide Wege, die dahin führen: den `401` an irgendeinem
+ * Aufruf (`pruefeSitzung`) und die ausdrückliche Abmeldung (`useAbmelden`). Die
+ * Abmeldung räumt so genauso auf wie ein Ablauf – zwei Kopien liefen irgendwann
+ * auseinander.
+ */
+export function sitzungsendeAusloesen() {
+  queryClient.clear()
+  beiSitzungsende()
+}
+
+/**
+ * Behandelt den Sitzungsablauf an genau einer Stelle (A14).
+ *
+ * `401` steht im Kontrakt an allen 44 Operationen. Ohne zentrale Behandlung
+ * stünde die Abfrage in jeder Ansicht – und fehlte irgendwann in einer.
  */
 function pruefeSitzung(fehler: unknown) {
-  if (istSitzungsende(fehler)) {
-    queryClient.clear()
-    beiSitzungsende()
-  }
+  if (istSitzungsende(fehler)) sitzungsendeAusloesen()
 }
 
 /**

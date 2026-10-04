@@ -7,6 +7,12 @@ import GeschuetzteRoute from './GeschuetzteRoute'
 const sitzungMock = vi.fn<() => SitzungZustand>()
 vi.mock('@/hooks/useSitzung', () => ({ useSitzung: () => sitzungMock() }))
 
+// Der Ablauf-Dialog hat einen eigenen Test; hier zaehlt nur, ob er im
+// geschuetzten Bereich haengt. Echt braeuchte er einen Query-Client und Server.
+vi.mock('@/components/SitzungAblaufDialog/SitzungAblaufDialog', () => ({
+  default: () => <div data-testid="sitzung-ablauf-dialog-attrappe" />,
+}))
+
 function zustand(teil: Partial<SitzungZustand> = {}): SitzungZustand {
   return {
     laedt: false,
@@ -46,6 +52,25 @@ describe('GeschuetzteRoute', () => {
     sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
     startseiteOeffnen()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
+  })
+
+  test('haengt den Ablauf-Dialog neben die freigegebene Ansicht', () => {
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+    startseiteOeffnen()
+    expect(screen.getByTestId('sitzung-ablauf-dialog-attrappe')).toBeInTheDocument()
+  })
+
+  test('zeigt den Ablauf-Dialog nicht, solange keine Anmeldung besteht', () => {
+    // Ohne abgeschlossene Anmeldung gibt es nichts zu verlaengern; der Dialog
+    // wuerde Login-Schritte unterbrechen und fragte eine Sitzung ab, die es
+    // nicht gibt.
+    sitzungMock.mockReturnValue(zustand({ pinGeprueft: true }))
+    startseiteOeffnen()
+    expect(screen.queryByTestId('sitzung-ablauf-dialog-attrappe')).not.toBeInTheDocument()
+
+    sitzungMock.mockReturnValue(zustand({ laedt: true }))
+    startseiteOeffnen()
+    expect(screen.queryByTestId('sitzung-ablauf-dialog-attrappe')).not.toBeInTheDocument()
   })
 
   test('leitet ohne Sitzung zur PIN-Eingabe um', () => {

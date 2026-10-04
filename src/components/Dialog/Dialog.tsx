@@ -20,6 +20,18 @@ type DialogEigenschaften = {
    * schützen (DESIGN.md, Sitzungsablauf). Geschlossen wird dann nur über `offen`.
    */
   festhalten?: boolean
+  /**
+   * Schmückendes Symbol vor dem Titel (z. B. `Icon`). Wird für Screenreader
+   * ausgeblendet: Die Aussage steht im Titel, das Symbol unterstützt sie nur.
+   */
+  symbol?: ReactNode
+  /**
+   * `id` des Elements, das den Dialog beschreibt (`aria-describedby`). Der
+   * Titel nennt den Dialog, die Beschreibung sagt, worum es geht – ohne sie
+   * hört ein Screenreader beim Öffnen nur Titel und erste Schaltfläche, nicht
+   * den Text dazwischen.
+   */
+  beschreibungId?: string
   /** Test-ID des `<dialog>`-Elements. */
   'data-testid'?: string
   children: ReactNode
@@ -54,6 +66,8 @@ export default function Dialog({
   titel,
   aufSchliessen,
   festhalten = false,
+  symbol,
+  beschreibungId,
   'data-testid': testId = 'dialog',
   children,
 }: DialogEigenschaften) {
@@ -88,13 +102,21 @@ export default function Dialog({
       ref={ref}
       className={style.dialog}
       aria-labelledby={titelId}
+      aria-describedby={beschreibungId}
       onCancel={beimAbbrechen}
       onClose={beimSchliessen}
       data-testid={testId}
     >
-      <h2 id={titelId} className={style.titel}>
-        {titel}
-      </h2>
+      <div className={style.kopf}>
+        {symbol && (
+          <span className={style.symbol} aria-hidden="true">
+            {symbol}
+          </span>
+        )}
+        <h2 id={titelId} className={style.titel}>
+          {titel}
+        </h2>
+      </div>
       <div className={style.inhalt}>{children}</div>
     </dialog>
   )

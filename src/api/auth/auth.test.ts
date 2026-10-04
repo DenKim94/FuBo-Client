@@ -5,6 +5,9 @@ import {
   nameWaehlen,
   namenslisteLesen,
   pinPruefen,
+  sitzungBeenden,
+  sitzungErneuern,
+  sitzungFristLesen,
   sitzungLesen,
 } from '@/api/auth/auth'
 import { ApiFehler } from '@/api/common/fehler'
@@ -140,6 +143,116 @@ describe('sitzungLesen', () => {
     await sitzungLesen(true)
 
     expect(koepfe).toEqual([null, 'true'])
+  })
+})
+
+describe('sitzungFristLesen', () => {
+  test('liest die Sitzung als Hintergrundaufruf mit dem Kopf gegen die Verlaengerung', async () => {
+    let kopf: string | null = 'nicht gelesen'
+    mockServer.use(
+      http.get('*/auth/session/lesen', ({ request }) => {
+        kopf = request.headers.get('X-FuBo-Kein-Refresh')
+        return HttpResponse.json({ stage: 'PROFILE_AUTHENTICATED' })
+      }),
+    )
+
+    await sitzungFristLesen()
+
+    // Ohne den Kopf hielte allein die Anzeige der Restlaufzeit die Sitzung am
+    // Leben, und der Ablauf-Dialog kaeme nie.
+    expect(kopf).toBe('true')
+  })
+
+  test('wirft bei 401, statt null zu liefern', async () => {
+    // Anders als `sitzungLesen`: Wer die Restlaufzeit beobachtet, hatte eine
+    // Sitzung. Ist sie weg, gehoert der Fehler in die globale Behandlung.
+    mockServer.use(
+      http.get('*/auth/session/lesen', () =>
+        problem(401, 'SESSION_UNGUELTIG', 'Die Sitzung ist abgelaufen.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(sitzungFristLesen())
+
+    expect(fehler.status).toBe(401)
+    expect(fehler.code).toBe('SESSION_UNGUELTIG')
+  })
+
+  test('meldet bei 401 selbst nicht ab, das tut erst der Query-Cache', async () => {
+    const abmelden = vi.fn()
+    sitzungsendeBehandeln(abmelden)
+    mockServer.use(
+      http.get('*/auth/session/lesen', () =>
+        problem(401, 'SESSION_UNGUELTIG', 'Die Sitzung ist abgelaufen.'),
+      ),
+    )
+
+    // Die Behandlung haengt am Query-Cache und greift erst, wenn eine Abfrage
+    // den Fehler wirft (Test in `useRestlaufzeit.test`).
+    await sitzungFristLesen().catch(() => {})
+    expect(abmelden).not.toHaveBeenCalled()
+
+    sitzungsendeBehandeln(() => {})
+  })
+})
+
+describe('sitzungErneuern', () => {
+  test('loest bei 204 ohne Rueckgabewert auf und traegt keinen Hintergrundkopf', async () => {
+    let methode = ''
+    let kopf: string | null = 'nicht gelesen'
+    mockServer.use(
+      http.post('*/auth/session/erneuern', ({ request }) => {
+        methode = request.method
+        kopf = request.headers.get('X-FuBo-Kein-Refresh')
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await expect(sitzungErneuern()).resolves.toBeUndefined()
+
+    expect(methode).toBe('POST')
+    // Der Kopf wuerde genau das verhindern, worum es hier geht.
+    expect(kopf).toBeNull()
+  })
+
+  test('wirft bei abgelaufener Sitzung einen ApiFehler mit Code', async () => {
+    mockServer.use(
+      http.post('*/auth/session/erneuern', () =>
+        problem(401, 'SESSION_UNGUELTIG', 'Die Sitzung ist abgelaufen.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(sitzungErneuern())
+
+    expect(fehler.code).toBe('SESSION_UNGUELTIG')
+  })
+})
+
+describe('sitzungBeenden', () => {
+  test('loest bei 204 ohne Rueckgabewert auf', async () => {
+    let methode = ''
+    mockServer.use(
+      http.post('*/auth/session/beenden', ({ request }) => {
+        methode = request.method
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await expect(sitzungBeenden()).resolves.toBeUndefined()
+
+    expect(methode).toBe('POST')
+  })
+
+  test('wirft bei bereits beendeter Sitzung einen ApiFehler mit Code', async () => {
+    mockServer.use(
+      http.post('*/auth/session/beenden', () =>
+        problem(401, 'SESSION_UNGUELTIG', 'Die Sitzung ist abgelaufen.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(sitzungBeenden())
+
+    expect(fehler.code).toBe('SESSION_UNGUELTIG')
   })
 })
 

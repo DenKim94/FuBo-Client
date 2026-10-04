@@ -148,7 +148,13 @@ test.describe('Namensauswahl', () => {
     await expect(page.getByTestId('offline-hinweis')).toBeHidden()
     await expect(page.getByTestId('namensauswahl-liste')).toBeVisible()
     // Auf dem Telefon kein Scrollen: Die Meldung ersetzt den Hinweis der Liste.
-    if (page.viewportSize()!.width < 600) {
+    // **Nur ab Fensterhoehe 740 px:** Die Ansicht mit gewaehltem Gast und
+    // Meldung ist 736 px hoch. Auf einem iPhone SE (667 px) und dem iPhone 17
+    // der Geraeteprofile (681 px) scrollt sie dadurch, auch ohne dass die
+    // Meldung dort etwas aendert (CI-Fehler vom 04.10.2026, Entscheidung des
+    // Entwicklers: kein Verdichten des Layouts, kleinere Telefone scrollen).
+    const groesse = page.viewportSize()!
+    if (groesse.width < 600 && groesse.height >= 740) {
       const { scrollhoehe, sichthoehe } = await page.evaluate(() => ({
         scrollhoehe: document.documentElement.scrollHeight,
         sichthoehe: document.documentElement.clientHeight,
