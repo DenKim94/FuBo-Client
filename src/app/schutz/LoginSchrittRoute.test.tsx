@@ -117,4 +117,87 @@ describe('LoginSchrittRoute', () => {
     render(<RouterProvider router={router} />)
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
   })
+
+  test('fuehrt einen angemeldeten Admin ins Admin-Dashboard statt zur Startseite', () => {
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true, istAdmin: true }))
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <p>Dashboard</p> },
+        { path: '/admin', element: <p>Admin-Dashboard</p> },
+        { element: <LoginSchrittRoute schritt="name" />, children: [{ path: '/admin/anmelden', element: null }] },
+      ],
+      { initialEntries: ['/admin/anmelden'] },
+    )
+    render(<RouterProvider router={router} />)
+    // Nach der Admin-Anmeldung leitet dieser Guard selbst weiter (C4, E1).
+    expect(screen.getByText('Admin-Dashboard')).toBeInTheDocument()
+  })
+
+  test('hat bei einem gemerkten Ziel dieses vor dem Admin-Dashboard', () => {
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true, istAdmin: true }))
+    const router = createMemoryRouter(
+      [
+        { path: '/teams/7', element: <p>Teams</p> },
+        { path: '/admin', element: <p>Admin-Dashboard</p> },
+        { element: <LoginSchrittRoute schritt="name" />, children: [{ path: '/admin/anmelden', element: null }] },
+      ],
+      { initialEntries: [{ pathname: '/admin/anmelden', state: { von: '/teams/7' } }] },
+    )
+    render(<RouterProvider router={router} />)
+    expect(screen.getByText('Teams')).toBeInTheDocument()
+  })
+})
+
+describe('Admin-Anmeldung hinter dem Guard der Stufe PIN_VERIFIED', () => {
+  beforeEach(() => sitzungMock.mockReset())
+
+  /** Die Admin-Ansichten sind Geschwister der Namensauswahl in der Gruppe `name` (C4, 4.2). */
+  function admin(pfad: string) {
+    const router = createMemoryRouter(
+      [
+        { path: '/', element: <p>Dashboard</p> },
+        { path: '/pin/pruefen', element: <p>PIN-Eingabe</p> },
+        {
+          element: <LoginSchrittRoute schritt="name" />,
+          children: [
+            { path: '/anmelden', element: <p>Namensauswahl</p> },
+            { path: '/admin/anmelden', element: <p>Admin-Anmeldung</p> },
+            { path: '/admin/passwort/vergessen', element: <p>Passwort vergessen</p> },
+            { path: '/admin/passwort/neu', element: <p>Passwort neu</p> },
+          ],
+        },
+      ],
+      { initialEntries: [pfad] },
+    )
+    render(<RouterProvider router={router} />)
+    return router
+  }
+
+  test.each(['/admin/anmelden', '/admin/passwort/vergessen', '/admin/passwort/neu'])(
+    'schickt %s ohne Sitzung zur PIN-Eingabe',
+    (pfad) => {
+      // Der Server antwortete sonst mit 401 SESSION_UNGUELTIG, und die globale
+      // Behandlung wuerfe den Admin beim ersten Versuch zur PIN zurueck.
+      sitzungMock.mockReturnValue(zustand())
+      admin(pfad)
+      expect(screen.getByText('PIN-Eingabe')).toBeInTheDocument()
+    },
+  )
+
+  test.each([
+    ['/admin/anmelden', 'Admin-Anmeldung'],
+    ['/admin/passwort/vergessen', 'Passwort vergessen'],
+    ['/admin/passwort/neu', 'Passwort neu'],
+  ])('zeigt %s in PIN_VERIFIED', (pfad, text) => {
+    sitzungMock.mockReturnValue(zustand({ pinGeprueft: true }))
+    admin(pfad)
+    expect(screen.getByText(text)).toBeInTheDocument()
+  })
+
+  test('schickt einen angemeldeten Spieler von der Admin-Anmeldung zur Startseite', () => {
+    // Ein Spieler, der Admin werden will, meldet sich erst ab (sonst 403).
+    sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+    admin('/admin/anmelden')
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+  })
 })

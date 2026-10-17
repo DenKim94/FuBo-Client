@@ -1,0 +1,27 @@
+@use '@/styles/globalVars';
+
+// Gleiche Form wie die Fehlermeldung, aber ruhig: Flaeche und dekorativer Rand
+// statt Fehlerrot. Der Text traegt die Aussage, nicht die Farbe.
+.hinweis {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  inline-size: 100%;
+  max-inline-size: var(--breite-text);
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text);
+  font-size: var(--schrift-klein);
+  text-align: start;
+}
+
+.symbol {
+  display: inline-flex;
+  color: var(--farbe-link);
+}
+
+.text {
+  white-space: pre-line;
+}

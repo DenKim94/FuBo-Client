@@ -67,8 +67,10 @@ export default defineConfig({
       injectManifest: {
         // Nur die App-Shell. Icons und Bilder bleiben draussen, sonst waechst
         // der Precache um rund ein Megabyte, das bei jeder Aktualisierung
-        // erneut geprueft wird.
-        globPatterns: ['**/*.{js,css,html,woff2}'],
+        // erneut geprueft wird. Ausnahme: das Auge am Passwortfeld. Der
+        // Umschalter besteht nur aus diesem Bild und waere offline leer.
+        // Bewusst nur diese zwei Dateien, nicht alle PNGs (Logo, PWA-Icons).
+        globPatterns: ['**/*.{js,css,html,woff2}', 'icons/visibility_{on,off}_dark.png'],
       },
       devOptions: {
         // Service Worker auch unter `npm run dev` pruefbar.

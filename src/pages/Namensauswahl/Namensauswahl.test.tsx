@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { TEXT_NICHT_ERREICHBAR } from '@/api/common/fehler'
 import { schluessel } from '@/api/common/schluessel'
@@ -17,11 +18,13 @@ import Namensauswahl from './Namensauswahl'
  */
 const ALS_TEXTINHALT = TEXT_NICHT_ERREICHBAR.replace(/\s+/g, ' ')
 
-/** Rendert die Ansicht und wartet, bis die Namensliste geladen ist. */
+/** Rendert die Ansicht (mit Router fuer den Admin-Link) und wartet, bis die Namensliste geladen ist. */
 async function rendernUndLaden() {
   render(
     <QueryUmgebung>
-      <Namensauswahl />
+      <MemoryRouter>
+        <Namensauswahl />
+      </MemoryRouter>
     </QueryUmgebung>,
   )
   return screen.findByTestId('namensauswahl-liste')
@@ -64,7 +67,9 @@ describe('Namensauswahl', () => {
   test('zeigt waehrend des Ladens den Spinner', () => {
     render(
       <QueryUmgebung>
-        <Namensauswahl />
+        <MemoryRouter>
+          <Namensauswahl />
+        </MemoryRouter>
       </QueryUmgebung>,
     )
     expect(screen.getByRole('status')).toHaveTextContent('Namen werden geladen')
@@ -84,6 +89,15 @@ describe('Namensauswahl', () => {
       screen.getByRole('option', { name: 'Beispielspieler 02, bereits angemeldet' }),
     ).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('namensauswahl-absenden')).toBeDisabled()
+  })
+
+  test('verlinkt die Admin-Anmeldung – hier und nur hier', async () => {
+    // Die Admin-Anmeldung verlangt PIN_VERIFIED; die Namensauswahl ist der einzige
+    // Ort, an dem die Sitzung sicher in dieser Stufe steht (C4, E5).
+    await rendernUndLaden()
+    const link = screen.getByRole('link', { name: 'Als Admin anmelden' })
+    expect(link).toHaveAttribute('href', '/admin/anmelden')
+    expect(link).toHaveAttribute('data-testid', 'namensauswahl-admin-link')
   })
 
   test('sendet fuer einen Namen die Id und nennt ihn auf der Schaltflaeche', async () => {
@@ -230,7 +244,9 @@ describe('Namensauswahl', () => {
     )
     render(
       <QueryUmgebung>
-        <Namensauswahl />
+        <MemoryRouter>
+          <Namensauswahl />
+        </MemoryRouter>
       </QueryUmgebung>,
     )
     // Die Wiederholungsregel versucht einen 500 einmal selbst – erst danach steht der Fehler.

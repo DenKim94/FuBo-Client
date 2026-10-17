@@ -5,7 +5,9 @@
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`. Gestraffte Fassung vom 03.10.2026; die
 > ausführliche Vorfassung mit allen Herleitungen liegt unter `archive/AGENT_CLIENT_2026-10-03.md`.
 > Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2, am 04.10.2026 um den
-> Ablauf-Dialog der Sitzung und den Abschluss von C3 (verlängernde Abrufe nur bei Bedienung).
+> Ablauf-Dialog der Sitzung und den Abschluss von C3 (verlängernde Abrufe nur bei Bedienung), am
+> 17.10.2026 um den Abschluss von C4 (Admin-Zugang hinter `PIN_VERIFIED`, Passwortbausteine). Vorfassung:
+> `archive/AGENT_CLIENT_2026-10-17.md`.
 
 ### Rolle
 Senior-Frontend-Entwickler mit Schwerpunkt TypeScript und React (ab 19). Achtet auf Testbarkeit,
@@ -78,7 +80,8 @@ und erscheint **nirgends** in der Oberfläche.
 - **Kein Token im `localStorage`.** HttpOnly-Cookie, Aufrufe mit `credentials: 'include'`.
 - **Server ist die Autorität.** Client-Validierung dient nur der Bedienung und spiegelt Serverregeln.
 - **Genau ein Zugang zum Server: `aufrufen` in `src/api/common/httpService.ts`.** Im Quellbaum steht genau
-  ein `fetch(`. `204` liefert `undefined` (23 von 44 Operationen), jede Fehlerantwort wird `ApiFehler`.
+  ein `fetch(`. `204` und `202` liefern `undefined` (24 von 45 Operationen; `ANTWORT_OHNE_RUMPF`), jede
+  Fehlerantwort wird `ApiFehler`. Bei `400 EINGABE_UNGUELTIG` trägt sie `felder` (Feldname → Meldung).
 - **Anzeigetext ist `detail` vom Server, Programmlogik verzweigt über `code`.** Keine Übersetzungstabelle
   `Fehlercode → Text`. Eigene Worte nur, wo keine Antwort kam oder die Oberfläche mehr weiss (Fehler am
   Formularfeld statt im Kasten). Text immer über `fehlertextBilden(fehler, ersatz)` aus
@@ -86,10 +89,17 @@ und erscheint **nirgends** in der Oberfläche.
   angeboten wird, entscheidet `istWiederholbar` (Netzfehler, `≥ 500`).
 - **Sitzungsende nur bei `401 SESSION_UNGUELTIG`** (oder `401` ohne lesbaren Code); `PIN_FALSCH`,
   `ADMIN_PASSWORT_FALSCH`, `RESET_PIN_FALSCH` sind Eingabefehler (`istSitzungsende` in `queryClient.ts`).
-  Ein Sitzungsende während der Nutzung leitet der `SitzungsWaechter` zur PIN.
-- **Routen-Schutz** über pfadlose Layout-Routen in `src/app/schutz/`: öffentlich (inkl.
-  `/admin/anmelden`), `LoginSchrittRoute` (bindet `/pin/pruefen` an „ohne Sitzung" und `/anmelden` an
-  `PIN_VERIFIED`), `GeschuetzteRoute` (`PROFILE_AUTHENTICATED`) und darin `AdminRoute` (`ADMIN`). Die
+  Ein Sitzungsende während der Nutzung leitet der `SitzungsWaechter` zur PIN; ein mitgegebener Grund
+  (`sitzungsendeAusloesen(hinweis)`, etwa nach dem Passwortwechsel) erscheint dort neutral als `Hinweis`.
+- **Routen-Schutz** über pfadlose Layout-Routen in `src/app/schutz/`: `LoginSchrittRoute` (bindet
+  `/pin/pruefen` an „ohne Sitzung" und `/anmelden` **sowie die drei Admin-Login-Ansichten**
+  `/admin/anmelden`, `/admin/passwort/vergessen`, `/admin/passwort/neu` an `PIN_VERIFIED`),
+  `GeschuetzteRoute` (`PROFILE_AUTHENTICATED`) und darin `AdminRoute` (`ADMIN`, `/admin`,
+  `/admin/passwort/aendern`). Es gibt **keine** öffentliche Route ohne Sitzung mehr. Der Einstieg in die
+  Admin-Anmeldung ist der Link in der Namensauswahl, nicht die PIN-Seite (der Server verlangt dort
+  `PIN_VERIFIED`). Admin-Endpunkte unter `/auth/` brauchen `PIN_VERIFIED`, die unter `/admin/` die Rolle
+  `ADMIN`. Nach der Admin-Anmeldung führt `zielFuerStufe` nach `/admin`. Pfade der Admin-Ansichten
+  stehen nur in `ADMIN_PFADE` (`zielpfad.ts`). Die
   Abbildung Stufe → Pfad steht nur in `zielpfad.ts`. Unbekannter Zustand ⇒ Ladespinner, keine Umleitung
   auf Verdacht. Nach der Anmeldung zurück zum ursprünglichen Ziel (`state.von`, nur interne Pfade).
   Guards sind **Bedienkomfort, keine Sicherheitsmassnahme**; die Rolle kommt aus `useSitzung`.
@@ -146,7 +156,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Sitzungsauskunft, sonst `403`.
 - Teamdaten für USER/GAST: nur Name, Team, Auswechselflag. Namensliste: `id`, `name`, `belegt`;
   gewählt wird über die `id`. Gastname ohne „(Gast)" senden.
-- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (44 Operationen). Massgeblich ist
+- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (45 Operationen, Stand 17.10.2026). Massgeblich ist
   `server/fubo-api.json`; Änderungen zuerst dort, dann Kopie **gegen den Unterschied** auffrischen,
   Typen (`npm run api:typen`) und Mocks nachziehen.
 - Typen nur aus dem Generat: `components['schemas'][…]`, `operations[…]`.
@@ -203,7 +213,32 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Symbole, die ohne Verbindung erscheinen müssen, sind über `Icon/eingebettet.ts` per `?raw` ins
   Bündel eingebettet – derzeit `error_circle_icon` und `no_connection_icon_red`),
   `Feld`, `Auswahlliste`, `Erklaerung`, `Aktionsleiste`, `Dialog`, `Fortschrittsbalken`,
-  `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`.
+  `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`, ab C4 `PinFeld`, `PasswortFeld`, `PasswortRegeln`,
+  `Hinweis`, `Textlink`, `Restzeitbalken` und der Hook `useSperre` (siehe unten).
+- **Passwort- und Codefelder (C4, 17.10.2026):**
+  - `PasswortFeld` (umhüllt `Feld`): Auge-Umschalter als reiner Symbol-`button` (`visibility_on_dark.png` /
+    `visibility_off_dark.png`, kein sichtbarer Text) mit festem `aria-label` „Passwort anzeigen" und
+    `aria-pressed`; Pflicht, weil es kein Wiederholungsfeld gibt; verbirgt beim Absenden wieder; `maxLength` 72; **kein `trim()`**;
+    `autoComplete` ist Pflichtangabe (`current-password` für Anmeldung und bisheriges, `new-password` für
+    neues Passwort).
+  - `PasswortRegeln` (nur Länge 10–72, keine Zeichenklassen; Icon **und** Text je Regel; keine Live-Region),
+    Regeln und Grenzen in `src/api/auth/passwortRegeln.ts`.
+  - `PinFeld` (aus `PinEingabe` herausgelöst): Zahl der Stellen frei (vier für die zentrale PIN, fünf für die
+    Bestätigungs-PIN); die Bestätigungs-PIN mit `autoComplete="one-time-code"`.
+  - **Name am Anmeldefeld des Admins:** `autoCapitalize="none"`, `autoCorrect="off"`, `spellCheck={false}`,
+    `autoComplete="username"` – der Server vergleicht zeichengenau, iOS schriebe sonst gross.
+  - `useSperre`: sperrt Absenden für `wartesekunden` bei `429` (Verzweigung über Status und Wartezeit, nicht
+    über den Code), danach `reset` der Mutation. Gilt für `PIN_GESPERRT` (PIN, Admin-Login, Passwortwechsel:
+    derselbe Zähler) und `RESET_GEDROSSELT`.
+  - **Fehler an ein Feld nur, wenn der Server das Feld meint** (`felder`, `RESET_PIN_FALSCH`, bisheriges
+    Passwort): `ADMIN_PASSWORT_FALSCH` bei der Anmeldung steht im Kasten (Name oder Passwort, nicht
+    unterscheidbar). Geleert wird nur das abgelehnte Feld; bei Netzfehler und `≥ 500` bleibt alles stehen.
+  - **Navigationshinweis:** `useNavigationsHinweis` liest `location.state.hinweis` (neutral, `role="status"`);
+    er verschwindet mit der nächsten Eingabe oder dem Absenden.
+  - **Restzeitbalken** ist reine Darstellung (`aria-hidden`), die Aussage steht als fester Satz daneben;
+    die PIN gilt, solange der Server sie annimmt (`409`).
+  - Eine neue Anforderung der Bestätigungs-PIN nur auf ausdrückliche Aktion (entwertet die alte).
+  - Passwörter nie loggen; in Tests nur Platzhalter wie `beispiel-passwort-01`.
 - **Dialog (03.10.2026):** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über
   `useId`. Unterbrechungsfeindliche Dialoge mit `festhalten` – die Komponente weist Escape ab und
   öffnet sich wieder, wenn der Browser `cancel` überspringt (Close Watcher, Chrome 122; auch die
@@ -238,7 +273,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Dessen aufgeklappte Liste zeichnet das Betriebssystem. Nachgebildet nach WAI-ARIA APG
   („Select-only Combobox"): `aria-activedescendant`, Pfeiltasten, Pos1/Ende, Enter/Leertaste, Escape,
   Tab, Anfangsbuchstabe; gesperrte Einträge mit `aria-disabled` und Grund als zweite Zeile.
-- **PIN-Eingabe:** natives `<input inputMode="numeric">` (`maxLength` 4, `autoComplete="off"`) unter vier
+- **PIN-Eingabe:** `PinFeld` – natives `<input inputMode="numeric">` (`maxLength` 4, `autoComplete="off"`) unter vier
   Kästchen in einem **CSS-Raster mit fester Spaltenzahl**. Kein Flex-Umbruch mit `fit-content` – Safari
   stellte die Kästchen damit untereinander.
 - Formular-Ereignisse mit `SubmitEvent`/`ChangeEvent` typisieren, nicht mit `FormEvent`.
@@ -249,6 +284,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **Tests im jeweiligen Paket.** Hook-Tests mit dem echten `queryClient` (`src/test/QueryUmgebung.tsx`)
   und mit beobachteter Sitzung (`useSitzung`), sonst lädt `invalidateQueries` nicht neu. Eine Absicherung
   gilt erst, wenn ihr Test ohne sie rot wird (Gegenprobe).
+- **E2E-Nachbildung der Sitzung** liegt in `e2e/hilfen/sitzung.ts` (`sitzungNachbilden` mit `stage` und
+  `rolle`; zählt verlängernde Abrufe). Relative Importe in `e2e/` mit Endung `.js` (NodeNext).
 - **End-to-End:** sieben Geräteprojekte gegen die gebaute Fassung, **drei Chromium und vier WebKit**;
   lokal vorher `npm run e2e:browser`, in **CI laufen alle sieben** (Job `e2e`, `--with-deps chromium
   webkit`). PWA-Tests in `e2e/*.pwa.spec.ts` nur in Chromium. Tab-Navigation auf Links und

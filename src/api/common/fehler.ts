@@ -3,7 +3,7 @@ import type { components } from '@/api/common/types/schema'
 /** Einheitliches Fehlerformat des Servers (RFC 9457). */
 export type ProblemDetail = components['schemas']['ProblemDetail']
 
-/** Maschinenlesbarer Fehlercode; 34 Werte im Kontrakt. */
+/** Maschinenlesbarer Fehlercode; 37 Werte im Kontrakt. */
 export type Fehlercode = components['schemas']['Fehlercode']
 
 /**
@@ -22,13 +22,27 @@ export class ApiFehler extends Error {
   readonly code: Fehlercode | 'UNBEKANNT'
   /** Nur bei 429: Restwartezeit in Sekunden (aus dem Rumpf, nicht aus `Retry-After`). */
   readonly wartesekunden?: number
+  /**
+   * Nur bei `400 EINGABE_UNGUELTIG`: Feldname zu Meldung (Vertrag, Antwort
+   * `EingabeUngueltig`). Die Namen sind die der Anfragekörper, etwa
+   * `anmeldename` oder `neuesPasswort`. Fehlt, wenn der Körper als Ganzes
+   * unlesbar war. Der Text ist Anzeigetext des Servers wie `message`.
+   */
+  readonly felder?: Readonly<Record<string, string>>
 
-  constructor(status: number, code: Fehlercode | 'UNBEKANNT', text: string, wartesekunden?: number) {
+  constructor(
+    status: number,
+    code: Fehlercode | 'UNBEKANNT',
+    text: string,
+    wartesekunden?: number,
+    felder?: Readonly<Record<string, string>>,
+  ) {
     super(text)
     this.name = 'ApiFehler'
     this.status = status
     this.code = code
     this.wartesekunden = wartesekunden
+    this.felder = felder
   }
 }
 

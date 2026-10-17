@@ -10,7 +10,10 @@ import { verbindungMelden } from '@/api/common/verbindungsStatus'
  */
 const BASIS = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 
-/** Im Kontrakt kommen nur diese beiden Methoden vor (44 Operationen). */
+/** Erfolgsstatus, die laut Kontrakt keinen Rumpf tragen (`204`, seit 04.10.2026 auch `202`). */
+const ANTWORT_OHNE_RUMPF: readonly number[] = [202, 204]
+
+/** Im Kontrakt kommen nur diese beiden Methoden vor (45 Operationen). */
 export type Methode = 'GET' | 'POST'
 
 /** Zusatzangaben eines Aufrufs. */
@@ -27,8 +30,8 @@ export type AufrufOptionen = {
  *
  * **Der einzige Ort im Client, an dem `fetch` aufgerufen wird.** Wirft bei jeder
  * Fehlerantwort einen {@link ApiFehler}; der Aufrufer muss den Statuscode nicht
- * kennen. Bei `204` liefert die Funktion `undefined` – das betrifft 23 der 44
- * Operationen und wäre mit `json()` ein `SyntaxError`.
+ * kennen. Bei `204` und `202` liefert die Funktion `undefined` – das betrifft 24
+ * der 45 Operationen und wäre mit `json()` ein `SyntaxError`.
  *
  * @param methode HTTP-Methode laut Kontrakt.
  * @param pfad Pfad **ohne** Versionspräfix, z. B. `/auth/session/lesen`.
@@ -69,8 +72,10 @@ export async function aufrufen<T>(
   verbindungMelden(true)
 
   if (!antwort.ok) throw await erstelleFehlerAntwort(antwort)
-  // 23 von 44 Operationen antworten ohne Rumpf; `json()` würfe hier.
-  if (antwort.status === 204) return undefined as T
+  // 24 von 45 Operationen antworten ohne Rumpf; `json()` würfe hier. `202` kam mit
+  // dem Vertrag vom 04.10.2026 hinzu (`POST /admin/name/aendern`: angenommen,
+  // noch nicht übernommen) und trägt wie `204` keinen Inhalt.
+  if (ANTWORT_OHNE_RUMPF.includes(antwort.status)) return undefined as T
   return (await antwort.json()) as T
 }
 
@@ -87,6 +92,7 @@ async function erstelleFehlerAntwort(antwort: Response): Promise<ApiFehler> {
       code?: Fehlercode
       detail?: string
       wartesekunden?: number
+      felder?: Record<string, string>
     }
     return new ApiFehler(
       antwort.status,
@@ -96,6 +102,7 @@ async function erstelleFehlerAntwort(antwort: Response): Promise<ApiFehler> {
       // an beiden Stellen, der Rumpf ist aber unabhängig davon lesbar, ob die
       // CORS-Freigabe des Kopfes steht.
       inhalt.wartesekunden,
+      inhalt.felder,
     )
   } catch {
     // Kein JSON im Rumpf: Die Gegenstelle antwortet nicht wie vereinbart

@@ -120,6 +120,12 @@ export async function pinPruefen(pin: string): Promise<void> {
   await aufrufen<void>('POST', '/auth/pin/pruefen', { body: request })
 }
 
+/** Body der Admin-Anmeldung laut Kontrakt (`AdminLoginRequest`). */
+export type AdminAnmeldung = components['schemas']['AdminLoginRequest']
+
+/** Body der Passwort-Bestätigung laut Kontrakt (`PasswortResetBestaetigenRequest`). */
+export type PasswortBestaetigung = components['schemas']['PasswortResetBestaetigenRequest']
+
 /** Ein Eintrag der Namensliste: Id, Name, Belegtstatus. Enthält nie Skillwerte (A12). */
 export type NameOption = components['schemas']['NameOption']
 
@@ -178,4 +184,64 @@ export async function nameWaehlen(spielerId: number): Promise<void> {
 export async function alsGastAnmelden(gastName: string, stufe?: GastStufe): Promise<void> {
   const request: GastAnfrage = { gastName, stufe: stufe ?? null }
   await aufrufen<void>('POST', '/auth/gast/anmelden', { body: request })
+}
+
+/**
+ * Zweite Stufe des Logins für den Admin (`POST /auth/admin/anmelden`, A22).
+ *
+ * Nur in der Stufe `PIN_VERIFIED` erreichbar – auch der Admin braucht zuerst die
+ * zentrale PIN. Bei Erfolg (`204`) steht die Sitzung auf `PROFILE_AUTHENTICATED`
+ * mit der Rolle `ADMIN`, und der Server rotiert das Cookie.
+ *
+ * **Name und Passwort gehen unverändert hinaus.** Kein `trim()`: Randleerzeichen
+ * des Namens entfernt der Server selbst, und ein Passwort darf Leerzeichen
+ * enthalten. Der Name wird dort zeichengenau verglichen, einschliesslich
+ * Gross- und Kleinschreibung.
+ *
+ * Fehler als `ApiFehler`: `401 ADMIN_PASSWORT_FALSCH` (Name und Passwort sind
+ * laut Kontrakt nicht unterscheidbar; **kein Sitzungsende**), `401
+ * SESSION_UNGUELTIG` (die `PIN_VERIFIED`-Sitzung ist abgelaufen), `429
+ * PIN_GESPERRT` mit `wartesekunden` (derselbe Zähler wie an der PIN), `400
+ * EINGABE_UNGUELTIG` mit `felder`.
+ *
+ * @param anfrage Anmeldename und Passwort im Klartext.
+ */
+export async function adminAnmelden(anfrage: AdminAnmeldung): Promise<void> {
+  await aufrufen<void>('POST', '/auth/admin/anmelden', { body: anfrage })
+}
+
+/**
+ * Fordert die Bestätigungs-PIN für das Zurücksetzen des Passworts an
+ * (`POST /auth/passwort/zuruecksetzen`, A22).
+ *
+ * **Kein Anfragekörper:** Es gibt genau einen Admin und genau eine hinterlegte
+ * Adresse (Kontrakt). Der Server schickt eine fünfstellige PIN dorthin, sie gilt
+ * 15 Minuten. **Eine ältere offene Anforderung wird entwertet** – der Aufruf
+ * darf deshalb nur auf ausdrückliche Handlung der Person erfolgen.
+ *
+ * Fehler als `ApiFehler`: `429 RESET_GEDROSSELT` mit `wartesekunden` (höchstens
+ * drei je Stunde), `503 VERSAND_FEHLGESCHLAGEN` (es bleibt kein Vorgang zurück,
+ * der Aufruf lässt sich unverändert wiederholen), `401 SESSION_UNGUELTIG`.
+ */
+export async function passwortZuruecksetzen(): Promise<void> {
+  await aufrufen<void>('POST', '/auth/passwort/zuruecksetzen')
+}
+
+/**
+ * Löst die Bestätigungs-PIN ein und setzt das neue Passwort
+ * (`POST /auth/passwort/bestaetigen`, A22) – in **einem** Aufruf.
+ *
+ * Bei Erfolg (`204`) sind alle Sitzungen des Admins widerrufen; **die aufrufende
+ * Sitzung bleibt in `PIN_VERIFIED`** und gehört nicht dem Admin. Die Person kann
+ * direkt zur Admin-Anmeldung weitergehen.
+ *
+ * Fehler als `ApiFehler`: `401 RESET_PIN_FALSCH` (ein Versuch verbraucht; **kein
+ * Sitzungsende**), `409 RESET_UNGUELTIG` (kein brauchbarer Vorgang: neu
+ * anfordern statt nochmal versuchen), `429 PIN_GESPERRT` mit `wartesekunden`,
+ * `400 EINGABE_UNGUELTIG` mit `felder` (kostet **keinen** Versuch).
+ *
+ * @param anfrage Fünfstellige Bestätigungs-PIN und neues Passwort im Klartext.
+ */
+export async function passwortBestaetigen(anfrage: PasswortBestaetigung): Promise<void> {
+  await aufrufen<void>('POST', '/auth/passwort/bestaetigen', { body: anfrage })
 }

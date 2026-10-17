@@ -147,6 +147,8 @@ test.describe('Namensauswahl', () => {
     // (Rueckmeldung vom 04.10.2026). Die Liste bleibt stehen.
     await expect(page.getByTestId('offline-hinweis')).toBeHidden()
     await expect(page.getByTestId('namensauswahl-liste')).toBeVisible()
+    // Der Admin-Link (C4, E5) steht unter der Aktionsleiste und gehoert zu dieser Ansicht.
+    await expect(page.getByTestId('namensauswahl-admin-link')).toBeVisible()
     // Auf dem Telefon kein Scrollen: Die Meldung ersetzt den Hinweis der Liste.
     // **Nur ab Fensterhoehe 740 px:** Die Ansicht mit gewaehltem Gast und
     // Meldung ist 736 px hoch. Auf einem iPhone SE (667 px) und dem iPhone 17

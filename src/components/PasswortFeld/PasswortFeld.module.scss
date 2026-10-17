@@ -1,0 +1,23 @@
+@use '@/styles/globalVars';
+
+// Symbolschaltflaeche im Feld: kein Rahmen, damit sie nicht wie ein zweites Feld
+// wirkt, aber ein volles Tap-Ziel (A2: draussen, einhaendig).
+.umschalter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--tapziel-min);
+  min-inline-size: var(--tapziel-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  cursor: pointer;
+}
+
+// Das Auge behaelt seine Groesse (24 px), das Tap-Ziel ist die Schaltflaeche.
+.symbol {
+  flex: none;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}

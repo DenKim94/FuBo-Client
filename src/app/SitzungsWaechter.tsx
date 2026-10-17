@@ -23,12 +23,18 @@ import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
  * auch keine in der Stufe `PIN_VERIFIED`. Die Umleitung ersetzt den Eintrag im
  * Verlauf (`replace`), damit „Zurück" nicht auf die Ansicht führt, deren
  * Sitzung gerade abgelaufen ist.
+ *
+ * **Ein mitgegebener Hinweis** (`sitzungsendeAusloesen(hinweis)`, C4: Passwort
+ * geändert) wandert als `state.hinweis` zur PIN-Eingabe, die ihn neutral zeigt.
  */
 export default function SitzungsWaechter() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    sitzungsendeBehandeln(() => void navigate(LOGIN_PFADE.pin, { replace: true }))
+    sitzungsendeBehandeln(
+      (hinweis) =>
+        void navigate(LOGIN_PFADE.pin, { replace: true, state: hinweis ? { hinweis } : undefined }),
+    )
   }, [navigate])
 
   return null

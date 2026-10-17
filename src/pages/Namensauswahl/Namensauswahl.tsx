@@ -9,6 +9,8 @@ import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Feld from '@/components/Feld/Feld'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
+import Textlink from '@/components/Textlink/Textlink'
+import { ADMIN_PFADE } from '@/app/schutz/zielpfad'
 import { useGastAnmelden } from '@/hooks/useGastAnmelden'
 import { useNameWaehlen } from '@/hooks/useNameWaehlen'
 import { useNamensliste } from '@/hooks/useNamensliste'
@@ -38,7 +40,7 @@ const TRENNSTELLE = '\u00AD'
 const STUFEN: { wert: GastStufe; text: string }[] = [
   { wert: 'SCHWACH', text: `Anfän${TRENNSTELLE}ger` },
   { wert: 'MITTEL', text: 'Solide' },
-  { wert: 'STARK', text: 'Goat' },
+  { wert: 'STARK', text: 'Stark' },
 ]
 
 /** Kurze Erklärung am Gastbereich (A8). */
@@ -68,6 +70,9 @@ const GAST_ERKLAERUNG =
  * (`409 KEIN_GAST_SLOT_FREI`). In der Stufe `PIN_VERIFIED` gibt es keinen
  * Endpunkt, der die freien Plätze vorab nennt – eine Vorab-Sperre des
  * Eintrags, wie DESIGN.md sie beschreibt, braucht eine Vertragserweiterung.
+ *
+ * **Hier steht auch der Link „Als Admin anmelden“** (C4, E5, vorher auf der
+ * PIN-Seite).
  *
  * Nach dem Erfolg navigiert die Ansicht nicht selbst: Die Sitzung steht dann
  * auf `PROFILE_AUTHENTICATED`, und `LoginSchrittRoute` leitet weiter.
@@ -265,16 +270,23 @@ export default function Namensauswahl() {
       </div>
 
       <Aktionsleiste>
-        <CustomButton
-          type="submit"
-          art="primaer"
-          breit
-          laedt={laeuft}
-          disabled={!bereit}
-          data-testid="namensauswahl-absenden"
-        >
-          {knopfText}
-        </CustomButton>
+        <div className={style.aktionen}>
+          <CustomButton
+            type="submit"
+            art="primaer"
+            breit
+            laedt={laeuft}
+            disabled={!bereit}
+            data-testid="namensauswahl-absenden"
+          >
+            {knopfText}
+          </CustomButton>
+          {/* Einziger Einstieg in die Admin-Anmeldung (C4, E5): Sie verlangt serverseitig
+              `PIN_VERIFIED`, und hier steht die Sitzung immer in dieser Stufe. */}
+          <Textlink to={ADMIN_PFADE.anmelden} data-testid="namensauswahl-admin-link">
+            Als Admin anmelden
+          </Textlink>
+        </div>
       </Aktionsleiste>
     </form>
   )

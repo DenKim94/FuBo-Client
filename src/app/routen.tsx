@@ -4,10 +4,15 @@ import type { RoutenAngaben } from '@/app/routenAngaben'
 import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
-import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
+import { ADMIN_PFADE, LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
+import Textlink from '@/components/Textlink/Textlink'
+import AdminAnmeldung from '@/pages/AdminAnmeldung/AdminAnmeldung'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
 import NichtGefunden from '@/pages/NichtGefunden/NichtGefunden'
+import PasswortAendern from '@/pages/PasswortAendern/PasswortAendern'
+import PasswortNeu from '@/pages/PasswortNeu/PasswortNeu'
+import PasswortVergessen from '@/pages/PasswortVergessen/PasswortVergessen'
 import PinEingabe from '@/pages/PinEingabe/PinEingabe'
 
 /** Login-Schritte haben kein sinnvolles „Zurück" (siehe `RoutenAngaben`). */
@@ -16,8 +21,7 @@ const LOGIN_SCHRITT: RoutenAngaben = { ohneZurueck: true }
 /**
  * Ansichten direkt unter dem Dashboard: „Zurück" führt dorthin, nicht einen
  * Schritt im Verlauf (C2, Abschnitt 6.1). Routen ohne eindeutige übergeordnete
- * Ansicht – die Admin-Anmeldung, die man von der PIN-Eingabe wie vom Dashboard
- * aus erreicht – bleiben ohne Angabe und gehen einen Schritt zurück.
+ * Ansicht bleiben ohne Angabe und gehen einen Schritt zurück.
  */
 const ZUM_DASHBOARD: RoutenAngaben = { zurueck: LOGIN_PFADE.start }
 
@@ -30,11 +34,12 @@ const ZUM_DASHBOARD: RoutenAngaben = { zurueck: LOGIN_PFADE.start }
  *
  * **Drei Zugriffsebenen**, umgesetzt ueber pfadlose Layout-Routen:
  *
- * 1. **Oeffentlich** – alles, was ohne Sitzung erreichbar sein muss. Dazu
- *    gehoert ausdruecklich auch `/admin/anmelden`: Der Admin muss sich anmelden
- *    koennen, bevor er Admin ist. Die beiden Login-Schritte sind ebenfalls
- *    oeffentlich, aber an ihre Stufe gebunden (`LoginSchrittRoute`): ohne
- *    Sitzung die PIN-Eingabe, in `PIN_VERIFIED` die Namensauswahl.
+ * 1. **Oeffentlich** – alles, was ohne Sitzung erreichbar sein muss. Das sind
+ *    nur die Login-Schritte, und sie sind an ihre Stufe gebunden
+ *    (`LoginSchrittRoute`): ohne Sitzung die PIN-Eingabe, in `PIN_VERIFIED` die
+ *    Namensauswahl **und die drei Admin-Ansichten** (Anmeldung, Passwort
+ *    vergessen, neues Passwort; C4). `/admin/anmelden` ist *nicht* mehr ohne
+ *    Sitzung erreichbar: Der Server verlangt dafuer `PIN_VERIFIED`.
  * 2. **`GeschuetzteRoute`** – verlangt eine abgeschlossene Anmeldung
  *    (`stage = PROFILE_AUTHENTICATED`).
  * 3. **`AdminRoute`** – verlangt zusaetzlich die Rolle ADMIN.
@@ -61,9 +66,25 @@ export const routen = createBrowserRouter([
             element: <Namensauswahl />,
             handle: LOGIN_SCHRITT,
           },
+          // Die Admin-Anmeldung hat ein „Zurück“: zur Namensauswahl, von der der
+          // Weg ausgeht (C4, 4.2). Die Folgeschritte gehen je einen Schritt zurück.
+          {
+            path: 'admin/anmelden',
+            element: <AdminAnmeldung />,
+            handle: { zurueck: LOGIN_PFADE.name } satisfies RoutenAngaben,
+          },
+          {
+            path: 'admin/passwort/vergessen',
+            element: <PasswortVergessen />,
+            handle: { zurueck: ADMIN_PFADE.anmelden } satisfies RoutenAngaben,
+          },
+          {
+            path: 'admin/passwort/neu',
+            element: <PasswortNeu />,
+            handle: { zurueck: ADMIN_PFADE.passwortVergessen } satisfies RoutenAngaben,
+          },
         ],
       },
-      { path: 'admin/anmelden', element: <Platzhalter titel="Admin-Anmeldung" paket="C4" /> },
 
       // --- Nur mit abgeschlossener Anmeldung ------------------------------
       {
@@ -91,7 +112,33 @@ export const routen = createBrowserRouter([
           {
             element: <AdminRoute />,
             children: [
-              { path: 'admin', element: <Platzhalter titel="Administration" paket="C7" /> },
+              {
+                path: 'admin',
+                children: [
+                  // Startseite der Administration (E1): kein „Zurück“, das den
+                  // Admin ins User-Dashboard schickte. Der Platzhalter traegt den
+                  // Einstieg in „Passwort aendern“, bis das Dashboard in C7 folgt.
+                  {
+                    index: true,
+                    element: (
+                      <Platzhalter titel="Administration" paket="C7">
+                        <Textlink
+                          to={ADMIN_PFADE.passwortAendern}
+                          data-testid="admin-passwort-aendern-link"
+                        >
+                          Passwort ändern
+                        </Textlink>
+                      </Platzhalter>
+                    ),
+                    handle: { ohneZurueck: true } satisfies RoutenAngaben,
+                  },
+                  {
+                    path: 'passwort/aendern',
+                    element: <PasswortAendern />,
+                    handle: { zurueck: ADMIN_PFADE.start } satisfies RoutenAngaben,
+                  },
+                ],
+              },
             ],
           },
         ],

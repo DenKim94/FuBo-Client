@@ -15,7 +15,16 @@ $eingabe-hoehe: 3.5rem;
   font-weight: var(--gewicht-halbfett);
 }
 
+// Die Eingabe und, wenn vorhanden, die Aktion im Feld bilden eine Zeile: Die
+// Aktion liegt absolut ueber dem Rand der Eingabe.
+.zeile {
+  position: relative;
+  display: flex;
+}
+
 .eingabe {
+  flex: 1;
+  min-inline-size: 0;
   min-block-size: $eingabe-hoehe;
   padding-inline: var(--abstand-m);
   // Bedienbarer Rand: Er ist die einzige Grenze des Feldes (WCAG 1.4.11).
@@ -28,6 +37,19 @@ $eingabe-hoehe: 3.5rem;
 
 .ungueltig {
   border: 2px solid var(--farbe-fehler);
+}
+
+// Platz fuer die Aktion am Ende (lokale Breite: ein Tap-Ziel von 44 px plus Rand).
+.mitAktion {
+  padding-inline-end: 3.5rem;
+}
+
+.aktion {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--abstand-xs);
+  display: flex;
+  align-items: center;
 }
 
 .hinweis {

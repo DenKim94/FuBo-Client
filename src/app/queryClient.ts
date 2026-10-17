@@ -7,7 +7,7 @@ import { ApiFehler } from '@/api/common/fehler'
  * Vorbelegt mit einer wirkungslosen Funktion, damit ein `401` vor dem Start des
  * Routers nicht ins Leere greift.
  */
-let beiSitzungsende: () => void = () => {}
+let beiSitzungsende: (hinweis?: string) => void = () => {}
 
 /**
  * Hinterlegt, was bei einem `401` geschehen soll.
@@ -17,9 +17,10 @@ let beiSitzungsende: () => void = () => {}
  * würfe die ganze Anwendung weg, lüde sie neu und zeigte dem Nutzer dazwischen
  * ein weißes Bild.
  *
- * @param rueckruf Wird nach dem Leeren des Caches aufgerufen.
+ * @param rueckruf Wird nach dem Leeren des Caches aufgerufen; bekommt den Hinweis,
+ *   den der Auslöser mitgegeben hat (siehe {@link sitzungsendeAusloesen}).
  */
-export function sitzungsendeBehandeln(rueckruf: () => void) {
+export function sitzungsendeBehandeln(rueckruf: (hinweis?: string) => void) {
   beiSitzungsende = rueckruf
 }
 
@@ -31,7 +32,7 @@ export function sitzungsendeBehandeln(rueckruf: () => void) {
  * `RESET_PIN_FALSCH`. `ADMIN_PASSWORT_FALSCH` kommt dabei auch beim
  * Passwortwechsel vor, also mitten in einer gültigen Sitzung. Würden diese Fälle
  * als Sitzungsende behandelt, löste eine vertippte PIN die Abmeldung aus, und
- * ein falsches Admin-Passwort leitete von `/admin/anmelden` auf `/anmelden` um.
+ * ein falsches Admin-Passwort warf die Person aus der Admin-Anmeldung zurück zur PIN.
  *
  * Verzweigt wird deshalb über `code`, nicht über den Status allein:
  * `SESSION_UNGUELTIG` ist der Code des Vertrags für eine fehlende oder
@@ -60,17 +61,21 @@ function istSitzungsende(fehler: unknown): boolean {
  * Eine Funktion für beide Wege, die dahin führen: den `401` an irgendeinem
  * Aufruf (`pruefeSitzung`) und die ausdrückliche Abmeldung (`useAbmelden`). Die
  * Abmeldung räumt so genauso auf wie ein Ablauf – zwei Kopien liefen irgendwann
- * auseinander.
+ * auseinander. Ein dritter Weg ist der Passwortwechsel des Admins (C4): Der
+ * Server hat alle Adminsitzungen widerrufen, der Client räumt sofort auf.
+ *
+ * @param hinweis Optionaler Text für die Zielansicht (PIN-Eingabe), etwa warum
+ *   die Person abgemeldet wurde. Ohne Text bleibt alles wie beim Ablauf.
  */
-export function sitzungsendeAusloesen() {
+export function sitzungsendeAusloesen(hinweis?: string) {
   queryClient.clear()
-  beiSitzungsende()
+  beiSitzungsende(hinweis)
 }
 
 /**
  * Behandelt den Sitzungsablauf an genau einer Stelle (A14).
  *
- * `401` steht im Kontrakt an allen 44 Operationen. Ohne zentrale Behandlung
+ * `401` steht im Kontrakt an allen 45 Operationen. Ohne zentrale Behandlung
  * stünde die Abfrage in jeder Ansicht – und fehlte irgendwann in einer.
  */
 function pruefeSitzung(fehler: unknown) {

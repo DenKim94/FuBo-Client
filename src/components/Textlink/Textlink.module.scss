@@ -1,0 +1,11 @@
+@use '@/styles/globalVars';
+
+.textlink {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-s);
+  color: var(--farbe-link);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

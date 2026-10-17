@@ -7,13 +7,14 @@
 > Repository: **eigenständig mit Wurzel in `client/`** (GitHub, öffentlich, `FuBo-Client`), Branch
 > `dev_client`. **Kein Monorepo**; das Backend liegt in `FuBo-Server` (`server/`). `PRJ_FuBo/`,
 > `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
-> **Stand: 04.10.2026** (C0, C1 abgeschlossen; **C2 umgesetzt**, Abnahme bis auf Hand- und
-> WebKit-Prüfungen erledigt; **C3 abgeschlossen**: PIN-Eingabe, Namensauswahl, Gast, Ablauf-Dialog,
-> „Abmelden" in der Kopfzeile; Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E bestanden).
-> Nächster Meilenstein: **C4** (Admin-Zugang, Passwort-Reset und -wechsel).
+> **Stand: 17.10.2026** (C0, C1, C3 abgeschlossen; C2 umgesetzt, Rest Hand- und WebKit-Prüfungen;
+> **C4 umgesetzt**: Admin-Anmeldung, Passwort vergessen (zwei Schritte), Passwort ändern; Kontrakt-Kopie
+> auf 45 Operationen aktualisiert. Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen:
+> Handprüfung gegen den echten Server und WebKit im CI, siehe 6.2 und 7).
+> Nächster Meilenstein: **C5** (Termin und Teilnahme, User-Dashboard).
 > Gestraffte Fassung. Vorfassungen mit allen Herleitungen in `archive/`, zuletzt
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04c.md` (Stand vor dem Abschluss von C3) und
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04b.md` (Stand vor der Korrektur).
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17.md` (Stand vor C4) und
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04c.md` (Stand vor dem Abschluss von C3).
 
 ---
 
@@ -155,10 +156,45 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
   `e2e/pwa.spec.ts` nicht; die PWA-Tests wären im CI auch in WebKit gelaufen. Neues Muster
   `/(^|[/\\.])pwa\.spec\.ts$/`, nachgeprüft mit `playwright test --list` (WebKit-Projekte: 0).
 
+**Admin-Zugang (C4, Entscheidungen E1–E5 vom 04.10.2026, umgesetzt 17.10.2026)**
+- **E5 / Befund:** Die drei Admin-Login-Endpunkte (`/auth/admin/anmelden`, `/auth/passwort/zuruecksetzen`,
+  `/auth/passwort/bestaetigen`) verlangen laut Vertrag `PIN_VERIFIED`; `/admin/passwort/aendern` die Rolle
+  `ADMIN`. Der Einstieg „Als Admin anmelden" (`namensauswahl-admin-link`) steht deshalb **nur in der
+  Namensauswahl**, die PIN-Seite hat keinen Link mehr. `/admin/anmelden`, `/admin/passwort/vergessen` und
+  `/admin/passwort/neu` liegen hinter `LoginSchrittRoute schritt="name"`; `/admin/anmelden` ist nicht mehr
+  ohne Sitzung erreichbar (ohne Sitzung → PIN → Namensauswahl). „Zurück" führt zur Namensauswahl bzw. je
+  einen Schritt zurück. Pfade in `ADMIN_PFADE` (`zielpfad.ts`).
+- **E1:** Nach der Admin-Anmeldung `/admin` (Platzhalter bis C7, ohne „Zurück", mit Link
+  `admin-passwort-aendern-link`); `zielFuerStufe` kennt `istAdmin`.
+- **E2/E3:** Reset in zwei Ansichten (`PasswortVergessen`, `PasswortNeu`), ein Formular für PIN und neues
+  Passwort, **keine Wiederholung** des Passworts; das Auge (Umschalter „Passwort anzeigen") am `PasswortFeld` ist Pflicht und die einzige
+  Kontrolle gegen Tippfehler. Neues Passwort 10–72 Zeichen, keine Zeichenklassen (`PasswortRegeln`).
+- **E4:** Neutraler Hinweis (`Hinweis`, `role="status"`) über dem Formular der Zielseite: nach dem Reset auf
+  der Admin-Anmeldung („Passwort gesetzt …", die Sitzung bleibt `PIN_VERIFIED`), nach dem Passwortwechsel auf
+  der PIN-Eingabe. Transport über `location.state.hinweis` (`useNavigationsHinweis`); beim Wechsel räumt der
+  Client sofort auf (`sitzungsendeAusloesen(hinweis)`), statt auf den nächsten `401` zu warten.
+- **Fehlerverhalten** (Tabellen in der Umsetzungsanleitung): `ADMIN_PASSWORT_FALSCH` bei der Anmeldung im
+  Kasten (Passwort leer, Name bleibt, Fokus ins Passwort), beim Wechsel am Feld „Bisheriges Passwort", **kein
+  Sitzungsende**; `RESET_PIN_FALSCH` am PIN-Feld (PIN leer, Passwort bleibt); `409 RESET_UNGUELTIG` mit
+  „Neue PIN anfordern"; `400` mit `felder` am jeweiligen Feld (`ApiFehler.felder`); `429` über `useSperre`.
+  Geleert wird nur nach dem jeweiligen Code, nicht nach jedem `ApiFehler`.
+- **`PinFeld` und `useSperre`** aus `PinEingabe` herausgelöst; `PinEingabe` unverändert im Verhalten.
+- **Abweichungen:** Statt `Fortschrittsbalken` ein eigener `Restzeitbalken` (aria-hidden, Aussage im festen
+  Satz „Gültig bis 20:58 Uhr."), weil `Fortschrittsbalken` Zusagen zählt (`role="progressbar"`, „x von y
+  Zusagen"); `Namensauswahl` mit kürzeren Abständen (Gap l→m, kleinerer Fuß, Link überlappt den Fuß der
+  Leiste), damit sie mit Link bei 780 px nicht scrollt; „Schritt x von 2" und Titel als Kopf mit kleinem
+  Abstand. Abweichungen von DESIGN.md/Prototyp: siehe 1.3 der Umsetzungsanleitung; **DESIGN.md (Screen 1,
+  E5) ist dem Entwickler zur Übernahme vorzulegen** – sie liegt nicht im Client-Repository.
+
 ## 4. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kontrakt-Kopie
-`client/harness/assets/fubo-api.json` (44 Operationen, zuletzt am 26.09.2026 byteweise gegen
-`server/fubo-api.json` verglichen); Generat `src/api/common/types/schema.d.ts`.
+`client/harness/assets/fubo-api.json` (**45 Operationen**, am 17.10.2026 byteweise gegen
+`server/fubo-api.json` verglichen und übernommen); Generat `src/api/common/types/schema.d.ts`
+(`npm run api:typen`, neu erzeugt). Neu gegenüber 44: `POST /admin/name/bestaetigen`; `POST /admin/name/aendern`
+antwortet jetzt `202` (Namensänderung mit E-Mail-PIN, **Client-Seite folgt in C7**). Ein `202` ohne Rumpf
+liefert `aufrufen` wie `204` als `undefined` (`ANTWORT_OHNE_RUMPF`, mit Gegenprobe). `servers` im Vertrag
+nennt jetzt `https://tunnel-fubo-app.{domain}` (Vorgabe `denis-kim.dev`); `AGENT_CLIENT.md` und die Hosting-
+Notizen sprechen noch von `api.<domain>` – bei C9 (Deployment) klären; der Client nutzt `VITE_API_BASE_URL`.
 
 **Offene Vertragslücke (Server-Track):** In der Stufe `PIN_VERIFIED` nennt kein Endpunkt die freien
 Gastplätze. DESIGN.md verlangt, „Gast" vorab zu sperren, wenn alle Plätze belegt sind; heute zeigt die
@@ -174,10 +210,10 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026, Beg
 | C1 | Vertrag, Datenzugriff, Mocks, Offline-Hinweis | 10 | **abgeschlossen** (26.09.) |
 | C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari). Der Dialog-E2E-Test kam mit dem Ablauf-Dialog (C3) |
 | C3 | Sitzung & Spieler-Login | 14 | **abgeschlossen** (04.10.): PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, Ablauf-Dialog mit Verlängern/Abmelden, „Abmelden" in der Kopfzeile, Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E-Tests vom Entwickler bestätigt. **Entfallen:** dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf) |
-| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **als Nächstes** |
-| C5 | Termin & Teilnahme, User-Dashboard | 14 | offen |
+| C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **umgesetzt** (17.10.2026): drei Ansichten plus Bausteine; offen Handprüfung gegen den echten Server und WebKit im CI (6.2) |
+| C5 | Termin & Teilnahme, User-Dashboard | 14 | **als Nächstes** |
 | C6 | Teams & Ergebnis | 12 | offen |
-| C7 | Admin-Verwaltung | 20 | offen |
+| C7 | Admin-Verwaltung und Admin-Dashboard | 20 | offen |
 | C8 | PWA-Onboarding & Push (A25) | 14 | offen |
 | C9 | Abnahme, WCAG 2.1 AA, Deployment | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
 
@@ -188,7 +224,9 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
 ### 6.1 Überblick
 - **Datenzugriff:** `src/api/common/` (`httpService`, `fehler`, `schluessel`, `verbindungsStatus`,
   Generat) und `src/api/auth/auth.ts` (`sitzungLesen`, `pinPruefen`, `namenslisteLesen`,
-  `nameWaehlen`, `alsGastAnmelden`, `sitzungFristLesen`, `sitzungErneuern`, `sitzungBeenden`).
+  `nameWaehlen`, `alsGastAnmelden`, `sitzungFristLesen`, `sitzungErneuern`, `sitzungBeenden`,
+  ab C4 `adminAnmelden`, `passwortZuruecksetzen`, `passwortBestaetigen`), `src/api/admin/admin.ts`
+  (`passwortAendern`) und `src/api/auth/passwortRegeln.ts` (Grenzen 10/72, `RESET_GUELTIG_MS`).
 - **Query-Client** (`src/app/queryClient.ts`): Wiederholung nur bei `≥ 500`, Mutationen nie;
   `istSitzungsende` leert den Cache und ruft den `SitzungsWaechter`.
 - **Routing** (`src/app/`): `routen.tsx`; Guards `LoginSchrittRoute`, `GeschuetzteRoute`, `AdminRoute`;
@@ -196,7 +234,8 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
 - **Hooks:** `useSitzung`, `useVerbindung`, `useSitzungswechsel` (gemeinsamer Stufenwechsel),
   `usePinPruefen`, `useNamensliste` (Polling 5 s mit `X-FuBo-Kein-Refresh`), `useNameWaehlen` (liest
   bei `NAME_BELEGT` die Liste sofort neu), `useGastAnmelden`, `useRestlaufzeit` (Frist-Abruf plus
-  Sekundentakt: `restMs`, `verlaengerbar`, `warnen`), `useSitzungErneuern`, `useAbmelden`.
+  Sekundentakt: `restMs`, `verlaengerbar`, `warnen`), `useSitzungErneuern`, `useAbmelden`; ab C4 `useSperre`, `useNavigationsHinweis`,
+  `useAdminAnmelden`, `usePasswortAnfordern`, `usePasswortBestaetigen`, `usePasswortAendern`.
 - **Seiten:** `PinEingabe` (vier Kästchen über nativem Zahlenfeld, Sperre bei `429`), `Namensauswahl`
   (Auswahlliste mit belegten Namen, Hinweis bei zwischenzeitlicher Belegung, Gastbereich mit Name,
   Stufe, Info-Icon und „(Gast)"; Fehler am Feld bzw. im Kasten).
@@ -205,12 +244,18 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   `Ladespinner`, `Leerzustand`, `OfflineHinweis` (Symbol über `Icon`), `Platzhalter`.
 - **Fehlertexte:** `fehlertextBilden`, `istWiederholbar`, `TEXT_NICHT_ERREICHBAR` in
   `src/api/common/fehler.ts`.
-- **Seiten zusätzlich:** `NichtGefunden` (Route `*`).
+- **Seiten zusätzlich:** `NichtGefunden` (Route `*`); ab C4 `AdminAnmeldung`, `PasswortVergessen`,
+  `PasswortNeu`, `PasswortAendern`. **Komponenten ab C4:** `PinFeld`, `PasswortFeld`, `PasswortRegeln`,
+  `Hinweis`, `Textlink`, `Restzeitbalken`; `Feld` mit `aktion`, `beschriebenDurch`, `ref`; `Platzhalter` mit
+  `children`.
 - **Layout:** `AppLayout` mit Safe-Area, Zurück-Navigation (Ziel aus `handle.zurueck`, sonst ein
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 197 Unit-Tests in 33 Dateien (Stand 04.10.2026 abends, nach der Korrektur „Rückkehr verlängert nicht“); E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
+- **Tests:** 352 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4); E2E zusätzlich `admin.spec.ts`
+  (16 Fälle: Anmeldung, Reset, Passwort ändern, Passwortfeld, kein Scrollen bei 780 px), `layout.spec.ts`
+  umgebaut (Admin-Anmeldung nur nach der PIN, Zurück-Ziele, Fokusring in der Namensauswahl), Sitzungs-
+  nachbildung nach `e2e/hilfen/sitzung.ts` (mit `stage` und `rolle`). Zuvor: E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
   gefunden", Fokusring), `namensauswahl.spec.ts`
   (API per `page.route`) und `pwa.spec.ts` (nur Chromium). CI: Job `pruefen` (Lint, Typen, Bau,
   Unit-Tests) und Job `e2e` (alle sieben Projekte, Chromium und WebKit).
@@ -244,7 +289,33 @@ verlängernde Abrufe statt einem). **Handprüfung gegen den echten Server** (Lee
 Browser der Desktop-App, Chromium): Login über PIN und Name, Dialog nach rund 60 s, bleibt bei acht
 Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" setzt 3 Minuten neu.
 
+**C4 (17.10.2026):** `lint` (inkl. `e2e/`), `typecheck`, **352 Unit-Tests** (vorher 197), Bau (sechs
+Precache-Einträge), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, Suche nach verwaisten Pfaden
+ohne Befund, **174 E2E-Läufe grün in den drei Chromium-Projekten, 3 übersprungen** (Kopie in der
+Cloud-Umgebung mit vorinstalliertem Chromium über eine Konfiguration, die nicht Teil des Repos ist).
+Gegenproben (Test rot ohne Absicherung): `202` ohne Rumpf, `ADMIN_PASSWORT_FALSCH` als Sitzungsende,
+Aufräumen nach `204` beim Passwortwechsel, „Neue PIN anfordern" bei `409`, Sperre deaktiviert den Knopf,
+`autoCapitalize="none"`, Ziel `/admin` nach der Anmeldung, `useSperre` ohne Statusprüfung, Passwort nur
+bei `ADMIN_PASSWORT_FALSCH` leeren, PIN-Fehler leert nur die PIN, Link in der Namensauswahl. Die
+Gegenprobe „Admin-Login hinter dem Guard" deckt `LoginSchrittRoute.test.tsx` und der E2E-Fall „hält die
+Admin-Anmeldung ohne Sitzung geschlossen" ab (nicht einzeln mutiert). Sichtprüfung bei 360 × 780: alle
+vier Ansichten und die Namensauswahl mit Link, auch mit Fehlermeldung, ohne Scrollen.
+**Nicht geprüft:** die vier WebKit-Projekte (im CI), die Handprüfung gegen den echten Server und das
+iPhone (Abnahme 3 der Umsetzungsanleitung: Anmeldung richtig/falsch/Sperre, Reset mit echter E-Mail, Passwort
+ändern, Kleinschreibung am Namen, `one-time-code`, Passwortmanager). **Danach das Passwort im
+Passwortmanager nachziehen:** `ADMIN_PASSWORD` in `server/.env` liest der Server nur beim ersten Start.
+
 ### 6.3 Fallen, die aufgetreten sind
+- **Ein `202` ohne Rumpf** hätte `aufrufen` (`json()` auf leerem Rumpf) zum Absturz gebracht; `202` und `204`
+  werden zentral als „kein Rumpf" behandelt (C4, Vertragsupdate).
+- **Das Passwortfeld nicht bei jedem `ApiFehler` leeren** (Test „500: neuer Versuch über denselben Knopf"
+  fiel auf): Nur nach dem Code leeren, der das Feld als falsch benennt.
+- **Relative Importe in `e2e/` brauchen die Endung `.js`** (NodeNext; `tsc` meldet sonst TS2835).
+- **Playwright-Version und vorinstalliertes Chromium passen in der Cloud-Umgebung nicht zusammen** (1.63 will
+  Build 1243, vorhanden ist 1194): eigene Konfiguration mit `launchOptions.executablePath` ausserhalb des Repos.
+- **Jede zusätzliche Zeile in der Namensauswahl kostet Platz:** der Admin-Link (48 px) ließ den Fall „Gast
+  gewählt plus Meldung" bei 780 px um 27 px überlaufen; gelöst über Abstände, nicht über die Grenze 740 px.
+- **`PinFeld`: `readOnly` statt `disabled`** während des Aufrufs, sonst verliert das Feld den Fokus.
 - **`npm install` repariert die Sperrdatei stillschweigend**, nur `npm ci` prüft sie (26.09.).
 - **`invalidateQueries` lädt nur beobachtete Abfragen neu** – Hook-Tests brauchen `useSitzung` daneben.
 - **Ein laufender Abruf ohne Daten wird beim Invalidieren nicht ersetzt**, sondern übernommen; daher
@@ -281,8 +352,18 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
 
 ### 6.4 Bewusst offen
 - Zielangabe mit Parameter (`teams/:terminId` → Termin) kennt `RoutenAngaben` noch nicht (C6).
-- `/admin/anmelden` und „nicht gefunden" lesen beim Direkteinstieg keine Sitzung; der
-  Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
+- „nicht gefunden" liest beim Direkteinstieg keine Sitzung; der Offline-Hinweis erscheint dort erst mit
+  dem ersten Aufruf oder dem Ereignis `offline`.
+- **C4:** `PasswortFeld` begrenzt auf 72 Zeichen (`maxLength`); ein längeres Passwort wird beim Einfügen
+  still gekürzt, die Regel „höchstens 72" ist deshalb nie sichtbar. Folgt dem Vertrag (BCrypt kürzt sonst
+  ebenfalls still), ist aber ein Randfall für Passwortmanager.
+- **C4:** Läuft die `PIN_VERIFIED`-Sitzung beim Warten auf die Reset-E-Mail ab, ist der `navigate`-Zustand
+  weg, der Vorgang auf dem Server aber noch gültig: Weg PIN → Name → „Als Admin anmelden" → „Passwort
+  vergessen?" → „Ich habe bereits eine PIN" (Umsetzungsanleitung 7.3).
+- **C4:** Namensänderung des Admins (`/admin/name/aendern` → `202`, `/admin/name/bestaetigen`) ist im
+  Datenzugriff noch nicht angebunden; gehört zu C7.
+- **C4:** Verhalten auf iOS (`one-time-code`, Passwortmanager, Kleinschreibung am Namen) nur per
+  Handprüfung.
 - Dialog-E2E (Fokusfalle, Escape) ist mit dem Ablauf-Dialog da (WebKit im CI, Tab-Teil dort ohne
   Systemeinstellung übersprungen).
 - **Leerlauf-Fenster ≤ 2 Minuten (Admin-Konfiguration erlaubt ab 1):** Der Dialog erschiene nach jedem
@@ -312,12 +393,13 @@ Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" 
   Precache-Zahl sinkt von 6 auf 5; `Icon.test.tsx` und `pwa.spec.ts` anpassen).
 
 ## 7. Nächste Schritte
-1. **Push auf `dev_client`** und den ersten CI-Lauf mit WebKit prüfen.
+1. **Commit und Push auf `dev_client`** (C4 ist noch nicht committet) und den ersten CI-Lauf mit WebKit
+   prüfen; dabei die Layout-Tests der neuen Admin-Ansichten und die Fenster unter 740 px beobachten.
 2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
    gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
-3. **C4 beginnen:** Admin-Anmeldung (`/admin/anmelden`, heute Platzhalter), Passwort-Reset (PIN anfordern,
-   eingeben, neues Passwort) und Passwortwechsel. Auf die Regel achten: `ADMIN_PASSWORT_FALSCH` ist ein
-   Eingabefehler, kein Sitzungsende (`istSitzungsende`); die Admin-Anmeldung läuft über `useSitzungswechsel`.
+3. **C4 abnehmen:** Handprüfung gegen den echten Server und das iPhone (Abnahme 3 der Umsetzungs-
+   anleitung, Abschnitt 6.2 oben); danach das Passwort im Passwortmanager nachziehen. Dann **C5 beginnen**
+   (Termin und Teilnahme, User-Dashboard).
 4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
    CI-Lauf mit WebKit.
 5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).

@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { sitzungNachbilden } from './hilfen/sitzung.js'
 
 /**
  * Prueft den Rahmen der Anwendung auf allen Geraeteprojekten.
@@ -7,11 +8,26 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
  * WebKit-Projekten laufen. Was hier scheitert, scheitert auf einem echten
  * Telefon ebenfalls – Umbrueche, Tap-Ziele, horizontales Scrollen.
  *
- * Die Tests laufen ohne erreichbaren Server, also ohne Sitzung. Erreichbar
- * bleiben muessen in diesem Zustand die PIN-Eingabe – der Einstieg in die
- * Anwendung – und die Admin-Anmeldung. Die Zurueck-Schaltflaeche wird an der
- * Admin-Anmeldung geprueft, weil die Login-Schritte sie bewusst nicht zeigen.
+ * Die Tests laufen ohne erreichbaren Server. Ohne Sitzung bleibt nur die
+ * PIN-Eingabe erreichbar – der Einstieg in die Anwendung. Die Admin-Anmeldung
+ * liegt seit C4 hinter der PIN (Stufe `PIN_VERIFIED`, Vertrag); die Tests, die
+ * sie brauchen, bilden diese Sitzung nach (`hilfen/sitzung.ts`). Die
+ * Zurueck-Schaltflaeche wird an der Admin-Anmeldung geprueft, weil die
+ * Login-Schritte sie bewusst nicht zeigen.
  */
+
+/** Bildet eine Sitzung nach der PIN-Pruefung nach (Leerlauf lang, der Ablauf-Dialog bleibt zu). */
+async function nachPinPruefung(page: Page) {
+  await sitzungNachbilden(page, { stage: 'PIN_VERIFIED', leerlaufSek: 900 })
+}
+
+/** Bildet die Namensliste nach, damit die Namensauswahl ohne Server steht. */
+async function namensliste(page: Page) {
+  await page.route('**/api/v1/auth/users/lesen', (route) =>
+    route.fulfill({ json: [{ id: 11, name: 'Beispielspieler 01', belegt: false }] }),
+  )
+}
+
 /**
  * Prueft die Breite des Fokusrings (Regel aus `_reset.scss`: 3 px).
  *
@@ -58,33 +74,60 @@ test.describe('Rahmen und Navigation', () => {
     await expect(page.getByTestId('platzhalter-c7')).toBeHidden()
   })
 
-  test('laesst die Admin-Anmeldung offen', async ({ page }) => {
-    // Ohne diese Ausnahme koennte sich der Admin nie anmelden.
+  test('haelt die Admin-Anmeldung ohne Sitzung geschlossen und oeffnet sie nach der PIN', async ({ page }) => {
+    // Seit C4 (Vertrag): Die Admin-Anmeldung verlangt serverseitig PIN_VERIFIED.
+    // Ohne Sitzung fuehrt der Aufruf zur PIN-Eingabe, nicht zu einer Ansicht,
+    // deren Aktion der Server ohnehin ablehnte.
+    await page.goto('/admin/anmelden')
+    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+    await expect(page.getByTestId('admin-anmeldung')).toBeHidden()
+
+    await nachPinPruefung(page)
     await page.goto('/admin/anmelden')
     await expect(page).toHaveURL(/\/admin\/anmelden$/)
-    await expect(page.getByTestId('platzhalter-c4')).toBeVisible()
+    await expect(page.getByTestId('admin-anmeldung')).toBeVisible()
   })
 
   test('zeigt die Zurueck-Navigation jenseits der Startseite', async ({ page }) => {
+    await nachPinPruefung(page)
     await page.goto('/admin/anmelden')
     await expect(page.getByTestId('layout-zurueck')).toBeVisible()
   })
 
   test('fuehrt beim Direkteinstieg mit Zurueck zur Startseite statt aus der Anwendung', async ({ page }) => {
     // Direkteinstieg: Vor diesem Eintrag liegt im Tab nur `about:blank`. Ein
-    // `navigate(-1)` fuehrte dorthin und verliesse die Anwendung.
-    await page.goto('/admin/anmelden')
+    // `navigate(-1)` fuehrte dorthin und verliesse die Anwendung. Die Route
+    // braucht dafuer **keine** Zielangabe (`handle.zurueck`), sonst griffe diese
+    // statt der Direkteinstiegs-Regel: `/teams/1` hat keine.
+    await sitzungNachbilden(page, { leerlaufSek: 900 })
+    await page.goto('/teams/1')
+    await expect(page.getByTestId('platzhalter-c6')).toBeVisible()
     await page.getByTestId('layout-zurueck').click()
-    // Ohne Sitzung leitet die Startseite zur PIN-Eingabe weiter.
-    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
   })
 
-  test('geht nach einem Schritt innerhalb der Anwendung mit Zurueck dorthin zurueck', async ({ page }) => {
-    await page.goto('/pin/pruefen')
-    await page.getByTestId('pin-admin-link').click()
+  test('fuehrt von der Admin-Anmeldung mit Zurueck zur Namensauswahl', async ({ page }) => {
+    // Der Weg ist ein Tipp auf den Link in der Namensauswahl (C4, E5). „Zurueck"
+    // folgt der Zielangabe der Route, nicht dem Verlauf.
+    await nachPinPruefung(page)
+    await namensliste(page)
+    await page.goto('/anmelden')
+    await page.getByTestId('namensauswahl-admin-link').click()
     await expect(page).toHaveURL(/\/admin\/anmelden$/)
     await page.getByTestId('layout-zurueck').click()
-    await expect(page).toHaveURL(/\/pin\/pruefen$/)
+    await expect(page).toHaveURL(/\/anmelden$/)
+    await expect(page.getByTestId('namensauswahl-liste')).toBeVisible()
+  })
+
+  test('fuehrt bei Direkteinstieg in die Admin-Anmeldung mit Zurueck ebenfalls zur Namensauswahl', async ({
+    page,
+  }) => {
+    await nachPinPruefung(page)
+    await namensliste(page)
+    await page.goto('/admin/anmelden')
+    await page.getByTestId('layout-zurueck').click()
+    await expect(page).toHaveURL(/\/anmelden$/)
   })
 
   test('zeigt fuer eine unbekannte Adresse die Seite „nicht gefunden"', async ({ page }) => {
@@ -111,20 +154,28 @@ test.describe('Rahmen und Navigation', () => {
     // selbst ist oben am Feld in allen Engines geprueft; das Weiterspringen per
     // Tab bleibt fuer WebKit eine Handpruefung (C2-Abnahme, Punkt 9).
     test.skip(browserName === 'webkit', 'WebKit springt per Tab ohne Systemeinstellung nicht auf Links.')
-    await page.goto('/pin/pruefen')
-    await expect(page.getByTestId('pin-feld')).toBeFocused()
+    // Auf der PIN-Seite gibt es nach Tab kein Ziel mehr („Absenden" ist bei
+    // leerem Feld gesperrt, der Admin-Link zog in die Namensauswahl um, C4 E5).
+    // Dort erreicht Tab nach der Liste den Link; „Weiter" ist ohne Wahl gesperrt.
+    await nachPinPruefung(page)
+    await namensliste(page)
+    await page.goto('/anmelden')
+    const link = page.getByTestId('namensauswahl-admin-link')
+    await expect(link).toBeVisible()
 
-    await page.keyboard.press('Tab')
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab')
+      if (await link.evaluate((e) => e === document.activeElement)) break
+    }
 
-    // „Absenden" ist bei leerem Feld gesperrt und wird uebersprungen.
-    const link = page.getByTestId('pin-admin-link')
     await expect(link).toBeFocused()
     await pruefeFokusringBreite(page, link)
   })
 
   test('legt den Offline-Hinweis ueber die Kopfzeile und laesst ihn wegklicken', async ({ page, context }) => {
+    await nachPinPruefung(page)
     await page.goto('/admin/anmelden')
-    const inhalt = page.getByTestId('platzhalter-c4')
+    const inhalt = page.getByTestId('admin-anmeldung')
     const vorher = (await inhalt.boundingBox())!.y
 
     await context.setOffline(true)
@@ -139,6 +190,7 @@ test.describe('Rahmen und Navigation', () => {
   })
 
   test('haelt das Mindestmass fuer Tap-Ziele ein', async ({ page }) => {
+    await nachPinPruefung(page)
     await page.goto('/admin/anmelden')
     const kasten = await page.getByTestId('layout-zurueck').boundingBox()
     expect(kasten).not.toBeNull()

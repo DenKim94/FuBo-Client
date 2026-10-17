@@ -9,10 +9,10 @@ import { mockServer } from '@/test/mocks/server'
 import PinEingabe from './PinEingabe'
 
 /** Rendert die Ansicht mit dem echten Query-Client und einem Router für den Admin-Link. */
-function rendern() {
+function rendern(state?: unknown) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[{ pathname: '/pin/pruefen', state }]}>
         <PinEingabe />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -146,11 +146,44 @@ describe('PinEingabe', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
-  test('verlinkt die Admin-Anmeldung', () => {
+  describe('Hinweis aus der Navigation (C4, E4)', () => {
+    const HINWEIS = 'Passwort geändert. Bitte melde dich mit dem neuen Passwort an.'
+
+    test('zeigt den Grund des Sitzungsendes neutral als Status, nicht als Fehler', () => {
+      rendern({ hinweis: HINWEIS })
+
+      const hinweis = screen.getByTestId('pin-hinweis')
+      expect(hinweis).toHaveTextContent(HINWEIS)
+      expect(hinweis).toHaveAttribute('role', 'status')
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    test('zeigt ohne Hinweis keinen', () => {
+      rendern()
+      expect(screen.queryByTestId('pin-hinweis')).not.toBeInTheDocument()
+    })
+
+    test('verschwindet mit der nächsten Eingabe', async () => {
+      rendern({ hinweis: HINWEIS })
+
+      eintippen('1')
+
+      await waitFor(() => expect(screen.queryByTestId('pin-hinweis')).not.toBeInTheDocument())
+    })
+
+    test('bleibt stehen, solange nichts abgeschickt wird', () => {
+      rendern({ hinweis: HINWEIS })
+      // Das Feld ist leer: Es wird nichts abgeschickt, also ist auch nichts geschehen.
+      fireEvent.submit(screen.getByTestId('pin-eingabe'))
+      expect(screen.getByTestId('pin-hinweis')).toBeInTheDocument()
+    })
+  })
+
+  test('bietet den Einstieg in die Admin-Anmeldung nicht mehr an', () => {
+    // Die Admin-Anmeldung verlangt serverseitig PIN_VERIFIED (Vertrag): Vor der
+    // PIN waere sie nicht nutzbar. Der Link steht in der Namensauswahl (C4, E5).
     rendern()
-    expect(screen.getByRole('link', { name: 'Als Admin anmelden' })).toHaveAttribute(
-      'href',
-      '/admin/anmelden',
-    )
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('pin-admin-link')).not.toBeInTheDocument()
   })
 })

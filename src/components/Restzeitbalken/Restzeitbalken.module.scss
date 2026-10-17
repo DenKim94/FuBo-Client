@@ -1,0 +1,19 @@
+@use '@/styles/globalVars';
+
+// Dieselbe Spur wie im Ablauf-Dialog: reiner Schmuck, keine Rolle.
+.spur {
+  overflow: hidden;
+  block-size: 0.5rem;
+  border-radius: var(--radius-l);
+  background: var(--farbe-flaeche-kraeftig);
+}
+
+.fuellung {
+  inline-size: var(--fuellung-anteil, 0%);
+  block-size: 100%;
+  border-radius: inherit;
+  // Hinweisfarbe wie im Ablauf-Dialog. Linear, weil sie im Takt
+  // der Uhr wandert und nicht ruckeln soll.
+  background: var(--farbe-hinweis);
+  transition: inline-size 5s linear;
+}

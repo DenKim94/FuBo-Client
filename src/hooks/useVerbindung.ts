@@ -53,8 +53,9 @@ export function useVerbindung(): { verbunden: boolean } {
   // Luecke ist auf den Bruchteil einer Sekunde begrenzt, weil die Ansichten
   // hinter den Guards beim Start die Sitzung lesen (`GET /auth/session/lesen`);
   // dessen Ergebnis – Antwort oder Netzfehler – landet ueber `aufrufen` in
-  // diesem Zustand. **Ausnahme:** Die oeffentlichen Routen ohne Guard
-  // (`/admin/anmelden`, „nicht gefunden") rufen beim Direkteinstieg nichts auf;
+  // diesem Zustand. **Ausnahme:** Die Route ohne Guard
+  // („nicht gefunden"; die Admin-Anmeldung liegt seit C4 hinter dem Stufen-Guard)
+  // ruft beim Direkteinstieg nichts auf;
   // dort erscheint der Hinweis erst mit dem ersten Aufruf der Ansicht oder beim
   // Browserereignis `offline`.
   //

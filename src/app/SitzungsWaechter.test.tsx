@@ -3,7 +3,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ApiFehler } from '@/api/common/fehler'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
-import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
+import { queryClient, sitzungsendeAusloesen, sitzungsendeBehandeln } from '@/app/queryClient'
 
 afterEach(() => {
   sitzungsendeBehandeln(() => {})
@@ -43,5 +43,47 @@ describe('SitzungsWaechter', () => {
     })
 
     expect(screen.getByText('PIN-Eingabe')).toBeInTheDocument()
+  })
+
+  test('gibt einen Hinweis als Navigationszustand an die PIN-Eingabe weiter', () => {
+    const router = createMemoryRouter(
+      [
+        {
+          element: (
+            <>
+              <SitzungsWaechter />
+              <p>Geschuetzte Ansicht</p>
+            </>
+          ),
+          children: [{ path: '/admin/passwort/aendern', element: null }],
+        },
+        { path: '/pin/pruefen', element: <p>PIN-Eingabe</p> },
+      ],
+      { initialEntries: ['/admin/passwort/aendern'] },
+    )
+    render(<RouterProvider router={router} />)
+
+    act(() => sitzungsendeAusloesen('Passwort geändert. Bitte melde dich mit dem neuen Passwort an.'))
+
+    expect(router.state.location.pathname).toBe('/pin/pruefen')
+    expect(router.state.location.state).toEqual({
+      hinweis: 'Passwort geändert. Bitte melde dich mit dem neuen Passwort an.',
+    })
+  })
+
+  test('geht ohne Hinweis ohne Navigationszustand zur PIN-Eingabe', () => {
+    const router = createMemoryRouter(
+      [
+        { element: <SitzungsWaechter />, children: [{ path: '/teams/1', element: null }] },
+        { path: '/pin/pruefen', element: <p>PIN-Eingabe</p> },
+      ],
+      { initialEntries: ['/teams/1'] },
+    )
+    render(<RouterProvider router={router} />)
+
+    act(() => sitzungsendeAusloesen())
+
+    expect(router.state.location.pathname).toBe('/pin/pruefen')
+    expect(router.state.location.state).toBeNull()
   })
 })

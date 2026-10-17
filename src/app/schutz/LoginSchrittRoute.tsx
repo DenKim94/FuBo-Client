@@ -59,7 +59,9 @@ export default function LoginSchrittRoute({ schritt }: LoginSchrittRouteEigensch
   const ziel = zielFuerStufe(zustand)
   if (ziel !== LOGIN_PFADE[schritt]) {
     const von = urspruenglichesZiel(ort.state)
-    if (ziel === LOGIN_PFADE.start && von) return <Navigate to={von} replace />
+    // Abgeschlossene Anmeldung (Spieler: Startseite, Admin: Dashboard) und ein
+    // gemerktes Ziel: dorthin, nicht zum Standardziel.
+    if (zustand.angemeldet && von) return <Navigate to={von} replace />
     return <Navigate to={ziel} replace state={ort.state} />
   }
 

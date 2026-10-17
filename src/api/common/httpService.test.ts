@@ -12,9 +12,20 @@ describe('aufrufen', () => {
   })
 
   test('liefert bei 204 undefined, statt am leeren Rumpf zu scheitern', async () => {
-    // Der Fall betrifft 23 der 44 Operationen; ein `json()` wuerfe hier
+    // Der Fall betrifft 23 der 45 Operationen; ein `json()` wuerfe hier
     // `SyntaxError: Unexpected end of JSON input`.
     await expect(aufrufen<void>('POST', '/auth/pin/pruefen', { body: { pin: '0000' } }))
+      .resolves.toBeUndefined()
+  })
+
+  test('liefert bei 202 undefined: angenommen, aber ohne Rumpf', async () => {
+    // `POST /admin/name/aendern` antwortet seit dem 04.10.2026 mit 202 statt 204
+    // (Vertrag: kein Inhalt). Ohne diesen Zweig wuerfe `json()` einen SyntaxError.
+    mockServer.use(
+      http.post('*/admin/name/aendern', () => new HttpResponse(null, { status: 202 })),
+    )
+
+    await expect(aufrufen<void>('POST', '/admin/name/aendern', { body: { neuerName: 'Beispieladmin' } }))
       .resolves.toBeUndefined()
   })
 
@@ -52,6 +63,32 @@ describe('aufrufen', () => {
     )) as ApiFehler
 
     expect(fehler.wartesekunden).toBe(58)
+  })
+
+  test('uebernimmt die Feldfehler einer 400-Antwort', async () => {
+    // Der Kontrakt nennt sie `felder` (Feldname zu Meldung); die Ansicht haengt
+    // den Text an das jeweilige Feld.
+    mockServer.use(
+      http.post('*/auth/admin/anmelden', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            status: 400,
+            code: 'EINGABE_UNGUELTIG',
+            detail: 'Ungültige Eingabedaten.',
+            felder: { anmeldename: 'Der Name darf nicht leer sein.' },
+          },
+          { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    const fehler = (await aufrufen('POST', '/auth/admin/anmelden', { body: {} }).catch(
+      (f: unknown) => f,
+    )) as ApiFehler
+
+    expect(fehler.code).toBe('EINGABE_UNGUELTIG')
+    expect(fehler.felder).toEqual({ anmeldename: 'Der Name darf nicht leer sein.' })
   })
 
   test('meldet UNBEKANNT, wenn die Antwort kein JSON traegt', async () => {

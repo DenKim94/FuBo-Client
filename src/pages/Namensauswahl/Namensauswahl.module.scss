@@ -11,8 +11,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--abstand-l);
-  padding-block: var(--abstand-m);
+  // Ein Abstand weniger als zuvor (l): Kopf, Liste und Gastbereich bleiben
+  // erkennbar getrennt, und der Link unter der Schaltflaeche hat Platz (C4, 4.3).
+  gap: var(--abstand-m);
+  // Unten nur klein: Die Aktionsleiste bringt oben ihren eigenen Abstand mit.
+  padding-block: var(--abstand-m) var(--abstand-s);
 }
 
 .liste {
@@ -155,3 +158,22 @@
   color: var(--farbe-text-schwach);
 }
 
+
+// --- Aktionen -----------------------------------------------------------------
+
+// Die Aktionsleiste teilt ihre Breite unter ihren Kindern auf; Schaltflaeche und
+// Link gehoeren in eine Spalte.
+//
+// **Kompakt gehalten, damit die Ansicht mit Gastbereich und Meldung auf einem
+// 360 x 780 Telefon nicht scrollt** (C4, 4.3: Der Link kostete 48 px, Abstaende
+// zuerst kuerzen, nicht die Grenze von 740 px verschieben):
+// - kein Abstand zwischen Schaltflaeche und Link (das Tap-Ziel des Links ist
+//   44 px hoch, der Text sitzt darin mittig),
+// - das Tap-Ziel des Links ragt in den unteren Innenabstand der Leiste (8 px;
+//   darunter folgt weiter der Abstand des Rahmens, die Safe Area bleibt frei).
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-block-end: calc(-1 * var(--abstand-s));
+}

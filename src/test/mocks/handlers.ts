@@ -19,6 +19,27 @@ export const beispielSitzung: components['schemas']['SitzungInfo'] = {
 }
 
 /**
+ * Sitzung des Admins (`PROFILE_AUTHENTICATED`, Rolle `ADMIN`) – für Tests der
+ * Admin-Ansichten. Zeitpunkte wie bei {@link beispielSitzung} weit in der Zukunft.
+ */
+export const beispielAdminSitzung: components['schemas']['SitzungInfo'] = {
+  ...beispielSitzung,
+  rolle: 'ADMIN',
+  anzeigeName: 'Beispieladmin',
+}
+
+/**
+ * Sitzung nach der PIN-Prüfung (`PIN_VERIFIED`, noch ohne Rolle und Namen) – der
+ * Ausgangspunkt der Admin-Anmeldung und des Passwort-Resets.
+ */
+export const beispielPinSitzung: components['schemas']['SitzungInfo'] = {
+  ...beispielSitzung,
+  stage: 'PIN_VERIFIED',
+  rolle: null,
+  anzeigeName: null,
+}
+
+/**
  * Baut die Sitzungsauskunft für Tests des Ablaufs: Enden **relativ zu jetzt**,
  * gerechnet bei jedem Abruf neu.
  *
@@ -93,7 +114,7 @@ export function problem(
 export const handlers = [
   http.get('*/auth/session/lesen', () => HttpResponse.json(beispielSitzung)),
 
-  // 204 ohne Rumpf – der Fall, den 23 der 44 Operationen liefern.
+  // 204 ohne Rumpf – der Fall, den 23 der 45 Operationen liefern.
   http.post('*/auth/pin/pruefen', () => new HttpResponse(null, { status: 204 })),
 
   http.post('*/auth/session/erneuern', () => new HttpResponse(null, { status: 204 })),
@@ -102,6 +123,13 @@ export const handlers = [
   http.get('*/auth/users/lesen', () => HttpResponse.json(beispielNamensliste)),
   http.post('*/auth/user/waehlen', () => new HttpResponse(null, { status: 204 })),
   http.post('*/auth/gast/anmelden', () => new HttpResponse(null, { status: 204 })),
+
+  // Admin-Zugang (C4). Erfolg ist der Normalfall; Fehlerfaelle setzt der jeweilige
+  // Test ueber `mockServer.use(...)`.
+  http.post('*/auth/admin/anmelden', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/auth/passwort/zuruecksetzen', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/auth/passwort/bestaetigen', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/admin/passwort/aendern', () => new HttpResponse(null, { status: 204 })),
 
   http.post('*/termine/rueckmeldung', () =>
     problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist geschlossen.'),

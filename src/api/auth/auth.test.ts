@@ -1,9 +1,12 @@
 import { HttpResponse, http } from 'msw'
 import { describe, expect, test, vi } from 'vitest'
 import {
+  adminAnmelden,
   alsGastAnmelden,
   nameWaehlen,
   namenslisteLesen,
+  passwortBestaetigen,
+  passwortZuruecksetzen,
   pinPruefen,
   sitzungBeenden,
   sitzungErneuern,
@@ -347,5 +350,201 @@ describe('alsGastAnmelden', () => {
     const fehler = await fehlerVon(alsGastAnmelden('Testgast'))
 
     expect(fehler.code).toBe('KEIN_GAST_SLOT_FREI')
+  })
+})
+
+describe('adminAnmelden', () => {
+  test('sendet Name und Passwort unveraendert und ohne Hintergrundkopf', async () => {
+    let rumpf: unknown
+    let kopf: string | null = 'nicht gelesen'
+    mockServer.use(
+      http.post('*/auth/admin/anmelden', async ({ request }) => {
+        rumpf = await request.json()
+        kopf = request.headers.get('X-FuBo-Kein-Refresh')
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    // Kein trim(): Der Server entfernt Randleerzeichen des Namens selbst, und ein
+    // Passwort darf Leerzeichen enthalten.
+    await expect(
+      adminAnmelden({ anmeldename: ' admin ', passwort: ' beispiel-passwort-01 ' }),
+    ).resolves.toBeUndefined()
+
+    expect(rumpf).toEqual({ anmeldename: ' admin ', passwort: ' beispiel-passwort-01 ' })
+    expect(kopf).toBeNull()
+  })
+
+  test('wirft bei falschen Zugangsdaten einen ApiFehler, der kein Sitzungsende ist', async () => {
+    mockServer.use(
+      http.post('*/auth/admin/anmelden', () =>
+        problem(401, 'ADMIN_PASSWORT_FALSCH', 'Anmeldename oder Passwort sind nicht korrekt.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(adminAnmelden({ anmeldename: 'admin', passwort: 'falsch' }))
+
+    expect(fehler.status).toBe(401)
+    expect(fehler.code).toBe('ADMIN_PASSWORT_FALSCH')
+  })
+
+  test('liefert bei 429 die Wartezeit', async () => {
+    mockServer.use(
+      http.post('*/auth/admin/anmelden', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            status: 429,
+            code: 'PIN_GESPERRT',
+            detail: 'Zu viele Fehlversuche. Bitte in 42 Sekunden erneut versuchen.',
+            wartesekunden: 42,
+          },
+          { status: 429, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    const fehler = await fehlerVon(adminAnmelden({ anmeldename: 'admin', passwort: 'falsch' }))
+
+    // Derselbe Zaehler wie an der PIN, deshalb derselbe Code.
+    expect(fehler.code).toBe('PIN_GESPERRT')
+    expect(fehler.wartesekunden).toBe(42)
+  })
+
+  test('liefert bei 400 die Meldungen je Feld', async () => {
+    mockServer.use(
+      http.post('*/auth/admin/anmelden', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            status: 400,
+            code: 'EINGABE_UNGUELTIG',
+            detail: 'Ungültige Eingabedaten.',
+            felder: { anmeldename: 'Der Anmeldename darf nicht leer sein.' },
+          },
+          { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    const fehler = await fehlerVon(adminAnmelden({ anmeldename: '', passwort: 'x' }))
+
+    expect(fehler.felder).toEqual({ anmeldename: 'Der Anmeldename darf nicht leer sein.' })
+  })
+})
+
+describe('passwortZuruecksetzen', () => {
+  test('sendet weder Rumpf noch Inhaltstyp und loest bei 204 ohne Wert auf', async () => {
+    let methode = ''
+    let inhaltstyp: string | null = 'nicht gelesen'
+    let text = 'nicht gelesen'
+    mockServer.use(
+      http.post('*/auth/passwort/zuruecksetzen', async ({ request }) => {
+        methode = request.method
+        inhaltstyp = request.headers.get('Content-Type')
+        text = await request.text()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await expect(passwortZuruecksetzen()).resolves.toBeUndefined()
+
+    // Laut Kontrakt gibt es keinen Anfragekoerper: genau ein Admin, genau eine Adresse.
+    expect(methode).toBe('POST')
+    expect(inhaltstyp).toBeNull()
+    expect(text).toBe('')
+  })
+
+  test('sendet keinen Hintergrundkopf', async () => {
+    let kopf: string | null = 'nicht gelesen'
+    mockServer.use(
+      http.post('*/auth/passwort/zuruecksetzen', ({ request }) => {
+        kopf = request.headers.get('X-FuBo-Kein-Refresh')
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await passwortZuruecksetzen()
+
+    expect(kopf).toBeNull()
+  })
+
+  test('meldet die Drosselung mit Wartezeit', async () => {
+    mockServer.use(
+      http.post('*/auth/passwort/zuruecksetzen', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            status: 429,
+            code: 'RESET_GEDROSSELT',
+            detail: 'Zu viele Anforderungen. Bitte in 1837 Sekunden erneut versuchen.',
+            wartesekunden: 1837,
+          },
+          { status: 429, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    )
+
+    const fehler = await fehlerVon(passwortZuruecksetzen())
+
+    expect(fehler.code).toBe('RESET_GEDROSSELT')
+    expect(fehler.wartesekunden).toBe(1837)
+  })
+
+  test('meldet einen fehlgeschlagenen Versand als wiederholbaren Fehler', async () => {
+    mockServer.use(
+      http.post('*/auth/passwort/zuruecksetzen', () =>
+        problem(503, 'VERSAND_FEHLGESCHLAGEN', 'Die E-Mail konnte nicht versendet werden.'),
+      ),
+    )
+
+    const fehler = await fehlerVon(passwortZuruecksetzen())
+
+    expect(fehler.status).toBe(503)
+    expect(fehler.code).toBe('VERSAND_FEHLGESCHLAGEN')
+  })
+})
+
+describe('passwortBestaetigen', () => {
+  test('sendet PIN (mit fuehrender Null) und neues Passwort in einem Aufruf', async () => {
+    let rumpf: unknown
+    mockServer.use(
+      http.post('*/auth/passwort/bestaetigen', async ({ request }) => {
+        rumpf = await request.json()
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    await expect(
+      passwortBestaetigen({ bestaetigungsPin: '04713', neuesPasswort: 'beispiel-passwort-02' }),
+    ).resolves.toBeUndefined()
+
+    // Die PIN bleibt eine Zeichenkette: Ein Zahlentyp verlore die fuehrende Null.
+    expect(rumpf).toEqual({ bestaetigungsPin: '04713', neuesPasswort: 'beispiel-passwort-02' })
+  })
+
+  test('unterscheidet falsche PIN (nochmal versuchen) und ungueltigen Vorgang (neu anfordern)', async () => {
+    mockServer.use(
+      http.post('*/auth/passwort/bestaetigen', () =>
+        problem(401, 'RESET_PIN_FALSCH', 'Die Bestätigungs-PIN ist nicht korrekt.'),
+      ),
+    )
+    const falsch = await fehlerVon(
+      passwortBestaetigen({ bestaetigungsPin: '11111', neuesPasswort: 'beispiel-passwort-02' }),
+    )
+    expect(falsch.status).toBe(401)
+    expect(falsch.code).toBe('RESET_PIN_FALSCH')
+
+    mockServer.use(
+      http.post('*/auth/passwort/bestaetigen', () =>
+        problem(409, 'RESET_UNGUELTIG', 'Es liegt keine gültige Anforderung vor. Bitte neu anfordern.'),
+      ),
+    )
+    const ungueltig = await fehlerVon(
+      passwortBestaetigen({ bestaetigungsPin: '11111', neuesPasswort: 'beispiel-passwort-02' }),
+    )
+    // Der Status ist der Unterschied, den der Kontrakt ausdruecklich vorsieht.
+    expect(ungueltig.status).toBe(409)
+    expect(ungueltig.code).toBe('RESET_UNGUELTIG')
   })
 })

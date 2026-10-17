@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { ApiFehler } from '@/api/common/fehler'
-import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
+import { queryClient, sitzungsendeAusloesen, sitzungsendeBehandeln } from '@/app/queryClient'
 
 /** Erzeugt eine Abfrage, die mit dem gewuenschten Status und Code scheitert. */
 function fehlschlagendeAbfrage(
@@ -116,5 +116,31 @@ describe('Wiederholungsregel', () => {
       .catch(() => {})
 
     expect(abfrage).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('sitzungsendeAusloesen', () => {
+  test('reicht einen Hinweis an den Rueckruf weiter und leert den Cache', () => {
+    // Weg des Passwortwechsels (C4): Der Server hat alle Adminsitzungen widerrufen,
+    // der Client raeumt sofort auf und sagt der PIN-Eingabe, warum.
+    const abmelden = vi.fn()
+    sitzungsendeBehandeln(abmelden)
+    queryClient.setQueryData(['admin-daten'], { geheim: true })
+
+    sitzungsendeAusloesen('Passwort geändert. Bitte melde dich mit dem neuen Passwort an.')
+
+    expect(abmelden).toHaveBeenCalledWith('Passwort geändert. Bitte melde dich mit dem neuen Passwort an.')
+    expect(queryClient.getQueryData(['admin-daten'])).toBeUndefined()
+  })
+
+  test('ruft den Rueckruf ohne Hinweis, wenn keiner mitgegeben wird', async () => {
+    const abmelden = vi.fn()
+    sitzungsendeBehandeln(abmelden)
+
+    // Der Weg ueber den 401 traegt keinen Hinweis.
+    await fehlschlagendeAbfrage(401, ['irgendetwas']).catch(() => {})
+
+    expect(abmelden).toHaveBeenCalledOnce()
+    expect(abmelden).toHaveBeenCalledWith(undefined)
   })
 })

@@ -493,18 +493,54 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Anmeldenamen des Admins ändern
-         * @description Benennt das Adminprofil um und ändert damit den **Anmeldenamen** für `/auth/admin/anmelden`. Verlangt die Rolle `ADMIN`.
+         * Änderung des Admin-Anmeldenamens anfordern
+         * @description Fordert die Änderung des **Anmeldenamens** für `/auth/admin/anmelden` an. Verlangt die Rolle `ADMIN`.
          *
-         *     Ein eigener Endpunkt statt eines Sonderfalls in `/admin/user/bearbeiten`: Der Name des Adminprofils ist seit dem 29.08.2026 ein Anmeldemerkmal und keine Stammdatenpflege. Er liegt unter dem Tag „Zugangsdaten", neben `/admin/passwort/aendern` und `/admin/pin/aendern`.
+         *     **Der Name wird hier noch nicht geändert** (Ergänzung vom 04.10.2026). Der Server prüft ihn, erzeugt eine fünfstellige Bestätigungs-PIN, speichert ihren BCrypt-Hash zusammen mit dem gewünschten Namen und schickt sie an die Adresse aus `admin_konto.email`. Übernommen wird der Name erst mit `POST /admin/name/bestaetigen`.
          *
-         *     **Die laufende Sitzung bleibt bestehen** – anders als bei der Passwortänderung, die das Cookie löscht. Der Name ist kein Geheimnis, dessen Bekanntwerden allein Zugang verschafft; ein Widerruf würfe den Admin unmittelbar nach der Umbenennung aus seiner eigenen Sitzung. Die Änderung greift beim **nächsten** Login.
+         *     **Warum die Bestätigung über das Postfach:** Der Anmeldename ist das einzige Anmeldemerkmal, das der Passwort-Reset nicht zurückholt. Wer an einer offenen Adminsitzung sitzt, könnte den Admin sonst mit einer einzigen Umbenennung dauerhaft aussperren; die Bestätigung verlangt zusätzlich den Zugriff auf das hinterlegte Postfach.
          *
-         *     **Ein aktuelles Passwort wird nicht verlangt** – dasselbe Muster wie bei `/admin/pin/aendern`, das die zentrale PIN ohne erneute Passworteingabe setzt. Nur die Passwortänderung selbst fragt das alte Passwort ab.
+         *     **Der Name wird vor dem Versand geprüft** (`400`, `409 NAME_BELEGT`) – ein vergebener Name löst keine Nachricht aus. Die Nachricht nennt den neuen Namen, und die PIN gilt genau für ihn.
+         *
+         *     **Eine ältere, noch offene Anforderung wird entwertet** – es gilt immer die zuletzt angeforderte PIN und damit der zuletzt genannte Name. Ein offener Passwort-Reset bleibt davon unberührt: Beide Vorgänge sind getrennt gespeichert, und die PIN des einen ist beim anderen wertlos.
+         *
+         *     **Ein aktuelles Passwort wird nicht verlangt** – den zweiten Nachweis übernimmt das Postfach.
+         *
+         *     **Die laufende Sitzung bleibt bestehen**, auch nach der Bestätigung. Der Name ist kein Geheimnis, dessen Bekanntwerden allein Zugang verschafft; die Änderung greift beim **nächsten** Login.
+         *
+         *     Ein eigener Endpunkt statt eines Sonderfalls in `/admin/user/bearbeiten`: Der Name des Adminprofils ist seit dem 29.08.2026 ein Anmeldemerkmal und keine Stammdatenpflege.
          *
          *     **Betriebshinweis:** Nach einer Umbenennung ist `ADMIN_NAME` in der `.env` veraltet. Für den laufenden Betrieb ist das folgenlos – der Start-Bootstrap liest den Wert nur, solange `profil.admin_konto` leer ist. Wird diese Zeile je neu aufgebaut, sucht er wieder unter `ADMIN_NAME`; deshalb gehört der Wert nachgezogen.
          */
         post: operations["adminNameAendern"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/name/bestaetigen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bestätigungs-PIN einlösen und Anmeldenamen übernehmen
+         * @description Prüft die Bestätigungs-PIN aus der E-Mail und übernimmt den Namen, der bei `POST /admin/name/aendern` genannt wurde. Verlangt die Rolle `ADMIN` (Ergänzung vom 04.10.2026).
+         *
+         *     **Kein Name im Körper.** Der Name steht am Vorgang; die PIN bestätigt genau ihn. Ein Name an dieser Stelle erlaubte, mit einer PIN einen anderen Namen zu setzen als den, den die Nachricht genannt hat.
+         *
+         *     **Der Versuchszähler steigt, bevor die PIN geprüft wird**, und er überlebt eine abgelehnte Anfrage – fünf Versuche je Vorgang. Ein Fehlversuch zählt zusätzlich auf den Brute-Force-Zähler des PIN-Endpunkts, wie bei der Passwortänderung.
+         *
+         *     **Die laufende Sitzung bleibt bestehen**, kein Cookie wird gelöscht. Die Änderung greift beim **nächsten** Login – das Anmeldeformular prüft den Namen zeichengenau.
+         *
+         *     **Ein Vorgang gehört nicht zur Sitzung.** Läuft die Sitzung zwischen Anfordern und Bestätigen ab, bleibt die PIN nach erneuter Anmeldung einlösbar, solange sie gültig ist.
+         */
+        post: operations["adminNameBestaetigen"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1223,7 +1259,7 @@ export interface components {
          * @description Maschinenlesbarer Fehlercode. Die Liste wächst mit den Meilensteinen; ein unbekannter Wert ist vom Frontend wie ein allgemeiner Fehler zu behandeln.
          * @enum {string}
          */
-        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT";
+        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT" | "NAME_PIN_FALSCH" | "NAME_AENDERUNG_UNGUELTIG" | "NAME_AENDERUNG_GEDROSSELT";
         /**
          * @description Stufe des zweistufigen Logins. Wird serverseitig erzwungen.
          * @enum {string}
@@ -1509,9 +1545,9 @@ export interface components {
             maxWert: number;
         };
         /**
-         * @description Neuer Anmeldename des Admins.
+         * @description Gewünschter neuer Anmeldename des Admins. **Er wird erst nach der Bestätigung über `/admin/name/bestaetigen` übernommen.**
          *
-         *     Das Adminprofil wird **ausschliesslich** über diesen Endpunkt umbenannt, nicht über `/admin/user/bearbeiten`.
+         *     Das Adminprofil wird **ausschliesslich** über dieses Endpunktpaar umbenannt, nicht über `/admin/user/bearbeiten`.
          */
         AdminNameAendernRequest: {
             /**
@@ -1522,6 +1558,11 @@ export interface components {
              *     Der Name eines anderen Profils liefert `409 NAME_BELEGT`.
              */
             neuerName: string;
+        };
+        /** @description Bestätigung einer angeforderten Änderung des Admin-Anmeldenamens. Enthält bewusst **keinen** Namen – er steht am Vorgang. */
+        AdminNameBestaetigenRequest: {
+            /** @description Die fünfstellige Bestätigungs-PIN aus der E-Mail, mit führenden Nullen. Dasselbe Format wie beim Passwort-Reset; eine PIN des einen Vorgangs ist beim anderen wertlos. */
+            bestaetigungsPin: string;
         };
         /**
          * @description Verfahren der Teamgenerierung (A15). Beide nutzen dieselbe Zielfunktion und dieselbe Datengrundlage und sind gegeneinander austauschbar.
@@ -3358,8 +3399,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Umbenannt. Kein Inhalt, **kein neues Cookie** – die Sitzung läuft weiter. */
-            204: {
+            /** @description Anforderung angenommen und Nachricht versendet. **Der Name ist noch nicht geändert** – erst `POST /admin/name/bestaetigen` übernimmt ihn. Die Bestätigungs-PIN ist 15 Minuten gültig. Kein Inhalt, **kein neues Cookie**. */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3368,9 +3409,127 @@ export interface operations {
             400: components["responses"]["EingabeUngueltig"];
             401: components["responses"]["SitzungUngueltig"];
             403: components["responses"]["KeineBerechtigung"];
-            /** @description Ein anderes Profil trägt diesen Namen (`NAME_BELEGT`), auch bei abweichender Gross-/Kleinschreibung. */
+            /** @description Ein anderes Profil trägt diesen Namen (`NAME_BELEGT`), auch bei abweichender Gross-/Kleinschreibung. Es wird keine Nachricht versendet. */
             409: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /**
+             * @description Zu viele Anforderungen von derselben Adresse – höchstens drei je Stunde (`NAME_AENDERUNG_GEDROSSELT`).
+             *
+             *     Ein eigener Zähler, getrennt von dem des Passwort-Resets: Begrenzt wird eine *erfolgreiche* Handlung, die jedes Mal eine E-Mail auslöst.
+             */
+            429: {
+                headers: {
+                    /** @description Sekunden bis zur nächsten zulässigen Anforderung (RFC 9110). */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Too Many Requests",
+                     *       "status": 429,
+                     *       "detail": "Zu viele Anforderungen. Bitte in 1837 Sekunden erneut versuchen.",
+                     *       "code": "NAME_AENDERUNG_GEDROSSELT",
+                     *       "wartesekunden": 1837
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /**
+             * @description Der E-Mail-Versand ist fehlgeschlagen (`VERSAND_FEHLGESCHLAGEN`).
+             *
+             *     **Es bleibt kein Vorgang zurück** – auch eine zuvor offene Anforderung bleibt gültig, denn ihr Entwerten rollt mit zurück. Der Aufruf lässt sich unverändert wiederholen.
+             */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    adminNameBestaetigen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminNameBestaetigenRequest"];
+            };
+        };
+        responses: {
+            /** @description Name übernommen. Kein Inhalt, **kein neues Cookie** – die Sitzung läuft weiter. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["EingabeUngueltig"];
+            /**
+             * @description Die Bestätigungs-PIN ist falsch (`NAME_PIN_FALSCH`) oder es liegt keine gültige Sitzung vor (`SESSION_UNGUELTIG`).
+             *
+             *     Bei `NAME_PIN_FALSCH` ist ein Versuch verbraucht; nach fünf Fehlversuchen antwortet der Endpunkt mit `409`. **Nur `SESSION_UNGUELTIG` beendet die Sitzung** – der Client verzweigt über `code`, nicht über den Status.
+             */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "detail": "Die Bestätigungs-PIN ist nicht korrekt.",
+                     *       "code": "NAME_PIN_FALSCH"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            403: components["responses"]["KeineBerechtigung"];
+            /**
+             * @description Zwei Fälle, beide mit „neu anfordern“ als Ausweg:
+             *
+             *     - `NAME_AENDERUNG_UNGUELTIG` – es gibt keinen brauchbaren Vorgang: nie angefordert, abgelaufen, bereits eingelöst, durch eine neuere Anforderung entwertet oder die fünf Versuche sind erschöpft. Die Fälle werden bewusst nicht unterschieden.
+             *     - `NAME_BELEGT` – der Name ist **seit der Anforderung** an ein anderes Profil vergeben worden. Der Vorgang lässt sich dann nicht mehr einlösen; eine neue Anforderung mit einem anderen Namen entwertet ihn.
+             */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Conflict",
+                     *       "status": 409,
+                     *       "detail": "Es liegt keine gültige Anforderung zur Namensänderung vor. Bitte neu anfordern.",
+                     *       "code": "NAME_AENDERUNG_UNGUELTIG"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Gesperrt – ein Fehlversuch zählt zusätzlich auf den Brute-Force-Zähler des PIN-Endpunkts, deshalb der Code `PIN_GESPERRT`. */
+            429: {
+                headers: {
+                    /** @description Sekunden bis zum nächsten zulässigen Versuch (RFC 9110). */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
                 content: {
