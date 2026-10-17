@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { createRef } from 'react'
 import { describe, expect, test, vi } from 'vitest'
 import CustomButton from './CustomButton'
 
@@ -75,5 +76,22 @@ describe('CustomButton', () => {
     render(<CustomButton>Weiter</CustomButton>)
     expect(screen.getByRole('button')).not.toHaveAttribute('aria-busy')
     expect(screen.queryByTestId('ladespinner')).not.toBeInTheDocument()
+  })
+
+  test('reicht ref an das Button-Element durch', () => {
+    // Der Aufrufer setzt damit den Fokus, wenn die gedrückte Schaltfläche entfällt.
+    const ref = createRef<HTMLButtonElement>()
+    render(<CustomButton ref={ref}>Absagen</CustomButton>)
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Absagen' }))
+  })
+
+  test('bleibt mit aria-disabled fokussierbar und meldet den Zustand', () => {
+    render(<CustomButton aria-disabled="true">Teams generieren</CustomButton>)
+    const knopf = screen.getByRole('button', { name: 'Teams generieren' })
+    // Nicht `disabled`: Sonst verlöre das Element den Fokus und fehlte in der Tabulatorreihenfolge.
+    expect(knopf).not.toBeDisabled()
+    knopf.focus()
+    expect(knopf).toHaveFocus()
+    expect(knopf).toHaveAttribute('aria-disabled', 'true')
   })
 })

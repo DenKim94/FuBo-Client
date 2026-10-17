@@ -6,8 +6,8 @@
 > ausführliche Vorfassung mit allen Herleitungen liegt unter `archive/AGENT_CLIENT_2026-10-03.md`.
 > Ergänzt am 03.10.2026 abends um die Festlegungen aus dem Abschluss von C2, am 04.10.2026 um den
 > Ablauf-Dialog der Sitzung und den Abschluss von C3 (verlängernde Abrufe nur bei Bedienung), am
-> 17.10.2026 um den Abschluss von C4 (Admin-Zugang hinter `PIN_VERIFIED`, Passwortbausteine). Vorfassung:
-> `archive/AGENT_CLIENT_2026-10-17.md`.
+> 17.10.2026 um den Abschluss von C4 (Admin-Zugang hinter `PIN_VERIFIED`, Passwortbausteine) und am selben Tag um C5
+> (User-Dashboard, Teams, Ergebnisse, Verlauf; C6 ist darin aufgegangen). Vorfassung: `archive/AGENT_CLIENT_2026-10-17b.md`.
 
 ### Rolle
 Senior-Frontend-Entwickler mit Schwerpunkt TypeScript und React (ab 19). Achtet auf Testbarkeit,
@@ -241,6 +241,29 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
     die PIN gilt, solange der Server sie annimmt (`409`).
   - Eine neue Anforderung der Bestätigungs-PIN nur auf ausdrückliche Aktion (entwertet die alte).
   - Passwörter nie loggen; in Tests nur Platzhalter wie `beispiel-passwort-01`.
+- **User-Dashboard, Teams, Ergebnisse, Verlauf (C5, 17.10.2026):**
+  - **Vier Hubs** (`/`, `/teams`, `/ergebnisse`, `/verlauf`) teilen `DashboardLayout` mit `TabLeiste` (`<nav
+    aria-label="Bereiche">`, Links mit `aria-current`, **keine ARIA-Tab-Rollen**, `OHNE_ZURUECK`). Detailrouten
+    (`termine/:terminId`, `teams/:terminId`, `ergebnisse/:terminId`) stehen **ausserhalb** des Layouts, ohne Leiste.
+    Der Admin wird nach `/admin` umgeleitet (E7). Ungültige Terminadresse → „nicht gefunden" **ohne** Abruf
+    (`useTerminParameter`).
+  - **Lesen/Schreiben:** Termine pollen alle 20 s (`TERMINE_INTERVALL_MS`) mit `X-FuBo-Kein-Refresh: true`; Mutationen
+    (Rückmeldung, Teams, Ergebnis) ohne Kopf, nie wiederholt. Verlauf ohne Polling, eigener Schlüssel
+    (`termineVerlauf`), 60 Tage (`VERLAUF_TAGE`). Bilanz nur für USER, nicht für GAST (`useBilanz` ruft für Gäste nichts ab).
+  - **Zustände, keine Werte:** `eigeneRueckmeldung` dreiwertig; `teams` und `ergebnis` sind im Normalfall `null`
+    (eigener Leerzustand); die Teilnehmerliste wird nie umsortiert; `mindestzahlErreicht` vom Server; `deutlich` ist bei
+    `U` immer `false`; Kontingent der Teamgenerierung nur über `409 KONTINGENT_ERSCHOEPFT` (Sperre bis sich
+    `teilnehmerVersion` ändert); `409 ERGEBNIS_VORHANDEN` ist ein Hinweis, kein Fehler.
+  - **Schreibende Hooks verdrängen ihren Aufrufer:** Liest der Hook den Termin vor dem Ende der Mutation neu und tauscht die
+    Seite dabei die Komponente aus, kommen die Rückrufe von `mutate(…, { onSuccess })` nicht an. Dort `mutateAsync` mit
+    `try/catch` verwenden und den Fokus über einen Effekt auf den Zielzustand setzen (nicht über eine einmalige Anfrage).
+  - **Seiten mit `Aktionsleiste`:** Die Leiste ist das **letzte Kind** der Seite (Wurzel `flex: 1`, Spalte), der Inhalt davor
+    füllt die Resthöhe; ein geschlossener `<dialog>` steht im Behälter der Leiste. Die Sperre einer Aktion ist
+    `aria-disabled` (Fokus bleibt) mit Grund als Text und `aria-describedby`.
+  - **Uhr nie im Render** (`react-hooks` v7): `new Date()` in `select`, `queryFn` oder einem Hook mit Takt.
+  - **E2E:** `e2e/hilfen/{sitzung,termine,teams,ergebnisse}.ts` bilden Server und Sitzung (auch `GAST`) nach; Tests auf
+    Detailrouten brauchen `termineNachbilden`. Alle drei Projekte laufen lassen (ein Lauf in einem Projekt kann einen
+    Wettlauf verdecken). Gegenproben: Auswertung nach „failed", Rückgabewert des Baus prüfen.
 - **Dialog (03.10.2026):** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über
   `useId`. Unterbrechungsfeindliche Dialoge mit `festhalten` – die Komponente weist Escape ab und
   öffnet sich wieder, wenn der Browser `cancel` überspringt (Close Watcher, Chrome 122; auch die

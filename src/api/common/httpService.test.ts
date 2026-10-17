@@ -30,6 +30,13 @@ describe('aufrufen', () => {
   })
 
   test('uebersetzt ein ProblemDetail in einen ApiFehler', async () => {
+    // Die Vorgabe fuer die Rueckmeldung ist seit C5 erfolgreich (204); der Fehlerfall
+    // wird hier ausdruecklich gestellt.
+    mockServer.use(
+      http.post('*/termine/rueckmeldung', () =>
+        problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist geschlossen.'),
+      ),
+    )
     const fehler = await aufrufen('POST', '/termine/rueckmeldung', { body: {} }).catch(
       (f: unknown) => f,
     )

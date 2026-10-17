@@ -7,13 +7,12 @@
 > Repository: **eigenständig mit Wurzel in `client/`** (GitHub, öffentlich, `FuBo-Client`), Branch
 > `dev_client`. **Kein Monorepo**; das Backend liegt in `FuBo-Server` (`server/`). `PRJ_FuBo/`,
 > `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
-> **Stand: 17.10.2026** (C0, C1, C3 abgeschlossen; C2 umgesetzt, Rest Hand- und WebKit-Prüfungen;
-> **C4 umgesetzt**: Admin-Anmeldung, Passwort vergessen (zwei Schritte), Passwort ändern; Kontrakt-Kopie
-> auf 45 Operationen aktualisiert. Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen:
-> Handprüfung gegen den echten Server und WebKit im CI, siehe 6.2 und 7).
-> Nächster Meilenstein: **C5** (Termin und Teilnahme, User-Dashboard).
+> **Stand: 17.10.2026** (C0, C1, C3 abgeschlossen; C2, C4 und **C5 umgesetzt** – C6 ist in C5 aufgegangen:
+> Termine mit Tab-Rahmen, Teams, Ergebnisse mit Bilanz, Verlauf. Unit-Tests, Lint, Typen, Bau und E2E in Chromium
+> grün; offen: Handprüfung gegen den echten Server, iPhone und WebKit im CI, siehe 6.2 und 7).
+> Nächster Meilenstein: **C7** (Admin-Verwaltung und Admin-Dashboard).
 > Gestraffte Fassung. Vorfassungen mit allen Herleitungen in `archive/`, zuletzt
-> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17.md` (Stand vor C4) und
+> `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17b.md` (Stand vor C5), `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17.md` (vor C4) und
 > `archive/CONTEXT_HANDOFF_CLIENT_2026-10-04c.md` (Stand vor dem Abschluss von C3).
 
 ---
@@ -186,6 +185,45 @@ Vollständige Begründungen in den Archivfassungen; verbindliche Regeln in `AGEN
   Abstand. Abweichungen von DESIGN.md/Prototyp: siehe 1.3 der Umsetzungsanleitung; **DESIGN.md (Screen 1,
   E5) ist dem Entwickler zur Übernahme vorzulegen** – sie liegt nicht im Client-Repository.
 
+**User-Dashboard, Teams, Ergebnisse, Verlauf (C5, 17.10.2026; die Pakete C5 und C6 sind zusammengelegt)**
+Vollständig in `harness/tmp/C5_UMSETZUNG.md` (Entscheidungen E1–E14); clientrelevant:
+- **Vier Hubs, ein Rahmen:** `DashboardLayout` mit `TabLeiste` (`<nav aria-label="Bereiche">`, vier Links, **keine
+  ARIA-Tab-Rollen**; `aria-current="page"`) für `/`, `/teams`, `/ergebnisse`, `/verlauf` (E11, E12, `OHNE_ZURUECK`).
+  Detailrouten `termine/:terminId`, `teams/:terminId`, `ergebnisse/:terminId` stehen **ausserhalb** des Layouts, ohne
+  Leiste, mit „Zurück". Ungültige Adresse (`abc`, `0`, `-1`) → „nicht gefunden" **ohne** Abruf (`useTerminParameter`).
+- **Der Admin sieht das User-Dashboard nicht (E7):** `zielFuerStufe` leitet ihn nach `/admin` (Umleitung); der Kommentar
+  zu A9 in `zielpfad.ts` ist angepasst.
+- **Lesen und Schreiben:** Termine pollen alle 20 s (`TERMINE_INTERVALL_MS`) mit `X-FuBo-Kein-Refresh: true`; jede
+  Mutation (Rückmeldung, Teams, Ergebnis) **ohne** Kopf, nie wiederholt. Schlüssel nur in `schluessel.ts`
+  (`termine`, `termin(id)`, `termineVerlauf`, `bilanz`). `invalidateQueries` lädt nur **beobachtete** Abfragen neu.
+- **Zustände statt Werte:** `eigeneRueckmeldung` ist dreiwertig (`true`/`false`/`null`; `null` ist nicht „abgesagt");
+  `teams` und `ergebnis` sind im Normalzustand `null` (eigener Leerzustand); die Teilnehmerliste wird **nie**
+  umsortiert; `mindestzahlErreicht` kommt vom Server und wird nicht nachgerechnet.
+- **Teams:** `POST /teams/generieren` ohne Kopf; ein Ersetzen einer **aktuellen** Einteilung fragt nach (`Dialog`).
+  Das Kontingent ist **nur** über `409 KONTINGENT_ERSCHOEPFT` erkennbar: Die Seite merkt sich die `teilnehmerVersion`
+  und sperrt die Aktion (`aria-disabled`, Grund als Text), bis sie sich ändert (E15). `veraltet` versteckt nichts.
+  Nach `TEAMS_FIXIERT`/`TERMIN_GESCHLOSSEN` und `404` liest der Hook den Termin neu (Erweiterung gegenüber der Vorgabe).
+- **Ergebnis:** Der **erste Eintrag gilt**, ein Ergebnis ist nicht löschbar (Korrektur nur Admin, `ergebnisKorrigieren`
+  im Datenzugriff, noch ohne Ansicht → C7). Formular mit Radiogruppe „Wer hat gewonnen?" und Haken „Deutlicher Sieg";
+  bei `U` ist der Haken gesperrt und zurückgesetzt, `ergebnisErfassen` sendet dann ohnehin `deutlich = false`.
+  **Bestätigungsdialog** mit demselben Satz wie die Anzeige (`ergebnisSatz`). **`409 ERGEBNIS_VORHANDEN` ist ein
+  Hinweis, kein Fehler:** Die Seite zeigt das fremde Ergebnis und „Das Ergebnis war bereits erfasst; es gilt der
+  erste Eintrag." (E17). Nach dem Abschluss springt der Fokus auf die Überschrift der Anzeige. Zustandsmatrix der
+  Seite: Anzeige / Formular / „Keine Einteilung" / „erst nach Abschluss" / „abgesagt". Die **Bilanz** (`useBilanz`)
+  gibt es **nicht für Gäste** (kein Abruf, keine Karte); dreimal `0` zeigt „Noch keine Spiele gewertet.".
+- **Verlauf:** 60 Tage (`VERLAUF_TAGE`, E14; Abruf mit `ab`, im Client auf vergangene Termine gefiltert, neueste zuerst,
+  eigener Schlüssel, **kein** Polling, kein „Mehr laden"). Zeile eines abgeschlossenen Termins ist ein Link
+  `ergebnisse/:terminId` (≥ 44 px), abgesagte Termine ohne Link. Der Satz unter der Liste nennt die Zahl aus der Konstante.
+- **Seiten mit Aktionsleiste:** Die `Aktionsleiste` ist das **letzte Kind** der Seite (sonst haftet sie nicht über dem
+  ganzen Inhalt); ein geschlossener `<dialog>` gehört in den Behälter der Leiste. Bei `aria-disabled` bleibt der Fokus,
+  der Grund steht als Text (`aria-describedby`).
+- **Schreibende Hooks, deren Aufrufer sich austauscht:** Der Hook liest vor dem Ende der Mutation den Termin neu, die
+  Seite tauscht dabei das Formular gegen die Anzeige. Rückrufe von `mutate(…, { onSuccess })` kommen dann nicht mehr
+  an (Komponente ist ausgehängt) → **`mutateAsync`** mit `try/catch`; der Fokus folgt der Anzeige über einen Effekt auf
+  `[Anfrage, hatErgebnis]` statt über eine einmalige Anfrage.
+- **Uhr nie im Render** (`react-hooks` v7): `new Date()` in `select`/`queryFn` (`useVerlauf`) oder in einem Hook mit
+  Takt (`useBegonnen`).
+
 ## 4. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`, Abschnitt „Schnittstelle zum Server". Kontrakt-Kopie
 `client/harness/assets/fubo-api.json` (**45 Operationen**, am 17.10.2026 byteweise gegen
@@ -211,13 +249,13 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026, Beg
 | C2 | Design-System, Basis-Komponenten, Lade-/Leer-/Fehlerzustand | 12 | **umgesetzt** (03.10.): alle Komponenten, Zurück-Ziel, Offline-Hinweis; offen nur Abnahme 5 (WebKit im CI), 10 (Zoom 200 %) und 11 (Telefon im Sonnenlicht, Safari). Der Dialog-E2E-Test kam mit dem Ablauf-Dialog (C3) |
 | C3 | Sitzung & Spieler-Login | 14 | **abgeschlossen** (04.10.): PIN-Eingabe, Namensauswahl mit Polling, Gast, Routing nach Stufe, Ablauf-Dialog mit Verlängern/Abmelden, „Abmelden" in der Kopfzeile, Korrektur „Rückkehr verlängert nicht"; Handprüfung und E2E-Tests vom Entwickler bestätigt. **Entfallen:** dauerhaft sichtbare Restlaufzeit-Anzeige (Chip im Kopf) |
 | C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **umgesetzt** (17.10.2026): drei Ansichten plus Bausteine; offen Handprüfung gegen den echten Server und WebKit im CI (6.2) |
-| C5 | Termin & Teilnahme, User-Dashboard | 14 | **als Nächstes** |
-| C6 | Teams & Ergebnis | 12 | offen |
+| C5 | Termin & Teilnahme, User-Dashboard, Teams, Ergebnisse, Verlauf (**C6 aufgegangen**) | 31,5 | **umgesetzt** (17.10.2026): vier Stufen (Termine mit Tab-Rahmen, Teams, Ergebnisse mit Bilanz, Verlauf); offen Handprüfung gegen den echten Server, iPhone, WebKit im CI (6.2) |
+| C6 | (in C5 aufgegangen) | – | entfällt als eigenes Paket |
 | C7 | Admin-Verwaltung und Admin-Dashboard | 20 | offen |
 | C8 | PWA-Onboarding & Push (A25) | 14 | offen |
 | C9 | Abnahme, WCAG 2.1 AA, Deployment | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
 
-Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
+Summe 135,5 h (C5 und C6 = 26 h geplant, 31,5 h veranschlagt). C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
 
 ## 6. Code-Zustand
 
@@ -252,7 +290,7 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 356 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4 und Symbolen an „Absenden“/„Abmelden“); E2E zusätzlich `admin.spec.ts`
+- **Tests:** 638 Unit-Tests in 83 Dateien (Stand 17.10.2026, nach C5; vorher 356 nach C4); E2E zusätzlich `admin.spec.ts`
   (16 Fälle: Anmeldung, Reset, Passwort ändern, Passwortfeld, kein Scrollen bei 780 px), `layout.spec.ts`
   umgebaut (Admin-Anmeldung nur nach der PIN, Zurück-Ziele, Fokusring in der Namensauswahl), Sitzungs-
   nachbildung nach `e2e/hilfen/sitzung.ts` (mit `stage` und `rolle`). Zuvor: E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
@@ -260,50 +298,43 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   (API per `page.route`) und `pwa.spec.ts` (nur Chromium). CI: Job `pruefen` (Lint, Typen, Bau,
   Unit-Tests) und Job `e2e` (alle sieben Projekte, Chromium und WebKit).
 
-### 6.2 Verifikation (Stand 03.10.2026, Abschluss C2)
-`npm run typecheck`, `npm run lint`, **135 Unit-Tests**, Bau (sechs Precache-Einträge), kein Hexwert
-ausserhalb der Tokendatei, kein `darken(`/`lighten(`/`@import`, `npm ci` in frischem Baum, **72
-E2E-Tests in den drei Chromium-Projekten**. Gegenproben (Test rot ohne Absicherung): Wiederöffnen
-im Modus `festhalten`, Direkteinstieg (Unit und E2E – ohne Absicherung landete „Zurück" auf
-`about:blank`), kein „Erneut versuchen" bei `409`. Sichtprüfung bei 360 px über eine nur in der
-Prüfumgebung angelegte Demo-Route: Fortschrittsbalken, Leerzustand, Dialog als Bottom Sheet
-(Fokusfalle hält, Escape schliesst, Fokus kehrt zurück), „nicht gefunden", Ladefehler der
-Namensauswahl, Offline-Hinweis mit Netzfehler an der PIN. **Nicht geprüft:** die vier
-WebKit-Projekte (Browser-Download gesperrt) – sie laufen im CI-Job `e2e`.
+- **C5 (17.10.2026), Datenzugriff:** `src/api/termine/` (`termine.ts`: `termineLesen`, `terminLesen`, `rueckmeldungSenden`;
+  `terminZeit.ts`: `beginnVon`, `datumKurz`, `datumLang`, `uhrzeitKurz`, `zeitpunktKurz`, `naechsterTermin`, `heuteIso`,
+  `verlaufAb`, `vergangeneTermine`, `letzterAbgeschlossener`, `VERLAUF_TAGE`), `src/api/teams/teams.ts`
+  (`teamsGenerieren`), `src/api/ergebnis/` (`ergebnisErfassen`, `ergebnisText.ts` mit `ergebnisSatz`),
+  `src/api/bilanz/bilanz.ts`, `src/api/admin/admin.ts` (`ergebnisKorrigieren`, ohne Ansicht).
+- **C5, Hooks:** `useTermine` (Polling), `useTermin`, `useRueckmeldung`, `useBegonnen`, `useTerminParameter`,
+  `useTeamsGenerieren`, `useErgebnisErfassen`, `useBilanz`, `useVerlauf`.
+- **C5, Komponenten:** `TabLeiste`, `TerminKarte`, `Zusagestatus`, `Teilnehmerliste`, `RueckmeldungLeiste`,
+  `TerminAnsicht`, `WeitereTermine`, `TeamsAnzeige`, `TeamsLeiste`, `BilanzKarte`, `ErgebnisAnzeige`,
+  `ErgebnisFormular`, `VerlaufListe`; `CustomButton` mit `ref` und `aria-disabled`-Stil. **Seiten/Layouts:**
+  `DashboardLayout`, `Dashboard`, `TerminDetail`, `TeamsSeite`, `ErgebnisSeite`, `VerlaufSeite` (die drei
+  Tab-Seiten sind Routenkomponenten mit Hub und Termin). Alle vier Tab-Routen sind ausgebaut, der Platzhalter dient nur noch
+  `/einstellungen` und `/admin`.
+- **C5, Mocks und E2E:** `src/test/mocks/termine.ts` (zustandsbehafteter Server mit `terminHandlers()`, `terminModell`,
+  `teamsAus`, `beispielErgebnis`, `beispielBilanz`), `problem.ts`; E2E-Nachbildungen `e2e/hilfen/{sitzung,termine,teams,ergebnisse}.ts`
+  (Sitzung kennt jetzt `GAST`), Specs `termine`, `tabs`, `teams`, `ergebnisse`, `verlauf`.
 
-**Ablauf-Dialog (04.10.2026):** `typecheck`, `lint`, **187 Unit-Tests**, kein Hexwert ausserhalb der
-Tokendatei, ein `fetch(`. E2E `sitzung-ablauf.spec.ts` **30 Läufe grün in den drei Chromium-Projekten**
-(in einer Kopie in der Cloud-Umgebung mit vorinstalliertem Chromium und Bau mit sechs Precache-Einträgen,
-weil der Browser-Download auf dem Entwicklerrechner gesperrt ist; WebKit läuft im CI). Gegenproben (Test
-rot ohne Absicherung): `festhalten`, Wiederöffnen bei Escape (Chromium 1194 überspringt `cancel`
-tatsächlich), `show()` statt `showModal()` (Fokusfalle), Erkennung „nicht verlängerbar", Merker
-„Weiterarbeiten", `cancelQueries`, dichter Abstand, `dataUpdatedAt`, Kopf `X-FuBo-Kein-Refresh`,
-Einbindung in `GeschuetzteRoute`. Sichtprüfung bei 360 px: beide Fälle und Fehlerzustand. **Nicht
-geprüft:** WebKit/iOS, echtes Telefon.
-
-**Korrektur „Rückkehr verlängert nicht“ (04.10.2026, abends):** `lint`, `typecheck`, **197 Unit-Tests**,
-Bau (sechs Precache-Einträge), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, **126 E2E-Läufe
-grün in den drei Chromium-Projekten** (Kopie in der Cloud-Umgebung). Gegenproben: Unit (`useSitzung.test.tsx`,
-Fokus und Wiederverbindung je rot ohne Fix; Nachholen ohne Stand rot ohne `ohneStand`) und E2E (zwei
-verlängernde Abrufe statt einem). **Handprüfung gegen den echten Server** (Leerlauf 3 Minuten, eingebauter
-Browser der Desktop-App, Chromium): Login über PIN und Name, Dialog nach rund 60 s, bleibt bei acht
-Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" setzt 3 Minuten neu.
-
-**C4 (17.10.2026):** `lint` (inkl. `e2e/`), `typecheck`, **353 Unit-Tests** (vorher 197), Bau (acht
-Precache-Einträge: sechs plus die zwei Auge-Symbole des Passwortfeldes), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, Suche nach verwaisten Pfaden
-ohne Befund, **177 E2E-Läufe grün in den drei Chromium-Projekten, 3 übersprungen** (Kopie in der
-Cloud-Umgebung mit vorinstalliertem Chromium über eine Konfiguration, die nicht Teil des Repos ist).
-Gegenproben (Test rot ohne Absicherung): `202` ohne Rumpf, `ADMIN_PASSWORT_FALSCH` als Sitzungsende,
-Aufräumen nach `204` beim Passwortwechsel, „Neue PIN anfordern" bei `409`, Sperre deaktiviert den Knopf,
-`autoCapitalize="none"`, Ziel `/admin` nach der Anmeldung, `useSperre` ohne Statusprüfung, Passwort nur
-bei `ADMIN_PASSWORT_FALSCH` leeren, PIN-Fehler leert nur die PIN, Link in der Namensauswahl. Die
-Gegenprobe „Admin-Login hinter dem Guard" deckt `LoginSchrittRoute.test.tsx` und der E2E-Fall „hält die
-Admin-Anmeldung ohne Sitzung geschlossen" ab (nicht einzeln mutiert). Sichtprüfung bei 360 × 780: alle
-vier Ansichten und die Namensauswahl mit Link, auch mit Fehlermeldung, ohne Scrollen.
-**Nicht geprüft:** die vier WebKit-Projekte (im CI), die Handprüfung gegen den echten Server und das
-iPhone (Abnahme 3 der Umsetzungsanleitung: Anmeldung richtig/falsch/Sperre, Reset mit echter E-Mail, Passwort
-ändern, Kleinschreibung am Namen, `one-time-code`, Passwortmanager). **Danach das Passwort im
-Passwortmanager nachziehen:** `ADMIN_PASSWORD` in `server/.env` liest der Server nur beim ersten Start.
+### 6.2 Verifikation
+Frühere Läufe (C2 bis C4) mit allen Gegenproben stehen in den Archivfassungen; hier der Stand je Abschnitt.
+- **C2 (03.10.2026):** 135 Unit-Tests, 72 E2E in Chromium. **C3 (04.10.2026):** 197 Unit-Tests, 126 E2E in Chromium;
+  Handprüfung gegen den echten Server bestanden (Ablauf-Dialog, Rückkehr verlängert nicht).
+- **C4 (17.10.2026):** 353 Unit-Tests, 177 E2E in Chromium (3 übersprungen), acht Precache-Einträge. Offen: WebKit im CI,
+  Handprüfung gegen den echten Server und das iPhone (Abnahme 3 der C4-Anleitung); danach das Passwort im Passwortmanager
+  nachziehen (`ADMIN_PASSWORD` in `server/.env` liest der Server nur beim ersten Start).
+- **C5 (17.10.2026):** `lint` (inkl. `e2e/`), `typecheck`, **638 Unit-Tests in 83 Dateien**, Bau (acht Precache-Einträge),
+  genau ein `fetch(` (`httpService.ts`), kein Hexwert ausserhalb der Tokendatei, Suche nach verwaisten Pfaden ohne
+  Befund (`platzhalter-c5` kommt nirgends mehr vor), **318 E2E-Läufe grün in den drei Chromium-Projekten, 3 übersprungen**
+  (Kopie in der Cloud-Umgebung mit vorinstalliertem Chromium über eine Konfiguration, die nicht Teil des Repos ist).
+  Gegenproben (Test rot ohne Absicherung): Stufe 1 und 2 (u. a. Beginn-Sperre, Reihenfolge der Teilnehmerliste,
+  `eigeneRueckmeldung` dreiwertig, Kontingent-Sperre, Ersetzen-Rückfrage), Stufe 3 (`mutate` statt `mutateAsync` → 3 rote
+  Läufe, **je Projekt einer**; Haken bei `U` nicht zurückgesetzt; Senden ohne Bestätigung; Bilanzkarte für Gast), Stufe 4
+  (abgesagter Termin als Link; Verlauf mit Polling; Verlauf ohne `X-FuBo-Kein-Refresh`). **Äquivalente Mutation:** `deutlich`
+  bei `U` ungefiltert senden – Formular und `ergebnisErfassen` sichern doppelt, die Wirkung ist gleich (Unit-Test des
+  Datenzugriffs deckt den zweiten Riegel). Sichtprüfung bei 360 × 780 über die Layout-Fälle der E2E-Specs (kein
+  waagerechtes Scrollen, Tap-Ziele ≥ 44 px, Aktion 64 px, Aktionsleiste und Dialog im Sichtfeld), **nicht** per Auge.
+  **Nicht geprüft:** WebKit-Projekte (im CI), Handprüfung gegen den echten Server, iPhone, Bilanz für GAST am echten Server
+  (Vertrag offen, 1.4 der C5-Anleitung), Reihenfolge der Teilnehmerliste nach Absage und erneuter Zusage am echten Server.
 
 ### 6.3 Fallen, die aufgetreten sind
 - **Ein `202` ohne Rumpf** hätte `aufrufen` (`json()` auf leerem Rumpf) zum Absturz gebracht; `202` und `204`
@@ -350,8 +381,26 @@ Passwortmanager nachziehen:** `ADMIN_PASSWORD` in `server/.env` liest der Server
   meldet `getComputedStyle` 2.8px statt 3px, Chromium 3px (CI, 04.10.2026). Die E2E-Prüfung erwartet daher
   einen Wert zwischen abgerundeter Breite und 3 px (`pruefeFokusringBreite` in `layout.spec.ts`).
 
+- **C5 – Rückrufe von `mutate` gehen verloren, wenn der Aufrufer sich austauscht** (Formular → Anzeige beim Neulesen im
+  Hook). Zufällig grün in einem Projekt, rot in zwei anderen (Last): immer `mutateAsync` mit `try/catch`, wo der Hook den
+  Aufrufer per Neulesen verdrängt; E2E über **alle drei** Projekte laufen lassen.
+- **C5 – Eine Gegenprobe ist nur gültig, wenn die Mutation gebaut wurde:** `npm run build` bricht bei einem Typfehler
+  (`noUnusedLocals`) ab und lässt das alte `dist/` stehen; das Auswertungsskript muss den Rückgabewert prüfen und
+  „failed" aus der Playwright-Ausgabe lesen (die letzte Zeile ist „N passed", auch bei Fehlschlägen). Beim Schreiben der
+  Datei zuerst den neuen Inhalt berechnen, dann öffnen (`open(p, 'w')` leert die Datei vor dem Lesen).
+- **C5 – Beobachtete Abfragen:** `invalidateQueries` lädt nur Abfragen mit Beobachter neu; Hook-Tests brauchen den
+  `useTermin` daneben. Eine Mutation endet erst, wenn die im Hook zurückgegebene Invalidierung fertig ist.
+- **C5 – MSW:** der erste passende Handler gewinnt, `mockServer.use()` stellt voran (der spätere Aufruf gewinnt);
+  `onUnhandledRequest: 'error'` macht fehlende Handler sichtbar (Beispiel: 409 in `httpService.test.ts`).
+- **C5 – Uhr im Render** ist unter `react-hooks` v7 ein Lintfehler; Uhrzeit in `select`/`queryFn`/Takt-Hook. Tests mit
+  Datum relativ zu heute bauen (Verlauf liest nur 60 Tage, feste Daten fielen heraus).
+- **C5 – Aktionsleiste und Dialog:** Die Leiste muss das letzte Kind der Seite sein; ein geschlossener `<dialog>` gehört in
+  ihren Behälter. `aria-disabled` hält den Fokus; Playwright braucht dafür `click({ force: true })`.
+- **C5 – E2E-Nachbildung ohne Termin-Route** leitet `GET /termine/:id/lesen` an den Vorschau-Server (liefert HTML):
+  Tests auf `teams/:id` oder `ergebnisse/:id` brauchen `termineNachbilden` (so brach `layout.spec.ts` nach C5).
+
 ### 6.4 Bewusst offen
-- Zielangabe mit Parameter (`teams/:terminId` → Termin) kennt `RoutenAngaben` noch nicht (C6).
+- Zielangabe mit Parameter (`teams/:terminId`, `ergebnisse/:terminId` → Termin) kennt `RoutenAngaben` noch nicht; „Zurück“ geht dort einen Schritt im Verlauf, beim Direkteinstieg zur Startseite (C5).
 - „nicht gefunden" liest beim Direkteinstieg keine Sitzung; der Offline-Hinweis erscheint dort erst mit
   dem ersten Aufruf oder dem Ereignis `offline`.
 - **C4:** `PasswortFeld` begrenzt auf 72 Zeichen (`maxLength`); ein längeres Passwort wird beim Einfügen
@@ -392,20 +441,36 @@ Passwortmanager nachziehen:** `ADMIN_PASSWORD` in `server/.env` liest der Server
   wird: die beiden SVGs nach `src/` verlegen (dann entfallen `includeAssets` in `vite.config.ts` und die
   Precache-Zahl sinkt von 6 auf 5; `Icon.test.tsx` und `pwa.spec.ts` anpassen).
 
+- **C5 – 60 statt 90 Tage:** Die Umsetzungsanleitung nennt an einer Stelle (10.4) „letzten 90 Tage"; E14 und der Code
+  (`VERLAUF_TAGE`) sagen 60. Der Satz im UI nimmt die Konstante. Anleitung bei Gelegenheit angleichen.
+- **C5 – Kontingent der Teamgenerierung** ist nur über `409 KONTINGENT_ERSCHOEPFT` erkennbar; es gibt keine Anzeige
+  „noch n Läufe" (Server-Track, 1.4 der Anleitung).
+- **C5 – Hinweistext bei Rückmeldung `false → true`** (Zusage nach vorheriger Absage, Platz in der Reihenfolge) ist offen:
+  erst nach der Handprüfung festlegen. Ebenso Reihenfolge der Teilnehmerliste nach Absage und Zusage.
+- **C5 – DESIGN.md (1.3 der Anleitung)** ist dem Entwickler zur Übernahme vorzulegen: Tab-Leiste (vier Links, kein
+  ARIA-Tab), Symbol `person_edit_dark` für den Auswechselspieler (vorläufige Wahl), Überschriftenfolge h1/h2/h3.
+  Verlauf und Ergebnisse haben keine eigene Ansicht in DESIGN.md.
+- **C5 – `useErgebnisErfassen` und `useTeamsGenerieren`** lesen den Termin auch nach `404` neu (kleine Erweiterung
+  gegenüber der Vorgabe: Bei einem entfernten Termin verschwindet sonst der Stand nicht).
+- **C5 – Ergebnis-Korrektur (Admin)** ist im Datenzugriff (`ergebnisKorrigieren`) und im Mock vorhanden, die Ansicht folgt in C7.
+
 ## 7. Nächste Schritte
-1. **Push von `dev_client`** (C4 ist lokal als `c5e43f4` committet, nicht gepusht) und den ersten CI-Lauf mit WebKit
-   prüfen; dabei die Layout-Tests der neuen Admin-Ansichten und die Fenster unter 740 px beobachten.
-2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
-   gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
-3. **C4 abnehmen:** Handprüfung gegen den echten Server und das iPhone (Abnahme 3 der Umsetzungs-
-   anleitung, Abschnitt 6.2 oben); danach das Passwort im Passwortmanager nachziehen. Dann **C5 beginnen**
-   (Termin und Teilnahme, User-Dashboard); Umsetzungsanleitung `harness/tmp/C5_UMSETZUNG.md`, deren
-   Entscheidungen E1–E10 (Abschnitt 1.2) der Entwickler vorher bestätigt.
-4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
-   CI-Lauf mit WebKit.
-5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).
-6. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus,
-   `FUBO_INITIAL_PIN` vierstellig.
+1. **Review und Commit von C5 durch den Entwickler** (nichts ist committet; `git --no-optional-locks diff` zeigt den
+   Umfang). Danach **Push von `dev_client`** und der erste CI-Lauf mit WebKit (Layout-Fälle der neuen Specs bei kleinen
+   Fenstern beobachten).
+2. **Handprüfung C5 gegen eine laufende Serverinstanz** (Abschnitt 6.2 „Nicht geprüft"; Anleitung 12): Zusage/Absage und
+   Reihenfolge, Teams generieren (Kontingent, Ersetzen, `veraltet`, Beginn), Termin 10 Minuten in der Zukunft anlegen und
+   30–35 Minuten nach Beginn Ergebnis erfassen (zwei Geräte gleichzeitig → Hinweis), Bilanz für Spieler und Gast notieren,
+   Verlauf, iPhone. Danach den offenen Hinweistext für `false → true` festlegen.
+3. **C4 abnehmen** (Handprüfung, iPhone, Passwortmanager) – Abschnitt 6.2.
+4. **C7 beginnen** (Admin-Verwaltung und Admin-Dashboard); dort auch die Ergebnis-Korrektur und die Namensänderung des
+   Admins (`/admin/name/aendern` → `202`, `/admin/name/bestaetigen`).
+5. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS), CI-Lauf mit WebKit.
+6. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4); Verhalten von `GET /bilanz/lesen` für Gäste klären;
+   Kontingent der Teamgenerierung in der Antwort anbieten.
+7. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus, `FUBO_INITIAL_PIN` vierstellig.
+8. **Aufräumen:** Die Archivdatei `PRJ_FuBo/_zu_loeschen/e2e-kopie.tgz` (Hilfsarchiv für die Cloud-E2E-Läufe) kann gelöscht
+   werden; die Agentenumgebung darf es ohne Freigabe nicht.
 
 ## 8. Weitere Anweisungen
 - Repo-Wurzel `client/`, Branches `dev_xxx`; nichts nach `main` ohne ausdrückliche Anweisung.

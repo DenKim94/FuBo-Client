@@ -1,0 +1,43 @@
+@use '@/styles/globalVars';
+
+// Balken unter dem aktiven Eintrag: die Kennzeichnung, die nicht an der Farbe haengt.
+$balken: 3px;
+
+// Haftet unter der Kopfzeile, wenn der Inhalt scrollt. Die negativen Raender
+// heben den Abstand des Inhalts (`.inhalt` im AppLayout) auf: Die Leiste reicht
+// von Rand zu Rand, damit vier Eintraege bei 360 px je rund 90 px bekommen.
+.leiste {
+  position: sticky;
+  top: var(--sicher-oben);
+  z-index: var(--ebene-kopf);
+  margin-inline: calc(-1 * var(--abstand-m));
+  margin-block-start: calc(-1 * var(--abstand-m));
+  border-block-end: 1px solid var(--farbe-rand);
+  background: var(--farbe-hintergrund);
+}
+
+.liste {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.eintrag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--tapziel-min);
+  padding-inline: 0;
+  border-block-end: $balken solid transparent;
+  color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+  // „Ergebnisse“ muss ohne Umbruch passen (Sichtpruefung 12, Nr. 7).
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+// `aria-current` setzt NavLink selbst; daran haengt auch die Gestaltung.
+.eintrag[aria-current='page'] {
+  border-block-end-color: var(--farbe-primaer);
+  color: var(--farbe-text);
+}

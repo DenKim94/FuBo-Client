@@ -1,0 +1,44 @@
+@use '@/styles/globalVars';
+
+// Die Aktion in Daumenhoehe (64 px). Mit dem Elementnamen davor gewinnt die
+// Regel gegen die Groesse des CustomButton, gleich in welcher Reihenfolge das
+// Buendel die Stile ausliefert.
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}
+
+.spalte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.meldung,
+.nurHinweis {
+  padding-block: var(--abstand-s);
+}
+
+.erfolg {
+  padding-block: var(--abstand-s);
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+  color: var(--farbe-text);
+}
+
+.kontingent,
+.grund {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
+}
+
+.text {
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+}
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-xs);
+}

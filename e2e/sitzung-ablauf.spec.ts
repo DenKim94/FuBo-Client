@@ -27,7 +27,7 @@ test.describe('Ablauf-Dialog der Sitzung', () => {
   test('bleibt zu, solange das Ende fern ist', async ({ page }) => {
     await sitzungNachbilden(page, { leerlaufSek: 600 })
     await page.goto('/')
-    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    await expect(page.getByTestId('tab-leiste')).toBeVisible()
 
     await expect(page.getByTestId('sitzung-ablauf-dialog')).toBeHidden()
   })
@@ -146,7 +146,7 @@ test.describe('Ablauf-Dialog der Sitzung', () => {
     // Die Uhr laeuft normal weiter, laesst sich aber vorstellen.
     await page.clock.install()
     await page.goto('/')
-    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    await expect(page.getByTestId('tab-leiste')).toBeVisible()
     // Der Startaufruf zaehlt als Aktivitaet (Neuladen), das ist gewollt.
     expect(sitzung.verlaengernd).toBe(1)
 
@@ -168,7 +168,7 @@ test.describe('Ablauf-Dialog der Sitzung', () => {
   test('verlaengert, schliesst und gibt den Fokus an das Feld zurueck', async ({ page }) => {
     const sitzung = await sitzungNachbilden(page, { leerlaufSek: 600 })
     await page.goto('/')
-    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    await expect(page.getByTestId('tab-leiste')).toBeVisible()
 
     // Ein Feld mit Eingabe, die der Dialog nicht anruehren darf. Ausserhalb von
     // React angelegt: Geprueft wird, was der Browser mit Fokus und Wert tut.
@@ -259,7 +259,7 @@ test.describe('Abmelden in der Kopfzeile', () => {
     // Ende fern: Der Ablauf-Dialog soll nicht dazwischenfunken.
     await sitzungNachbilden(page, { leerlaufSek: 900 })
     await page.goto('/')
-    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    await expect(page.getByTestId('tab-leiste')).toBeVisible()
 
     const abmelden = page.getByTestId('layout-abmelden')
     await expect(abmelden).toBeVisible()

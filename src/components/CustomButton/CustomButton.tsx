@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import Icon from '@/components/Icon/Icon'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import style from './CustomButton.module.scss'
@@ -19,6 +19,11 @@ type CustomButtonEigenschaften = ButtonHTMLAttributes<HTMLButtonElement> & {
    * Endung (SVG), z. B. `login_icon_dark`. Rein schmückend; den Namen trägt der Text.
    */
   symbol?: string
+  /**
+   * Zugriff auf das `<button>`-Element, etwa um den Fokus zu setzen, wenn die
+   * gedrückte Schaltfläche entfällt (C5). In React 19 ein gewöhnlicher Prop.
+   */
+  ref?: Ref<HTMLButtonElement>
   /** Test-ID für die End-to-End-Tests; jede Schaltfläche braucht eine eigene. */
   'data-testid'?: string
   children: ReactNode
@@ -42,6 +47,11 @@ const SYMBOLGROESSE = 1.25
  * dabei ihre Farbe – grau wird sie nur, wenn sie wirklich nicht verfügbar ist.
  * `aria-busy` meldet den Zustand an Screenreader; der Spinner selbst ist deshalb
  * nur Schmuck.
+ *
+ * **`aria-disabled="true"` sieht aus wie `disabled`** (C5), sperrt aber nicht: Die
+ * Schaltfläche bleibt fokussierbar, der Fokus springt nicht weg, und ein
+ * Screenreader findet sie samt Grund. Wer sie so sperrt, fängt den Klick in
+ * seinem Handler ab.
  */
 export default function CustomButton({
   art = 'sekundaer',
@@ -51,6 +61,7 @@ export default function CustomButton({
   disabled,
   type = 'button',
   className,
+  ref,
   children,
   'data-testid': testId = 'custom-button',
   ...rest
@@ -61,6 +72,7 @@ export default function CustomButton({
 
   return (
     <button
+      ref={ref}
       type={type}
       className={klassen}
       disabled={disabled || laedt}

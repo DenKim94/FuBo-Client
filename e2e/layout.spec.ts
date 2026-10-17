@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { sitzungNachbilden } from './hilfen/sitzung.js'
+import { terminModell, termineNachbilden } from './hilfen/termine.js'
 
 /**
  * Prueft den Rahmen der Anwendung auf allen Geraeteprojekten.
@@ -100,11 +101,12 @@ test.describe('Rahmen und Navigation', () => {
     // braucht dafuer **keine** Zielangabe (`handle.zurueck`), sonst griffe diese
     // statt der Direkteinstiegs-Regel: `/teams/1` hat keine.
     await sitzungNachbilden(page, { leerlaufSek: 900 })
+    await termineNachbilden(page, [terminModell({ terminId: 1 })])
     await page.goto('/teams/1')
-    await expect(page.getByTestId('platzhalter-c6')).toBeVisible()
+    await expect(page.getByTestId('teams-seite')).toBeVisible()
     await page.getByTestId('layout-zurueck').click()
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByTestId('platzhalter-c5')).toBeVisible()
+    await expect(page.getByTestId('tab-leiste')).toBeVisible()
   })
 
   test('fuehrt von der Admin-Anmeldung mit Zurueck zur Namensauswahl', async ({ page }) => {

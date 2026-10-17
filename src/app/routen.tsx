@@ -7,13 +7,19 @@ import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import { ADMIN_PFADE, LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
 import Textlink from '@/components/Textlink/Textlink'
+import DashboardLayout from '@/layouts/DashboardLayout/DashboardLayout'
 import AdminAnmeldung from '@/pages/AdminAnmeldung/AdminAnmeldung'
+import Dashboard from '@/pages/Dashboard/Dashboard'
+import ErgebnisSeite from '@/pages/ErgebnisSeite/ErgebnisSeite'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
 import NichtGefunden from '@/pages/NichtGefunden/NichtGefunden'
 import PasswortAendern from '@/pages/PasswortAendern/PasswortAendern'
 import PasswortNeu from '@/pages/PasswortNeu/PasswortNeu'
 import PasswortVergessen from '@/pages/PasswortVergessen/PasswortVergessen'
 import PinEingabe from '@/pages/PinEingabe/PinEingabe'
+import TeamsSeite from '@/pages/TeamsSeite/TeamsSeite'
+import TerminDetail from '@/pages/TerminDetail/TerminDetail'
+import VerlaufSeite from '@/pages/VerlaufSeite/VerlaufSeite'
 
 /** Login-Schritte haben kein sinnvolles „Zurück" (siehe `RoutenAngaben`). */
 const LOGIN_SCHRITT: RoutenAngaben = { ohneZurueck: true }
@@ -24,6 +30,12 @@ const LOGIN_SCHRITT: RoutenAngaben = { ohneZurueck: true }
  * Ansicht bleiben ohne Angabe und gehen einen Schritt zurück.
  */
 const ZUM_DASHBOARD: RoutenAngaben = { zurueck: LOGIN_PFADE.start }
+
+/**
+ * Die vier Bereiche des Dashboards (Termine, Teams, Ergebnisse, Verlauf) sind
+ * gleichrangig: Von dort gibt es kein „Zurück“, die Tab-Leiste ist der Weg (C5, E12).
+ */
+const OHNE_ZURUECK: RoutenAngaben = { ohneZurueck: true }
 
 /**
  * Routenbaum der Anwendung.
@@ -90,15 +102,25 @@ export const routen = createBrowserRouter([
       {
         element: <GeschuetzteRoute />,
         children: [
-          { index: true, element: <Platzhalter titel="Start" paket="C5" /> },
+          // Die vier Bereiche teilen sich `DashboardLayout` (Tab-Leiste; der Admin
+          // geht von dort nach `/admin`, E7). Alle vier Bereiche sind ausgebaut.
           {
-            path: 'termine/:terminId',
-            element: <Platzhalter titel="Termin" paket="C5" />,
-            handle: ZUM_DASHBOARD,
+            element: <DashboardLayout />,
+            children: [
+              { index: true, element: <Dashboard />, handle: OHNE_ZURUECK },
+              { path: 'teams', element: <TeamsSeite />, handle: OHNE_ZURUECK },
+              { path: 'ergebnisse', element: <ErgebnisSeite />, handle: OHNE_ZURUECK },
+              { path: 'verlauf', element: <VerlaufSeite />, handle: OHNE_ZURUECK },
+            ],
           },
-          // Ziel offen bis C6: Die übergeordnete Ansicht ist voraussichtlich der
-          // Termin – eine Zielangabe mit Parameter kennt `RoutenAngaben` noch nicht.
-          { path: 'teams/:terminId', element: <Platzhalter titel="Teams" paket="C6" /> },
+          // Detailansichten stehen ausserhalb des Layouts: keine Tab-Leiste (E12).
+          { path: 'termine/:terminId', element: <TerminDetail />, handle: ZUM_DASHBOARD },
+          // Ohne Zielangabe: Die uebergeordnete Ansicht ist der Termin, eine Zielangabe
+          // mit Parameter kennt `RoutenAngaben` nicht. „Zurueck“ geht einen Schritt im
+          // Verlauf, beim Direkteinstieg zur Startseite.
+          { path: 'teams/:terminId', element: <TeamsSeite /> },
+          // Wie `teams/:terminId`: ohne Zielangabe (vom Verlauf oder vom Termin aus erreichbar).
+          { path: 'ergebnisse/:terminId', element: <ErgebnisSeite /> },
           // Die Einstellungen sind fuer jede angemeldete Person erreichbar; den
           // Benachrichtigungsbereich blendet die Ansicht fuer GAST selbst aus
           // (A25d), weil die zugehoerigen Endpunkte dort mit `403` antworten.

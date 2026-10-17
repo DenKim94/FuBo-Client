@@ -1,0 +1,91 @@
+@use '@/styles/globalVars';
+
+// Fuellt die Resthoehe zwischen Inhalt und Leiste: Die Leiste haftet unten, auch wenn
+// Inhalt und Formular kurz sind.
+.formular {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-end: var(--abstand-m);
+}
+
+.gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legende {
+  padding: 0;
+  margin-block-end: var(--abstand-xs);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Die ganze Zeile ist die Beschriftung und das Tap-Ziel (A2).
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-s);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+
+  input {
+    flex: none;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    accent-color: var(--farbe-primaer);
+  }
+}
+
+.deutlich {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
+}
+
+.meldung {
+  padding-block: var(--abstand-s);
+}
+
+.spalte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+// Die Aktion in Daumenhoehe (64 px). Mit dem Elementnamen davor gewinnt die Regel gegen
+// die Groesse des CustomButton, gleich in welcher Reihenfolge das Buendel die Stile ausliefert.
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}
+
+.dialogText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+}
+
+.zusammenfassung {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-xs);
+}

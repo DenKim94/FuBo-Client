@@ -22,7 +22,10 @@ export const schluessel = {
   namensliste: ['namensliste'] as const,
   termine: ['termine'] as const,
   termin: (terminId: string) => ['termin', terminId] as const,
-  teams: (terminId: string) => ['teams', terminId] as const,
+  /** Präfix aller Einzeltermine, für `invalidateQueries` nach einer Rückmeldung. */
+  terminAlle: ['termin'] as const,
+  /** Verlaufsabruf (E14). Eigener Wurzelschlüssel: `invalidateQueries(termine)` trifft ihn nicht. */
+  termineVerlauf: ['termineVerlauf'] as const,
   bilanz: ['bilanz'] as const,
   pushStatus: ['push', 'status'] as const,
 } as const

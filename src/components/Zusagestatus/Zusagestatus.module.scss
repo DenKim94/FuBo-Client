@@ -1,0 +1,39 @@
+@use '@/styles/globalVars';
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+}
+
+.symbol {
+  flex: none;
+  display: inline-flex;
+}
+
+.text {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.zusatz {
+  font-weight: var(--gewicht-normal);
+  color: var(--farbe-text-schwach);
+}
+
+// Die Aussage steht im Text; die Farbe des Symbols unterstuetzt sie nur.
+// „Offen“ ist neutral (Link-Blau), nie Fehlerrot: Es ist keine Absage.
+.zugesagt .symbol {
+  color: var(--farbe-erfolg);
+}
+
+.abgesagt .symbol {
+  color: var(--farbe-text);
+}
+
+.offen .symbol {
+  color: var(--farbe-link);
+}
+
+.kompakt {
+  font-size: var(--schrift-klein);
+}

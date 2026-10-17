@@ -1,0 +1,13 @@
+@use '@/styles/globalVars';
+
+// Beide Schaltflaechen in Daumenhoehe (64 px), auch die sekundaere. Mit dem
+// Elementnamen davor gewinnt die Regel gegen `.sekundaer` des CustomButton,
+// gleich in welcher Reihenfolge das Buendel die Stile ausliefert.
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}
+
+// Fehler ueber der Leiste, im Raster des Inhalts.
+.fehler {
+  padding-block: var(--abstand-s);
+}

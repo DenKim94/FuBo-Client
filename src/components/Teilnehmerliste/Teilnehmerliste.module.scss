@@ -1,0 +1,69 @@
+@use '@/styles/globalVars';
+
+.liste {
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+}
+
+.zusammenfassung {
+  display: flex;
+  align-items: center;
+  // Tap-Ziel: die ganze Zeile klappt auf, mindestens 44 px hoch (A2).
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-m);
+  font-weight: var(--gewicht-halbfett);
+  cursor: pointer;
+}
+
+.eintraege {
+  display: flex;
+  flex-direction: column;
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.eintrag {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  padding: var(--abstand-s) var(--abstand-m);
+}
+
+.eintrag + .eintrag {
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+// Wartende ruhiger auf Flaeche gelegt; die Aussage steht im Text „wartet · Platz n“.
+.wartet {
+  background: var(--farbe-flaeche);
+}
+
+.warteschlange {
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+  color: var(--farbe-text-schwach);
+}
+
+.zeile {
+  display: flex;
+  align-items: baseline;
+  gap: var(--abstand-s);
+}
+
+.position {
+  flex: none;
+  min-inline-size: 2ch;
+  color: var(--farbe-text-schwach);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.platz {
+  flex: none;
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}

@@ -20,7 +20,7 @@ export type Sitzung = {
   /** Stufe der Sitzung; `PIN_VERIFIED` hat weder Rolle noch Namen. Vorgabe: `PROFILE_AUTHENTICATED`. */
   stage: 'PIN_VERIFIED' | 'PROFILE_AUTHENTICATED'
   /** Rolle in der Stufe `PROFILE_AUTHENTICATED`. Vorgabe: `USER`. */
-  rolle: 'USER' | 'ADMIN'
+  rolle: 'USER' | 'ADMIN' | 'GAST'
   /** Aufrufe von `/auth/session/erneuern` und `/auth/session/beenden`. */
   erneuert: number
   beendet: number
@@ -70,11 +70,17 @@ export async function sitzungNachbilden(page: Page, anfang: Partial<Sitzung> = {
       json: {
         stage: 'PROFILE_AUTHENTICATED',
         rolle: sitzung.rolle,
-        anzeigeName: sitzung.rolle === 'ADMIN' ? 'Beispieladmin' : 'Beispielspieler 03',
+        anzeigeName:
+          sitzung.rolle === 'ADMIN' ? 'Beispieladmin' : sitzung.rolle === 'GAST' ? 'Beispielgast' : 'Beispielspieler 03',
         ...enden,
       },
     })
   })
+  // Das Dashboard (`/`) liest die Terminliste. Ohne Nachbildung ginge der Abruf an den
+  // Vorschau-Server und lieferte dessen Startseite statt JSON. Die leere Liste haelt
+  // die Ansicht ruhig; Tests, die Termine brauchen, melden danach eigene Routen an
+  // (die zuletzt angemeldete Route gewinnt).
+  await page.route('**/api/v1/termine/lesen', (route) => route.fulfill({ json: [] }))
   await page.route('**/api/v1/auth/session/erneuern', (route) => {
     sitzung.erneuert += 1
     // Wie der Server: neues Fenster, aber nie ueber die Obergrenze.

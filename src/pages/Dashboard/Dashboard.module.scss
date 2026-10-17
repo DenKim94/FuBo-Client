@@ -1,0 +1,15 @@
+@use '@/styles/globalVars';
+
+.dashboard {
+  // Nimmt die Resthoehe des Inhalts ein, damit die Aktionsleiste unten sitzt.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.hinweise {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-m);
+}

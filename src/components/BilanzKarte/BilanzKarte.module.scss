@@ -1,0 +1,45 @@
+@use '@/styles/globalVars';
+
+.karte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-flaeche);
+}
+
+.titel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.zahlen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--abstand-s);
+}
+
+// Beschriftung unter der Zahl, damit „Unentschieden“ bei 360 px in seine Spalte passt.
+.zahl {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  text-align: center;
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach); // 5.89:1 auf --farbe-flaeche
+
+  dd {
+    font-size: var(--schrift-zahl);
+    font-weight: var(--gewicht-halbfett);
+    line-height: 1.1;
+    color: var(--farbe-text);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.leer {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}

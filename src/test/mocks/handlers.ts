@@ -1,5 +1,10 @@
 import { HttpResponse, http } from 'msw'
 import type { components } from '@/api/common/types/schema'
+import { problem } from './problem'
+import { beispielBilanz, beispielErgebnis, beispielModelle, beispielTermine, detailsVon, teamsAus } from './termine'
+
+// Bestehende Tests importieren `problem` aus dieser Datei.
+export { problem }
 
 /**
  * Beispielsitzung. Keine realen Personennamen (Vorgabe AGENT_CLIENT.md).
@@ -72,36 +77,6 @@ export const beispielNamensliste: components['schemas']['NameOption'][] = [
 ]
 
 /**
- * Baut eine Fehlerantwort im Vertragsformat.
- *
- * `type` ist im Generat Pflichtfeld, weil der Kontrakt dafür einen Vorgabewert
- * angibt – ein handgeschriebenes Fehlerobjekt ohne dieses Feld meldet `TS2741`.
- *
- * @param status HTTP-Statuscode der Antwort.
- * @param code Maschinenlesbarer Fehlercode, nach dem die Programmlogik verzweigt.
- * @param detail Deutschsprachiger Anzeigetext.
- */
-export function problem(
-  status: number,
-  code: components['schemas']['Fehlercode'],
-  detail: string,
-): Response {
-  const rumpf: components['schemas']['ProblemDetail'] = {
-    type: 'about:blank',
-    status,
-    code,
-    detail,
-  }
-  // Jede Fehlerantwort des Servers trägt `application/problem+json`, nie
-  // `application/json` – der Mock bildet das nach, damit ein Test die
-  // Unterscheidung überhaupt prüfen kann.
-  return HttpResponse.json(rumpf, {
-    status,
-    headers: { 'Content-Type': 'application/problem+json' },
-  })
-}
-
-/**
  * Vorgabeverhalten der API für Tests.
  *
  * Die Muster beginnen mit `*`, weil das Präfix aus `VITE_API_BASE_URL` kommt und
@@ -131,7 +106,32 @@ export const handlers = [
   http.post('*/auth/passwort/bestaetigen', () => new HttpResponse(null, { status: 204 })),
   http.post('*/admin/passwort/aendern', () => new HttpResponse(null, { status: 204 })),
 
-  http.post('*/termine/rueckmeldung', () =>
-    problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist geschlossen.'),
-  ),
+  // Termine (C5). Die Vorgaben sind **zustandslos**: Eine Rückmeldung ändert
+  // nichts, damit kein Test den Stand eines anderen erbt. Wer eine Änderung
+  // beobachten will, installiert `terminHandlers()` (zustandsbehaftet).
+  http.get('*/termine/lesen', () => HttpResponse.json(beispielTermine)),
+  http.get('*/termine/:terminId/lesen', ({ params }) => {
+    const modell = beispielModelle.find((m) => String(m.terminId) === params.terminId)
+    return modell
+      ? HttpResponse.json(detailsVon(modell))
+      : problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+  }),
+  http.post('*/termine/rueckmeldung', () => new HttpResponse(null, { status: 204 })),
+
+  // Teamgenerierung (C5, Stufe 2), zustandslos wie die Rückmeldung: liefert die Einteilung
+  // des angefragten Beispieltermins, ändert aber nichts. Kontingent und `veraltet` gibt es
+  // nur in `terminHandlers()`.
+  // Ergebnis und Bilanz (C5, Stufe 3), zustandslos: feste Antworten. Ablauf des ersten
+  // Eintrags und Zaehlung der Bilanz gibt es nur in `terminHandlers()`.
+  http.post('*/ergebnis/erfassen', () => HttpResponse.json(beispielErgebnis, { status: 201 })),
+  http.get('*/bilanz/lesen', () => HttpResponse.json(beispielBilanz)),
+  http.post('*/admin/ergebnis/korrigieren', () => new HttpResponse(null, { status: 204 })),
+
+  http.post('*/teams/generieren', async ({ request }) => {
+    const { terminId } = (await request.json()) as { terminId: number }
+    const modell = beispielModelle.find((m) => m.terminId === terminId)
+    return modell
+      ? HttpResponse.json(teamsAus(modell), { status: 201 })
+      : problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+  }),
 ]

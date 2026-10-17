@@ -1,0 +1,18 @@
+@use '@/styles/globalVars';
+
+// Fuellt die Resthoehe des Inhalts. Das Formular (falls vorhanden) ist ein Fragment aus
+// Eingabe mit flex:1 und der Aktionsleiste als letztem Kind: Die Leiste haftet unten.
+.seite {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+// Nicht wachsen: Die Resthoehe gehoert dem Formular, das den Raum bis zur Leiste fuellt.
+.inhalt {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block: var(--abstand-m);
+}

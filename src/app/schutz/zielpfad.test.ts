@@ -20,7 +20,7 @@ describe('zielFuerStufe', () => {
   })
 
   test('fuehrt den angemeldeten Admin ins Admin-Dashboard (E1)', () => {
-    // A9: getrennte Dashboards. Das User-Dashboard bleibt erreichbar, ist aber nicht das Ziel.
+    // A9: getrennte Dashboards. Der Admin landet in `/admin`; das User-Dashboard leitet ihn dorthin um (C5, E7).
     expect(zielFuerStufe(zustand({ angemeldet: true, istAdmin: true }))).toBe(ADMIN_PFADE.start)
   })
 

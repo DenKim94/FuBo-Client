@@ -1,0 +1,64 @@
+@use '@/styles/globalVars';
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+}
+
+.liste > li + li {
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--abstand-m);
+  // Tap-Ziel: die ganze Zeile ist der Link (A2).
+  min-block-size: var(--tapziel-min);
+  padding: var(--abstand-s) var(--abstand-m);
+  color: inherit;
+  text-decoration: none;
+}
+
+// Ohne Link keine Bedienbarkeit vortaeuschen: gleiche Hoehe, kein Zeiger.
+.ohneLink {
+  cursor: default;
+}
+
+.zeit {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.datum {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.ort {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+.stand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+  font-size: var(--schrift-klein);
+  text-align: end;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--abstand-xs);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.abgesagt {
+  color: var(--farbe-fehler);
+}

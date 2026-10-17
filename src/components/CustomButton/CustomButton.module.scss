@@ -110,3 +110,13 @@
   align-items: center;
   justify-content: center;
 }
+
+// Gesperrt, aber fokussierbar (`aria-disabled`): sieht aus wie `:disabled`. Am
+// Ende der Datei und mit gleicher Spezifitaet wie die Zustaende oben, damit
+// diese Regel gewinnt, ohne `!important`.
+.schaltflaeche[aria-disabled='true']:not(.laedt) {
+  background: var(--farbe-flaeche-kraeftig);
+  color: var(--farbe-text-schwach);
+  border-color: var(--farbe-rand);
+  cursor: not-allowed;
+}

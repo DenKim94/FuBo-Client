@@ -44,7 +44,8 @@ export const ADMIN_PFADE = {
  * „bin ich dieser Pfad?" und leiten sonst hierhin um.
  *
  * **Der Admin landet im Admin-Dashboard** (C4, E1), alle anderen auf der
- * Startseite. Das User-Dashboard bleibt für den Admin erreichbar (A9).
+ * Startseite. Das User-Dashboard ist für den Admin **nicht** erreichbar: `/` und
+ * die drei weiteren Bereiche leitet `DashboardLayout` nach `/admin` um (C5, E7).
  *
  * @param zustand Der Sitzungszustand aus `useSitzung`.
  * @returns Der Pfad, auf dem die Person in ihrer Stufe stehen soll.
