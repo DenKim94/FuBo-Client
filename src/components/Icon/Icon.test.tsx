@@ -42,9 +42,14 @@ describe('Icon', () => {
   test('jeder im Quellbaum benutzte Name liegt in public/icons', () => {
     // Eine Maske mit falschem Dateinamen verschwindet lautlos – ohne kaputtes
     // Bild, das den Fehler verraten wuerde.
-    const namen = tsxDateien('src').flatMap((datei) =>
-      [...readFileSync(datei, 'utf8').matchAll(/<Icon[^>]*\sname="([^"]+)"/g)].map((t) => t[1]),
-    )
+    // Auch die Namen, die eine Komponente als `symbol` entgegennimmt (CustomButton).
+    const namen = tsxDateien('src').flatMap((datei) => {
+      const quelltext = readFileSync(datei, 'utf8')
+      return [
+        ...quelltext.matchAll(/<Icon[^>]*\sname="([^"]+)"/g),
+        ...quelltext.matchAll(/\ssymbol="([^"]+)"/g),
+      ].map((t) => t[1])
+    })
     expect(namen.length).toBeGreaterThan(0)
     const fehlend = namen.filter((name) => !existsSync(join('public/icons', `${name}.svg`)))
     expect(fehlend).toEqual([])

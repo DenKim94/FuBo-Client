@@ -156,7 +156,7 @@ describe('Namensauswahl', () => {
     expect(screen.getByTestId('namensauswahl-absenden')).toBeDisabled()
 
     fireEvent.change(screen.getByTestId('gast-name'), { target: { value: '  Testgast ' } })
-    fireEvent.click(screen.getByRole('radio', { name: heisst('Goat') }))
+    fireEvent.click(screen.getByRole('radio', { name: heisst('Stark') }))
     const knopf = screen.getByTestId('namensauswahl-absenden')
     expect(knopf).toHaveTextContent('Weiter als Testgast (Gast)')
     fireEvent.click(knopf)

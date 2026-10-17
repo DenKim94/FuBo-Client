@@ -99,6 +99,7 @@ export default function AppLayout() {
           {angemeldet && (
             <CustomButton
               art="sekundaer"
+              symbol="logout_icon_dark"
               className={style.abmelden}
               laedt={abmeldung.isPending}
               onClick={() => abmeldung.mutate()}

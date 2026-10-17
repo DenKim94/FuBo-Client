@@ -129,6 +129,7 @@ export default function PinEingabe() {
           type="submit"
           art="primaer"
           breit
+          symbol="login_icon_dark"
           laedt={pruefung.isPending}
           disabled={pin === '' || sperre.aktiv}
           data-testid="pin-absenden"

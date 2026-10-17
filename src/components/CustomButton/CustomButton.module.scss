@@ -5,10 +5,11 @@
   min-block-size: var(--tapziel-min);
   padding-inline: var(--abstand-l);
 
+  // Bezugspunkt fuer den Spinner, der im Ladezustand mittig darueber liegt.
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--abstand-s);
 
   border: 1px solid transparent;
   border-radius: var(--radius-m);
@@ -84,4 +85,28 @@
 
 .laedt {
   cursor: progress;
+}
+
+// Symbol und Beschriftung in einer Zeile.
+.inhalt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--abstand-s);
+}
+
+// Im Ladezustand unsichtbar, aber im Layout und im Zugaenglichkeitsbaum: Die
+// Schaltflaeche behaelt Breite und Namen (`visibility: hidden` naehme beides).
+.laedt .inhalt {
+  opacity: 0;
+}
+
+// Der Spinner liegt ueber der Flaeche und ist darin waagerecht und senkrecht
+// zentriert, gleich wie breit die Beschriftung ist.
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

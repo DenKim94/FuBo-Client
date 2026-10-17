@@ -57,7 +57,7 @@ describe('PasswortVergessen', () => {
   test('erklärt den Schritt und bietet die Anforderung und den Direkteinstieg an', () => {
     rendern()
 
-    expect(screen.getByRole('heading', { name: 'Passwort vergessen' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Passwort zurücksetzen' })).toBeInTheDocument()
     expect(screen.getByTestId('passwort-vergessen-schritt')).toHaveTextContent('Schritt 1 von 2')
     expect(
       screen.getByText(/5-stellige Bestätigungs-PIN an die hinterlegte E-Mail-Adresse/),

@@ -252,7 +252,7 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 353 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4); E2E zusätzlich `admin.spec.ts`
+- **Tests:** 356 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4 und Symbolen an „Absenden“/„Abmelden“); E2E zusätzlich `admin.spec.ts`
   (16 Fälle: Anmeldung, Reset, Passwort ändern, Passwortfeld, kein Scrollen bei 780 px), `layout.spec.ts`
   umgebaut (Admin-Anmeldung nur nach der PIN, Zurück-Ziele, Fokusring in der Namensauswahl), Sitzungs-
   nachbildung nach `e2e/hilfen/sitzung.ts` (mit `stage` und `rolle`). Zuvor: E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht

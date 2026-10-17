@@ -208,8 +208,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   dekorativ, `--farbe-rand-bedienbar` für Bedienelemente), eigenes `--farbe-fokus`, `--farbe-link`,
   `--tapziel-min` (44 px) und `--tapziel-primaer` (64 px). Zustände der Primäraktion über eigene Tokens,
   sonst `color-mix`. Fokusregel einmal in `_reset.scss`, ohne `border-radius: inherit`.
-- **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art`, `breit`, `laedt`,
-  `type="button"` vorbelegt), `Ladespinner` (150 ms verzögert, `role="status"`, in Schaltflächen
+- **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art`, `breit`, `laedt`, `symbol`,
+  `type="button"` vorbelegt; im Ladezustand sitzt der Spinner allein mittig, Symbol und Text sind per
+  `opacity: 0` unsichtbar, aber im Layout und im Namen der Schaltfläche; `symbol` = SVG-Name aus `public/icons/`, links vom Text), `Ladespinner` (150 ms verzögert, `role="status"`, in Schaltflächen
   `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden benutzten Namen;
   Symbole, die ohne Verbindung erscheinen müssen, sind über `Icon/eingebettet.ts` per `?raw` ins
   Bündel eingebettet – derzeit `error_circle_icon` und `no_connection_icon_red`),

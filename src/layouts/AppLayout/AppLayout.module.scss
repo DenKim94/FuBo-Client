@@ -28,6 +28,14 @@
   margin-inline-start: auto;
 }
 
+// Etwas schmaler als die Standardschaltflaeche: Mit dem Symbol waere sie sonst rund
+// 170 px breit und liesse neben „Zurueck" auf kleinen Telefonen kaum Platz. Mit
+// `.kopf` davor gewinnt die Regel gegen `.schaltflaeche` unabhaengig von der
+// Reihenfolge, in der das Buendel die Stile ausliefert.
+.kopf .abmelden {
+  padding-inline: var(--abstand-m);
+}
+
 // Fehler des Abmeldens unter der Kopfzeile, im Raster des Inhalts.
 .abmeldefehler {
   width: 100%;

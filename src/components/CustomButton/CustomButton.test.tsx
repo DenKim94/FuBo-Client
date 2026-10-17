@@ -37,6 +37,40 @@ describe('CustomButton', () => {
     expect(klick).not.toHaveBeenCalled()
   })
 
+  test('zeigt ein schmückendes Symbol links neben der Beschriftung', () => {
+    render(<CustomButton symbol="login_icon_dark">Absenden</CustomButton>)
+    const knopf = screen.getByRole('button', { name: 'Absenden' })
+    const symbol = screen.getByTestId('icon-login_icon_dark')
+    expect(knopf).toContainElement(symbol)
+    // Links: Das Symbol ist das erste Kind, der Text folgt unmittelbar danach.
+    expect(symbol.parentElement?.firstElementChild).toBe(symbol)
+    expect(symbol.nextSibling?.textContent).toBe('Absenden')
+    // Schmückend: Der Name besteht nur aus dem Text.
+    expect(symbol).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  test('zeigt ohne Symbol keines', () => {
+    render(<CustomButton>Weiter</CustomButton>)
+    expect(screen.queryByTestId(/^icon-/)).not.toBeInTheDocument()
+  })
+
+  test('blendet im Ladezustand Text und Symbol aus, behaelt aber den Namen', () => {
+    render(
+      <CustomButton laedt symbol="login_icon_dark">
+        Absenden
+      </CustomButton>,
+    )
+    const knopf = screen.getByRole('button', { name: 'Absenden' })
+    // Der Inhalt liegt in einem eigenen Behaelter, der im Ladezustand unsichtbar ist.
+    const inhalt = screen.getByText('Absenden')
+    expect(inhalt.className).toMatch(/inhalt/)
+    expect(knopf.className).toMatch(/laedt/)
+    // Der Spinner steht in einem eigenen Behaelter ausserhalb des Inhalts, nicht daneben im Fluss.
+    const spinner = screen.getByTestId('ladespinner')
+    expect(inhalt).not.toContainElement(spinner)
+    expect(spinner.parentElement?.className).toMatch(/spinner/)
+  })
+
   test('zeigt ohne Ladezustand keinen Spinner und kein aria-busy', () => {
     render(<CustomButton>Weiter</CustomButton>)
     expect(screen.getByRole('button')).not.toHaveAttribute('aria-busy')
