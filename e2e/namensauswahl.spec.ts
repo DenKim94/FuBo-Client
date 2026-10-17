@@ -101,7 +101,6 @@ test.describe('Namensauswahl', () => {
       )
       const breiten = kaesten.map((k) => Math.round(k!.width))
       const hoehen = kaesten.map((k) => Math.round(k!.height))
-      // Bis 04.10.2026 wuchs die Spalte mit dem laengsten Wort (360 px: 97/74/107).
       expect(new Set(breiten).size, `Breiten ${breiten.join('/')}`).toBe(1)
       expect(new Set(hoehen).size, `Hoehen ${hoehen.join('/')}`).toBe(1)
     }
