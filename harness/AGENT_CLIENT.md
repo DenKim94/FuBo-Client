@@ -196,7 +196,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Anwendungsnamen; keine Namen Dritter, Skillwerte oder Zugangsdaten. Formulierung ist UI-Text im Code.
 - **Manifest:** `name` `MONTAGS-KICKER`, `short_name` `GUT-KICK` (in `e2e/pwa.spec.ts` festgenagelt),
   `lang: de`, `start_url`/`scope` `/`, `theme_color` passend zu `index.html`.
-- **Precache:** nur App-Shell, `includeManifestIcons: false`, dazu `no_connection_icon_red.svg`.
+- **Precache:** nur App-Shell, `includeManifestIcons: false`, dazu `no_connection_icon_red.svg` und die zwei Auge-Symbole des
+  Passwortfeldes (`icons/visibility_{on,off}_dark.png`, PNG, nur diese beiden).
 
 ### Implementierungs-Richtlinien
 - Bezeichner camelCase, Konstanten GROSS mit Unterstrich, **keine Umlaute in Bezeichnern**. JSDoc auf

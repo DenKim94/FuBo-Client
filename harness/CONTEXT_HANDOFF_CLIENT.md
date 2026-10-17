@@ -252,7 +252,7 @@ Summe 130 h. C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
   Schritt, beim Direkteinstieg zur Startseite; abbestellbar) und Inhalt als Flex-Spalte.
 - **Test-Stub:** `src/test/setup.ts` ergänzt jsdom um `showModal`/`show`/`close` von `<dialog>`.
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests:** 352 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4); E2E zusätzlich `admin.spec.ts`
+- **Tests:** 353 Unit-Tests in 50 Dateien (Stand 17.10.2026, nach C4); E2E zusätzlich `admin.spec.ts`
   (16 Fälle: Anmeldung, Reset, Passwort ändern, Passwortfeld, kein Scrollen bei 780 px), `layout.spec.ts`
   umgebaut (Admin-Anmeldung nur nach der PIN, Zurück-Ziele, Fokusring in der Namensauswahl), Sitzungs-
   nachbildung nach `e2e/hilfen/sitzung.ts` (mit `stage` und `rolle`). Zuvor: E2E in `sitzung-ablauf.spec.ts` (15 Fälle, darunter „Rückkehr verlängert nicht“, davon 4 zu „Abmelden in der Kopfzeile": Bottom Sheet, Fokusfalle, Escape, Fokus-Rückgabe, Abmelden, Ablauf, Obergrenze), `layout.spec.ts` (inkl. Zurück-Ziel, „nicht
@@ -289,9 +289,9 @@ verlängernde Abrufe statt einem). **Handprüfung gegen den echten Server** (Lee
 Browser der Desktop-App, Chromium): Login über PIN und Name, Dialog nach rund 60 s, bleibt bei acht
 Rückkehr-Ereignissen offen, `gueltigBis` unverändert; „Sitzung verlängern" setzt 3 Minuten neu.
 
-**C4 (17.10.2026):** `lint` (inkl. `e2e/`), `typecheck`, **352 Unit-Tests** (vorher 197), Bau (sechs
-Precache-Einträge), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, Suche nach verwaisten Pfaden
-ohne Befund, **174 E2E-Läufe grün in den drei Chromium-Projekten, 3 übersprungen** (Kopie in der
+**C4 (17.10.2026):** `lint` (inkl. `e2e/`), `typecheck`, **353 Unit-Tests** (vorher 197), Bau (acht
+Precache-Einträge: sechs plus die zwei Auge-Symbole des Passwortfeldes), ein `fetch(`, kein Hexwert ausserhalb der Tokendatei, Suche nach verwaisten Pfaden
+ohne Befund, **177 E2E-Läufe grün in den drei Chromium-Projekten, 3 übersprungen** (Kopie in der
 Cloud-Umgebung mit vorinstalliertem Chromium über eine Konfiguration, die nicht Teil des Repos ist).
 Gegenproben (Test rot ohne Absicherung): `202` ohne Rumpf, `ADMIN_PASSWORT_FALSCH` als Sitzungsende,
 Aufräumen nach `204` beim Passwortwechsel, „Neue PIN anfordern" bei `409`, Sperre deaktiviert den Knopf,
@@ -393,13 +393,14 @@ Passwortmanager nachziehen:** `ADMIN_PASSWORD` in `server/.env` liest der Server
   Precache-Zahl sinkt von 6 auf 5; `Icon.test.tsx` und `pwa.spec.ts` anpassen).
 
 ## 7. Nächste Schritte
-1. **Commit und Push auf `dev_client`** (C4 ist noch nicht committet) und den ersten CI-Lauf mit WebKit
+1. **Push von `dev_client`** (C4 ist lokal als `c5e43f4` committet, nicht gepusht) und den ersten CI-Lauf mit WebKit
    prüfen; dabei die Layout-Tests der neuen Admin-Ansichten und die Fenster unter 740 px beobachten.
 2. **Handprüfung gegen eine laufende Serverinstanz:** Cookie im Netzwerkfenster, PIN richtig/falsch/
    gesperrt, Namenswahl, Gast, `NAME_BELEGT` mit zwei Geräten, Sitzungsende → Umleitung zur PIN.
 3. **C4 abnehmen:** Handprüfung gegen den echten Server und das iPhone (Abnahme 3 der Umsetzungs-
    anleitung, Abschnitt 6.2 oben); danach das Passwort im Passwortmanager nachziehen. Dann **C5 beginnen**
-   (Termin und Teilnahme, User-Dashboard).
+   (Termin und Teilnahme, User-Dashboard); Umsetzungsanleitung `harness/tmp/C5_UMSETZUNG.md`, deren
+   Entscheidungen E1–E10 (Abschnitt 1.2) der Entwickler vorher bestätigt.
 4. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS),
    CI-Lauf mit WebKit.
 5. **Server-Track:** Vertragslücke freie Gastplätze (Abschnitt 4).
