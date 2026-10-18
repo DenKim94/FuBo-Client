@@ -9,11 +9,9 @@ describe('Fortschrittsbalken', () => {
     const balken = screen.getByRole('progressbar', { name: 'Zusagen' })
     expect(balken).toHaveAttribute('aria-valuenow', '4')
     expect(balken).toHaveAttribute('aria-valuemax', '6')
-    expect(balken).toHaveAttribute('aria-valuetext', '4 von 6 Zusagen')
+    expect(balken).toHaveAttribute('aria-valuetext', '4 von mindestens 6 Zusagen')
     // Die Aussage „zu wenige“ steht als Text da, nicht nur als rote Fuellung.
-    expect(screen.getByTestId('fortschrittsbalken-text')).toHaveTextContent(
-      '4 von 6 Zusagen – Mindestanzahl noch nicht erreicht',
-    )
+    expect(screen.getByTestId('fortschrittsbalken-text')).toHaveTextContent('4 von mindestens 6 Zusagen erreicht')
   })
 
   test('folgt beim Zustand dem Server und nicht der eigenen Rechnung', () => {
@@ -21,7 +19,9 @@ describe('Fortschrittsbalken', () => {
     render(<Fortschrittsbalken wert={5} ziel={6} erreicht />)
 
     expect(screen.getByTestId('fortschrittsbalken-fuellung')).toHaveAttribute('data-erreicht', 'true')
-    expect(screen.getByTestId('fortschrittsbalken-text')).not.toHaveTextContent('Mindestanzahl')
+    // Der Satz folgt dem Server: „erreicht“ heißt hier „Mindestanzahl erreicht“, nicht „5 von mindestens 6“.
+    expect(screen.getByTestId('fortschrittsbalken-text')).toHaveTextContent('5 Zusagen – Mindestanzahl von 6 erreicht')
+    expect(screen.getByTestId('fortschrittsbalken-text')).not.toHaveTextContent('von mindestens')
   })
 
   test('deckelt die Fuellung bei 100 Prozent, zeigt aber die echte Zahl', () => {
@@ -30,7 +30,7 @@ describe('Fortschrittsbalken', () => {
     expect(screen.getByTestId('fortschrittsbalken-fuellung').style.getPropertyValue('--fuellung-anteil')).toBe(
       '100%',
     )
-    expect(screen.getByTestId('fortschrittsbalken-text')).toHaveTextContent('9 von 6 Zusagen')
+    expect(screen.getByTestId('fortschrittsbalken-text')).toHaveTextContent('9 Zusagen – Mindestanzahl von 6 erreicht')
   })
 
   test('verkraftet eine Mindestanzahl von null', () => {

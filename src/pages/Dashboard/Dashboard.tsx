@@ -52,7 +52,7 @@ export default function Dashboard() {
         <div className={style.hinweise}>
           {abgesagtDavor.slice(0, MAX_ABSAGEHINWEISE).map((t) => (
             <Hinweis key={t.terminId} data-testid={`dashboard-abgesagt-${t.terminId}`}>
-              Der Termin am {datumKurz(t.datum)} fällt aus.
+              Kicken am {datumKurz(t.datum)} fällt aus.
             </Hinweis>
           ))}
           {abgesagtDavor.length > MAX_ABSAGEHINWEISE && (

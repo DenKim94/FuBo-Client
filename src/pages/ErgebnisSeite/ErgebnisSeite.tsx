@@ -119,7 +119,7 @@ function ErgebnisTermin({ terminId }: { terminId: number }) {
     } else if (termin.status === 'GEPLANT') {
       zustand = (
         <Hinweis data-testid="ergebnis-noch-nicht">
-          Das Ergebnis lässt sich eintragen, sobald der Termin abgeschlossen ist (30 Minuten nach Beginn).
+          Das Ergebnis lässt sich eintragen, sobald der Termin abgeschlossen ist.
         </Hinweis>
       )
     } else if (ergebnis) {
@@ -149,7 +149,7 @@ function ErgebnisTermin({ terminId }: { terminId: number }) {
       zustand = (
         <Leerzustand
           titel="Keine Einteilung"
-          text="Für diesen Termin wurde keine Einteilung erzeugt, ein Ergebnis lässt sich nicht eintragen."
+          text="Für diesen Termin wurden keine Teams eingeteilt, ein Ergebnis lässt sich daher nicht eintragen."
           data-testid="ergebnis-ohne-einteilung"
         />
       )
@@ -172,7 +172,7 @@ function ErgebnisTermin({ terminId }: { terminId: number }) {
     inhalt = (
       <Leerzustand
         titel="Termin nicht gefunden"
-        text="Dieser Termin existiert nicht mehr. Vielleicht wurde er entfernt."
+        text="Dieser Termin existiert nicht mehr."
         aktion={
           <Textlink to={LOGIN_PFADE.start} data-testid="ergebnis-nicht-gefunden-zurueck">
             Zum Dashboard

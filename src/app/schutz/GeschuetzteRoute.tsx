@@ -31,8 +31,8 @@ export default function GeschuetzteRoute() {
 
   // Solange der Sitzungszustand unbekannt ist, nicht umleiten: Eine Umleitung
   // auf Verdacht wuerde einen angemeldeten Nutzer bei jedem Neuladen kurz auf
-  // die PIN-Eingabe werfen. Statt einer leeren Flaeche erscheint der
-  // (verzoegerte) Ladespinner.
+  // die PIN-Eingabe werfen. Statt einer leeren Flaeche erscheint sofort der
+  // Ladespinner in der Mitte (wie die Anzeige aus index.html).
   if (zustand.laedt) return <Ladespinner groesse="gross" zentriert />
 
   if (!zustand.angemeldet) {

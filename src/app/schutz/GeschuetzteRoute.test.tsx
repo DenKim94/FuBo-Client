@@ -48,6 +48,12 @@ describe('GeschuetzteRoute', () => {
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
 
+  test('zeigt beim Neuladen sofort den Ladespinner, ohne Verzoegerung', () => {
+    sitzungMock.mockReturnValue(zustand({ laedt: true }))
+    startseiteOeffnen()
+    expect(screen.getByTestId('ladespinner')).toHaveAttribute('data-verzoegert', 'false')
+  })
+
   test('gibt die Ansicht bei abgeschlossener Anmeldung frei', () => {
     sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
     startseiteOeffnen()

@@ -123,7 +123,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
             titel="Noch keine Einteilung"
             text={
               geplant
-                ? 'Sobald jemand die Teams generiert, erscheinen sie hier.'
+                ? 'Sobald jemand die Teams generiert hat, erscheinen sie hier. Sei der erste!'
                 : 'Für diesen Termin wurde keine Einteilung erzeugt.'
             }
             data-testid="teams-nicht-generiert"

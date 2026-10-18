@@ -47,6 +47,7 @@ describe('LoginSchrittRoute', () => {
     sitzungMock.mockReturnValue(zustand({ laedt: true }))
     oeffnen('/pin/pruefen')
     expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(screen.getByTestId('ladespinner')).toHaveAttribute('data-verzoegert', 'false')
     expect(screen.queryByText('PIN-Eingabe')).not.toBeInTheDocument()
   })
 

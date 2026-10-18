@@ -32,6 +32,20 @@ describe('Icon', () => {
     expect(quelle).toMatch(/^url\("data:image\/svg\+xml,/)
   })
 
+  test('zeigt Haekchen gruen und Kreuz rot, andere Symbole in der Farbe der Umgebung', () => {
+    // Termin abgeschlossen, Verlauf, Zusage, Passwortregeln: ein Symbol, eine Farbe.
+    render(
+      <>
+        <Icon name="check_circle_icon" />
+        <Icon name="cancel_circle_icon_red" />
+        <Icon name="info_circle_icon" />
+      </>,
+    )
+    expect(screen.getByTestId('icon-check_circle_icon').style.color).toBe('var(--farbe-erfolg)')
+    expect(screen.getByTestId('icon-cancel_circle_icon_red').style.color).toBe('var(--farbe-fehler)')
+    expect(screen.getByTestId('icon-info_circle_icon').style.color).toBe('')
+  })
+
   test('laedt alle uebrigen Symbole aus public/icons', () => {
     render(<Icon name="info_circle_icon" />)
     expect(screen.getByTestId('icon-info_circle_icon').style.getPropertyValue('--icon-quelle')).toBe(

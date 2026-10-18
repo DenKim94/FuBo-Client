@@ -71,7 +71,7 @@ function Zeileninhalt({ termin }: { termin: TerminUebersicht }): ReactNode {
           <Icon name={abgeschlossen ? 'check_circle_icon' : 'block_icon_red'} />
           <span>{abgeschlossen ? 'Abgeschlossen' : 'Abgesagt'}</span>
         </span>
-        {abgeschlossen && <span>{termin.zusagen} Zusagen</span>}
+        {abgeschlossen && <span className={style.zusagen}>{termin.zusagen} Zusagen</span>}
       </span>
     </>
   )

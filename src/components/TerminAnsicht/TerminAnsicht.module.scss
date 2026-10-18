@@ -16,13 +16,26 @@
   padding-block: var(--abstand-m);
 }
 
+// Kopfbereich: Termin, eigene Rueckmeldung und Zusagenstand in einem Rahmen.
+// Dieselbe Kartenkante wie Teilnehmerliste und „Weitere Termine“ (dekorativ,
+// die Aussagen stehen im Text); Hintergrund bleibt weiss, damit die Spur des
+// Balkens (`--farbe-flaeche-kraeftig`) ihren Kontrast behaelt.
+.kopf {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+}
+
 .zusagen {
   display: flex;
   flex-direction: column;
   gap: var(--abstand-s);
 }
 
-.platzsatz {
+.wartesatz {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
 }

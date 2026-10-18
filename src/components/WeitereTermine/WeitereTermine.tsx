@@ -54,7 +54,6 @@ export default function WeitereTermine({ termine, max = MAX_ZEILEN }: WeitereTer
                 </span>
               ) : (
                 <span className={style.stand}>
-                  <span>{termin.zusagen} Zusagen</span>
                   <Zusagestatus rueckmeldung={termin.eigeneRueckmeldung ?? null} kompakt />
                 </span>
               )}

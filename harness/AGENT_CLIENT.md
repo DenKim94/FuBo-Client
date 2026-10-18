@@ -25,7 +25,7 @@ Repositoriumsname und erscheint **nirgends** in der Oberfläche.
   „(Gast)". (A14) Zweistufiger Login nach Server-`stage`; Erneuerungshinweis vor Ablauf; Logout bei Sitzungsende. (A22) Admin-Login
   mit Name und Passwort, Passwort-Reset (PIN anfordern, eingeben, neues Passwort).
 - **Abläufe:** (A7) Zu-/Absage als große Aktion. (A10) Teilnehmerbalken rot unter der Mindestzahl (Vorgabe 6), sonst grün – nie nur über
-  Farbe. (A11) Warteschlange über der Höchstzahl (Vorgabe 22). (A15) Teamgenerierung mit Kontingent; Einteilung bei Teilnehmeränderung
+  Farbe. (A11) Warteschlange über der Höchstzahl (Vorgabe 22); **die Höchstzahl wird nur bei bestehender Warteschlange genannt** (`termin-wartesatz`), sonst keine Platzzahl neben dem Balken. Balkentext „x von mindestens y Zusagen erreicht“. Karte, Rückmeldung und Balken stehen in einem umrandeten Kopfbereich (`termin-kopf`). (A15) Teamgenerierung mit Kontingent; Einteilung bei Teilnehmeränderung
   als veraltet kennzeichnen. (A20b) Auswechselspieler anzeigen, optional manuell wählen. (A21) Ergebnis (Sieger A/B, deutlich ja/nein),
   Hinweis „erster Eintrag gilt", Admin-Korrektur.
 - **Admin:** (A13/A17) Profile mit Skills, Gäste mit Stufen. (A18) Einzeltermine und befristete Serien. (A3/A10/A11/A17) PIN und

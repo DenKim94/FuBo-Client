@@ -23,6 +23,35 @@ body {
   min-height: 100dvh;
 }
 
+// Ladeanzeige aus index.html: Sie steht im ersten Bild, bevor das Skript laeuft
+// (das CSS im gebauten HTML laedt vor dem ersten Bild), und wird von React
+// ersetzt. Masse und Lage wie `Ladespinner` mit `zentriert` und `groesse="gross"`
+// im `AppLayout` (3 rem, Strich ein Achtel; Mitte des Fensters), damit beim
+// Wechsel nichts springt.
+.startLader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 100dvh;
+  color: var(--farbe-primaer);
+}
+
+.startLaderKreis {
+  flex: 0 0 auto;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border-radius: 50%;
+  border: calc(3rem / 8) solid color-mix(in srgb, currentColor 20%, transparent);
+  border-block-start-color: currentColor;
+  animation: startDrehen 0.8s linear infinite;
+}
+
+@keyframes startDrehen {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 // Nur fuer Screenreader sichtbarer Text.
 .nurFuerScreenreader {
   position: absolute;

@@ -15,6 +15,19 @@ describe('Ladespinner', () => {
     expect(screen.queryByText('Wird geladen')).not.toBeInTheDocument()
   })
 
+  test('erscheint im Fliesstext verzoegert, zentriert (ganze Ansicht) sofort', () => {
+    const { rerender } = render(<Ladespinner />)
+    expect(screen.getByTestId('ladespinner')).toHaveAttribute('data-verzoegert', 'true')
+
+    // Eine leere Flaeche nach dem Neuladen waere schlimmer als ein kurzes Aufblitzen.
+    rerender(<Ladespinner zentriert />)
+    expect(screen.getByTestId('ladespinner')).toHaveAttribute('data-verzoegert', 'false')
+
+    // Ausdrueckliche Angabe geht vor.
+    rerender(<Ladespinner zentriert verzoegert />)
+    expect(screen.getByTestId('ladespinner')).toHaveAttribute('data-verzoegert', 'true')
+  })
+
   test('bleibt als Schmuck ohne Rolle und fuer Screenreader verborgen', () => {
     // In einer Schaltflaeche ginge „Wird geladen" sonst in ihren Namen ein.
     render(<Ladespinner dekorativ />)

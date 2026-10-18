@@ -104,6 +104,7 @@ export default function AppLayout() {
               laedt={abmeldung.isPending}
               onClick={() => abmeldung.mutate()}
               data-testid="layout-abmelden"
+              style={{ 'background-color': 'var(--farbe-flaeche)' } as React.CSSProperties}
             >
               Abmelden
             </CustomButton>

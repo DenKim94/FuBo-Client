@@ -96,6 +96,21 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
   Termine als Link `ergebnisse/:terminId` (≥ 44 px), abgesagte ohne Link.
 - Schreibende Hooks, Aktionsleiste, Uhr im Render: siehe `AGENT_CLIENT.md` (Regeln) und 6.3 (Fallen).
 
+**Terminkopf (18.10.2026, Entscheidung des Entwicklers; Überarbeitung der Termin-Ansicht):**
+- **Rahmen:** `TerminKarte`, `Zusagestatus` und `Fortschrittsbalken` stehen in einem umrandeten Kopfbereich (`termin-kopf`, `TerminAnsicht.module.scss`: `1px solid var(--farbe-rand)`,
+  `--radius-m`, Innenabstand `--abstand-m`, wie Teilnehmerliste und „Weitere Termine“; Hintergrund bleibt weiß, sonst verliert die Balkenspur ihren Kontrast). Gilt in allen Zuständen
+  (auch abgesagt/abgeschlossen); Hinweise („Der Termin hat begonnen“, „abgesagt“) und Teilnehmerliste stehen **außerhalb**.
+- **Balkentext:** unter der Mindestzahl „3 von mindestens 6 Zusagen erreicht“, bei erreichter Mindestzahl „8 Zusagen – Mindestanzahl von 6 erreicht“ (Satzwahl nach `mindestzahlErreicht`
+  vom Server); `aria-valuetext` „3 von mindestens 6 Zusagen“. **Der zweite Satz ist eine Annahme** (der Auftrag nannte nur den ersten) und bei Bedarf in `Fortschrittsbalken.tsx` zu ändern.
+- **Platzsatz entfällt** („8 von 22 Plätzen belegt.“). Nur bei Warteschlange erscheint `termin-wartesatz` im Kopfbereich: „Maximale Teilnehmerzahl von 22 erreicht, 2 auf der Warteschlange.“
+  (`termin-platzsatz` heißt nicht mehr so; Tests und E2E nachgezogen).
+- **Ladeanzeige beim Neuladen (18.10.2026):** Eine **statische Ladeanzeige in `index.html`** (`#root > .startLader`, Stil in `global.scss`, Kreis wie `Ladespinner` `gross`) steht im ersten Bild, bevor das
+  Skript läuft; `createRoot` ersetzt sie. `Ladespinner` mit **`zentriert` erscheint jetzt sofort** (Vorgabe `verzoegert = !zentriert`; sonst blieb nach dem Neuladen 150 ms eine leere Fläche); Spinner im
+  Fließtext und in Teilbereichen bleiben verzögert. Eine Prop `vollbild` wurde ausprobiert und verworfen: Die Guards sitzen im `main` des `AppLayout` (Innenabstand 16 px), `zentriert` füllt dort schon die
+  Resthöhe mittig (Kreismitte 390 px bei 780 px Fenster, wie die statische Anzeige). **Auslegung:** „Ladebalken“ wurde als der vorhandene zentrale Ladespinner verstanden, nicht als Balken.
+- **Häkchen im Kreis grün (18.10.2026):** `Icon` kennt `EIGENFARBEN`; `check_circle_icon` ist überall `var(--farbe-erfolg)` (TerminKarte „Abgeschlossen“, VerlaufListe, Zusagestatus, PasswortRegeln), unabhängig von der Umgebungsfarbe. Test in `Icon.test.tsx`.
+- **Kreuz im Kreis rot (18.10.2026):** `cancel_circle_icon_red` ist ebenso in `EIGENFARBEN` (`var(--farbe-fehler)`). Bis dahin nutzte der Code die graue Fassung `cancel_circle_icon_dark` (Zusagestatus „Du hast abgesagt“ schwarz, PasswortRegeln „Noch offen“ grau); beide Stellen verwenden jetzt `_red`. **Folge in `PasswortRegeln`:** Offene Regeln zeigen ein rotes Kreuz neben grauem Text, auch bevor etwas eingegeben wurde. `_dark` ist ungenutzt, die Datei bleibt.
+
 ## 3. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`. Kontrakt-Kopie `client/harness/assets/fubo-api.json` (**45 Operationen**, am 18.10.2026 erneut mit `server/fubo-api.json` abgeglichen, byteweise identisch);
 Generat `src/api/common/types/schema.d.ts` (`npm run api:typen`). Neu gegenüber 44: `POST /admin/name/bestaetigen`; `POST /admin/name/aendern` antwortet `202`

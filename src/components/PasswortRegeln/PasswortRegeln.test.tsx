@@ -22,10 +22,10 @@ describe('PasswortRegeln', () => {
 
   test('unterscheidet erfuellt und offen durch die Form des Symbols', () => {
     const { rerender } = render(<PasswortRegeln passwort="" />)
-    expect(screen.getByTestId('icon-cancel_circle_icon_dark')).toBeInTheDocument()
+    expect(screen.getByTestId('icon-cancel_circle_icon_red')).toBeInTheDocument()
     rerender(<PasswortRegeln passwort={'a'.repeat(10)} />)
     expect(screen.getByTestId('icon-check_circle_icon')).toBeInTheDocument()
-    expect(screen.queryByTestId('icon-cancel_circle_icon_dark')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('icon-cancel_circle_icon_red')).not.toBeInTheDocument()
   })
 
   test('zeigt die Hoechstlaenge erst, wenn sie ueberschritten ist', () => {

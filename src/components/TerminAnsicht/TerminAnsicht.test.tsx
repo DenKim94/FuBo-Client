@@ -40,14 +40,38 @@ function zusagen(anzahl: number, eigenePosition?: number) {
 }
 
 describe('TerminAnsicht', () => {
-  test('zeigt einen geplanten Termin mit Status, Balken, Platzsatz, Liste und Leiste', async () => {
+  test('zeigt einen geplanten Termin mit Status, Balken, Liste und Leiste', async () => {
     rendern()
     expect(await screen.findByTestId('termin-karte')).toBeInTheDocument()
     expect(screen.getByTestId('termin-zusagestatus')).toHaveAttribute('data-zustand', 'offen')
     expect(screen.getByTestId('termin-balken')).toBeInTheDocument()
-    expect(screen.getByTestId('termin-platzsatz')).toHaveTextContent('8 von 22 Plätzen belegt.')
     expect(screen.getByTestId('teilnehmerliste')).toBeInTheDocument()
     expect(screen.getByTestId('aktionsleiste')).toBeInTheDocument()
+  })
+
+  test('fasst Karte, Rückmeldung und Balken in einem Kopfbereich zusammen, Liste und Leiste stehen außerhalb', async () => {
+    rendern()
+    const kopf = await screen.findByTestId('termin-kopf')
+    expect(kopf).toContainElement(screen.getByTestId('termin-karte'))
+    expect(kopf).toContainElement(screen.getByTestId('termin-zusagestatus'))
+    expect(kopf).toContainElement(screen.getByTestId('termin-balken'))
+    expect(kopf).not.toContainElement(screen.getByTestId('teilnehmerliste'))
+    expect(kopf).not.toContainElement(screen.getByTestId('aktionsleiste'))
+  })
+
+  test('nennt ohne Warteschlange keine Platzzahl', async () => {
+    rendern()
+    await screen.findByTestId('termin-karte')
+    expect(screen.queryByTestId('termin-wartesatz')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Plätzen belegt/)).not.toBeInTheDocument()
+  })
+
+  test('zeigt bei abgesagtem Termin den Kopfbereich ohne Balken', async () => {
+    rendern({ status: 'ABGESAGT' })
+    const kopf = await screen.findByTestId('termin-kopf')
+    expect(kopf).toContainElement(screen.getByTestId('termin-karte'))
+    expect(screen.queryByTestId('termin-balken')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('termin-wartesatz')).not.toBeInTheDocument()
   })
 
   test('zeigt waehrend des Ladens einen Spinner und keine Leiste', async () => {
@@ -139,13 +163,15 @@ describe('TerminAnsicht', () => {
     expect(screen.queryByTestId('termin-teams-link')).not.toBeInTheDocument()
   })
 
-  test('nennt auf der Warteschlange den Platz im Status und im Platzsatz', async () => {
+  test('nennt auf der Warteschlange den Platz im Status und die Höchstzahl im Kopfbereich', async () => {
     // 24 Zusagen bei Hoechstzahl 22, der eigene Eintrag an Position 23: Platz 1 der Warteschlange.
     rendern({ zusagen: zusagen(24, 23), eigene: true })
     expect(await screen.findByTestId('termin-zusagestatus')).toHaveTextContent(
       'Du hast zugesagt und stehst auf der Warteschlange (Platz 1).',
     )
-    expect(screen.getByTestId('termin-platzsatz')).toHaveTextContent('Alle 22 Plätze belegt, 2 auf der Warteschlange.')
+    const wartesatz = screen.getByTestId('termin-wartesatz')
+    expect(wartesatz).toHaveTextContent('Maximale Teilnehmerzahl von 22 erreicht, 2 auf der Warteschlange.')
+    expect(screen.getByTestId('termin-kopf')).toContainElement(wartesatz)
   })
 
   test('liest die Mindestzahl vom Server und rechnet sie nicht nach', async () => {
@@ -164,13 +190,13 @@ describe('TerminAnsicht', () => {
       </MemoryRouter>,
       { wrapper: QueryUmgebung },
     )
-    expect(await screen.findByTestId('termin-balken-text')).toHaveTextContent('Mindestanzahl noch nicht erreicht')
+    expect(await screen.findByTestId('termin-balken-text')).toHaveTextContent('8 von mindestens 6 Zusagen erreicht')
     expect(screen.getByTestId('termin-balken-fuellung')).toHaveAttribute('data-erreicht', 'false')
   })
 
-  test('zeigt bei erreichter Mindestzahl keinen Zusatz', async () => {
+  test('nennt bei erreichter Mindestzahl die Mindestanzahl als erreicht', async () => {
     rendern({ min: 6 })
-    expect(await screen.findByTestId('termin-balken-text')).not.toHaveTextContent('Mindestanzahl')
+    expect(await screen.findByTestId('termin-balken-text')).toHaveTextContent('8 Zusagen – Mindestanzahl von 6 erreicht')
     expect(screen.getByTestId('termin-balken-fuellung')).toHaveAttribute('data-erreicht', 'true')
   })
 
@@ -197,7 +223,7 @@ describe('TerminAnsicht', () => {
     rendern()
     await userEvent.click(await screen.findByTestId('rueckmeldung-zusagen'))
     await waitFor(() => expect(screen.getByTestId('termin-zusagestatus')).toHaveAttribute('data-zustand', 'zugesagt'))
-    expect(screen.getByTestId('termin-platzsatz')).toHaveTextContent('9 von 22 Plätzen belegt.')
+    expect(screen.getByTestId('termin-balken-text')).toHaveTextContent('9 Zusagen – Mindestanzahl von 6 erreicht')
     expect(screen.getByTestId('rueckmeldung-absagen')).toBeInTheDocument()
     expect(screen.queryByTestId('rueckmeldung-zusagen')).not.toBeInTheDocument()
   })

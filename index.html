@@ -18,7 +18,15 @@
     <title>MONTAGS-KICKER</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Steht im ersten Bild, noch bevor das Skript laeuft; React ersetzt den
+           Inhalt beim ersten Rendern (createRoot leert #root). Stil in
+           src/styles/global.scss (.startLader). -->
+      <div class="startLader" role="status">
+        <span class="startLaderKreis"></span>
+        <span class="nurFuerScreenreader">Wird geladen</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

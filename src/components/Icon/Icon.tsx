@@ -16,7 +16,21 @@ type IconEigenschaften = {
 }
 
 /**
- * Zeigt ein Symbol aus `public/icons/` in der Farbe seiner Umgebung (C2, Abschnitt 6).
+ * Symbole mit **fester Eigenfarbe**, unabhängig von der Umgebung. Das Häkchen
+ * im Kreis (`check_circle_icon`) steht für „erledigt/erfüllt“ und ist überall
+ * grün (Termin abgeschlossen, Verlauf, Zusage, Passwortregeln), das Kreuz im
+ * Kreis (`cancel_circle_icon_red`) für „abgesagt/nicht erfüllt“ und ist überall
+ * rot; sonst müsste jede Stelle die Farbe selbst setzen und eine neue sie
+ * vergessen. Die Aussage hängt weiter am Text neben dem Symbol, nicht an der Farbe.
+ */
+const EIGENFARBEN: Record<string, string> = {
+  check_circle_icon: 'var(--farbe-erfolg)',
+  cancel_circle_icon_red: 'var(--farbe-fehler)',
+}
+
+/**
+ * Zeigt ein Symbol aus `public/icons/` in der Farbe seiner Umgebung (C2, Abschnitt 6),
+ * außer es steht in `EIGENFARBEN`.
  *
  * Als CSS-Maske und nicht als Bild: Die vorhandenen SVG-Dateien tragen feste
  * Füllfarben und folgten sonst keinem Zustand – ein Symbol auf der
@@ -38,6 +52,7 @@ export default function Icon({ name, groesse = 1.5, beschriftung }: IconEigensch
         {
           '--icon-quelle': EINGEBETTETE_ICONS[name] ?? `url('/icons/${name}.svg')`,
           '--icon-groesse': `${groesse}rem`,
+          color: EIGENFARBEN[name],
         } as CSSProperties
       }
       role={beschriftung ? 'img' : undefined}

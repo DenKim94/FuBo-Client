@@ -7,18 +7,21 @@
   align-items: center;
   gap: var(--abstand-s);
   inline-size: 100%;
-  max-inline-size: var(--breite-text);
-  padding: var(--abstand-s) var(--abstand-m);
+  // max-inline-size: var(--breite-text);
+  width: 100%;
+  padding: var(--abstand-s) var(--abstand-s);
   border: 1px solid var(--farbe-rand);
   border-radius: var(--radius-m);
-  background: var(--farbe-flaeche);
+  background: var(--farbe-hinweis-flaeche);
   color: var(--farbe-text);
   font-size: var(--schrift-klein);
+  font-weight: 600;
   text-align: start;
 }
 
 .symbol {
   display: inline-flex;
+  align-items: flex-start;
   color: var(--farbe-link);
 }
 

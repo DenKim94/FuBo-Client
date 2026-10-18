@@ -35,19 +35,26 @@ type TerminAnsichtEigenschaften = {
 }
 
 /**
- * Platzsatz unter dem Balken: „18 von 22 Plätzen belegt.“ bzw. „Alle 22 Plätze
- * belegt, 3 auf der Warteschlange.“ Aus Höchstzahl und der Zahl der `wartet`-Einträge.
+ * Warteschlangensatz unter dem Balken: „Maximale Teilnehmerzahl von 22 erreicht,
+ * 3 auf der Warteschlange.“ Aus Höchstzahl und der Zahl der `wartet`-Einträge.
+ *
+ * **Nur bei einer Warteschlange (`null` sonst):** Solange Plätze frei sind, sagt
+ * der Balken alles Nötige; eine zweite Zahl („8 von 22 Plätzen belegt“) machte
+ * den Kopf der Ansicht nur voller. Die Höchstzahl wird erst genannt, wenn sie
+ * für die Person etwas bedeutet – ihre Zusage kann dann auf der Warteschlange landen.
  */
-function platzsatz(termin: TerminDetails): string {
+function warteschlangensatz(termin: TerminDetails): string | null {
   const { maxTeilnehmer, teilnehmer } = termin.teilnehmerliste
   const wartende = teilnehmer.filter((e) => e.wartet).length
-  if (wartende > 0) return `Alle ${maxTeilnehmer} Plätze belegt, ${wartende} auf der Warteschlange.`
-  return `${termin.zusagen} von ${maxTeilnehmer} Plätzen belegt.`
+  if (wartende === 0) return null
+  return `Maximale Teilnehmerzahl von ${maxTeilnehmer} erreicht, ${wartende} auf der Warteschlange.`
 }
 
 /**
  * Ein Termin mit Karte, eigener Rückmeldung, Balken, Teilnehmerliste und
- * Aktionsleiste (C5, 6.5). Baustein von Dashboard (`/`) und Termin-Ansicht
+ * Aktionsleiste (C5, 6.5). Karte, Rückmeldung und Zusagenstand stehen in einem
+ * **umrandeten Kopfbereich** (`termin-kopf`): Er trennt „worum geht es, wie
+ * stehe ich da“ von der Teilnehmerliste und den weiteren Terminen darunter. Baustein von Dashboard (`/`) und Termin-Ansicht
  * (`termine/:terminId`): ein Baustein, damit die Logik nicht doppelt steht (E1).
  *
  * **Die Zahlen kommen aus einer Antwort:** Der Balken liest `zusagen` und
@@ -80,38 +87,44 @@ export default function TerminAnsicht({ terminId, eingeklappt, verweise = false,
     const eigener = liste.teilnehmer.find((e) => e.anzeigeName === eigenerName && e.gast === istGast)
     const geplant = termin.status === 'GEPLANT'
     const nachladefehler = abfrage.failureReason
+    const wartesatz = geplant ? warteschlangensatz(termin) : null
 
     inhalt = (
       <>
         {nachladefehler && <Fehlermeldung fehler={nachladefehler} data-testid="termin-fehler-meldung" />}
 
-        <TerminKarte termin={termin} ebene={1} />
+        <div className={style.kopf} data-testid="termin-kopf">
+          <TerminKarte termin={termin} ebene={1} />
 
-        {geplant && (
-          <>
-            <Zusagestatus
-              rueckmeldung={termin.eigeneRueckmeldung ?? null}
-              wartet={eigener?.wartet}
-              warteplatz={eigener?.wartet ? eigener.position - liste.maxTeilnehmer : undefined}
-              data-testid="termin-zusagestatus"
-            />
-            <div className={style.zusagen}>
-              <Fortschrittsbalken
-                wert={termin.zusagen}
-                ziel={liste.minTeilnehmer}
-                erreicht={liste.mindestzahlErreicht}
-                data-testid="termin-balken"
+          {geplant && (
+            <>
+              <Zusagestatus
+                rueckmeldung={termin.eigeneRueckmeldung ?? null}
+                wartet={eigener?.wartet}
+                warteplatz={eigener?.wartet ? eigener.position - liste.maxTeilnehmer : undefined}
+                data-testid="termin-zusagestatus"
               />
-              <p className={style.platzsatz} data-testid="termin-platzsatz">
-                {platzsatz(termin)}
-              </p>
-            </div>
-            {begonnen && (
-              <Hinweis data-testid="termin-begonnen">
-                Der Termin hat begonnen. Rückmeldungen sind nicht mehr möglich.
-              </Hinweis>
-            )}
-          </>
+              <div className={style.zusagen}>
+                <Fortschrittsbalken
+                  wert={termin.zusagen}
+                  ziel={liste.minTeilnehmer}
+                  erreicht={liste.mindestzahlErreicht}
+                  data-testid="termin-balken"
+                />
+                {wartesatz && (
+                  <p className={style.wartesatz} data-testid="termin-wartesatz">
+                    {wartesatz}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {geplant && begonnen && (
+          <Hinweis data-testid="termin-begonnen">
+            Der Termin hat begonnen. Rückmeldungen sind nicht mehr möglich.
+          </Hinweis>
         )}
         {termin.status === 'ABGESAGT' && <Hinweis data-testid="termin-abgesagt">Dieser Termin wurde abgesagt.</Hinweis>}
         {termin.status === 'ABGESCHLOSSEN' && (

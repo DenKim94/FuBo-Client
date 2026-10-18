@@ -2,7 +2,7 @@
 
 .status {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--abstand-s);
 }
 
@@ -12,6 +12,11 @@
 }
 
 .text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+
   font-weight: var(--gewicht-halbfett);
 }
 
@@ -21,15 +26,8 @@
 }
 
 // Die Aussage steht im Text; die Farbe des Symbols unterstuetzt sie nur.
+// Haekchen (gruen) und Kreuz (rot) tragen ihre Farbe selbst (`Icon`, EIGENFARBEN).
 // „Offen“ ist neutral (Link-Blau), nie Fehlerrot: Es ist keine Absage.
-.zugesagt .symbol {
-  color: var(--farbe-erfolg);
-}
-
-.abgesagt .symbol {
-  color: var(--farbe-text);
-}
-
 .offen .symbol {
   color: var(--farbe-link);
 }

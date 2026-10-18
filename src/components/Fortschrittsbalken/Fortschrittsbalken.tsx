@@ -24,8 +24,9 @@ type FortschrittsbalkenEigenschaften = {
  * und die Farbe wechselt hier fachlich zwischen „noch zu wenige“ und „genug“.
  * Stattdessen ein `div` mit `role="progressbar"` und den ARIA-Werten.
  *
- * **Die Aussage hängt nicht an der Farbe:** Neben dem Balken steht „x von y
- * Zusagen“ und – solange die Mindestanzahl fehlt – ein Satz dazu.
+ * **Die Aussage hängt nicht an der Farbe:** Neben dem Balken steht ein Satz
+ * mit den Zahlen – „3 von mindestens 6 Zusagen erreicht“, solange die
+ * Mindestanzahl fehlt, sonst „8 Zusagen – Mindestanzahl von 6 erreicht“.
  * `aria-valuetext` sagt dasselbe für Screenreader.
  *
  * Die Füllung ist bei Überschreiten des Ziels auf 100 % gedeckelt; die Zahl im
@@ -50,7 +51,7 @@ export default function Fortschrittsbalken({
         aria-valuenow={wert}
         aria-valuemin={0}
         aria-valuemax={ziel}
-        aria-valuetext={`${wert} von ${ziel} Zusagen`}
+        aria-valuetext={`${wert} von mindestens ${ziel} Zusagen`}
         aria-label="Zusagen"
       >
         <div
@@ -61,8 +62,15 @@ export default function Fortschrittsbalken({
         />
       </div>
       <p className={style.text} data-testid={`${testId}-text`}>
-        <strong className={style.zahl}>{wert}</strong> von {ziel} Zusagen
-        {!erreicht && ' – Mindestanzahl noch nicht erreicht'}
+        {erreicht ? (
+          <>
+            <strong className={style.zahl}>{wert}</strong> Zusagen – Mindestanzahl von {ziel} erreicht
+          </>
+        ) : (
+          <>
+            <strong className={style.zahl}>{wert}</strong> von mindestens {ziel} Zusagen erreicht
+          </>
+        )}
       </p>
     </div>
   )

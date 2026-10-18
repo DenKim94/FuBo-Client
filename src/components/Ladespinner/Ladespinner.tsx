@@ -18,11 +18,20 @@ type LadespinnerEigenschaften = {
    * `aria-busy` meldet – sonst ginge „Wird geladen" in ihren Namen ein.
    */
   dekorativ?: boolean
-  /** Nimmt die verfügbare Fläche ein und zentriert den Kreis darin (Ladezustand einer Ansicht). */
+  /**
+   * Nimmt die verfügbare Fläche ein und zentriert den Kreis darin (Ladezustand
+   * einer Ansicht). Im `AppLayout` ist das die Resthöhe des Fensters, der Kreis
+   * liegt also dort, wo auch die Ladeanzeige aus `index.html` steht.
+   */
   zentriert?: boolean
   /**
-   * Erscheint erst nach 150 ms (Vorgabe). Eine Antwort nach 80 ms mit einem
-   * aufblitzenden Kreis dazwischen wirkt langsamer als dieselbe Antwort ohne.
+   * Erscheint erst nach 150 ms. Eine Antwort nach 80 ms mit einem aufblitzenden
+   * Kreis dazwischen wirkt langsamer als dieselbe Antwort ohne.
+   *
+   * **Vorgabe:** verzögert für Spinner im Fliesstext und in Teilbereichen;
+   * **sofort bei `zentriert`**: Dort steht sonst nach dem Neuladen
+   * für 150 ms eine leere Fläche, obwohl die Ladeanzeige aus `index.html` schon
+   * zu sehen war.
    */
   verzoegert?: boolean
 }
@@ -45,14 +54,15 @@ export default function Ladespinner({
   text,
   dekorativ = false,
   zentriert = false,
-  verzoegert = true,
+  verzoegert,
 }: LadespinnerEigenschaften) {
+  const mitVerzoegerung = verzoegert ?? !zentriert
   const klassen = [
     style.spinner,
     style[groesse],
     farbe === 'erben' ? style.erben : style.primaer,
     zentriert && style.zentriert,
-    verzoegert && style.verzoegert,
+    mitVerzoegerung && style.verzoegert,
   ]
     .filter(Boolean)
     .join(' ')
@@ -62,6 +72,7 @@ export default function Ladespinner({
       className={klassen}
       role={dekorativ ? undefined : 'status'}
       aria-hidden={dekorativ || undefined}
+      data-verzoegert={mitVerzoegerung}
       data-testid="ladespinner"
     >
       <span className={style.kreis} />

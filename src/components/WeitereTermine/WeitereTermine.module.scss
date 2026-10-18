@@ -24,12 +24,13 @@
 
 .zeile {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--abstand-m);
+  gap: var(--abstand-s);
   // Tap-Ziel: die ganze Zeile ist der Link (A2).
   min-block-size: var(--tapziel-min);
-  padding: var(--abstand-s) var(--abstand-m);
+  padding: var(--abstand-m) var(--abstand-m);
   color: inherit;
   text-decoration: none;
 }
@@ -52,7 +53,7 @@
 .stand {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   flex: none;
   font-size: var(--schrift-klein);
   text-align: end;

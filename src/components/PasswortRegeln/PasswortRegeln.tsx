@@ -72,7 +72,7 @@ function Regel({
       data-testid={testId}
     >
       <Icon
-        name={erfuellt ? 'check_circle_icon' : 'cancel_circle_icon_dark'}
+        name={erfuellt ? 'check_circle_icon' : 'cancel_circle_icon_red'}
         groesse={1.25}
         beschriftung={erfuellt ? 'Erfüllt:' : 'Noch offen:'}
       />

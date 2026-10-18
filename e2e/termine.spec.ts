@@ -20,12 +20,15 @@ test.describe('Dashboard: naechster Termin', () => {
     await page.goto('/')
 
     await expect(page.getByTestId('termin-zusagestatus')).toContainText('Noch nicht gemeldet.')
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('8 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('8 Zusagen – Mindestanzahl von 6 erreicht')
+    // Ohne Warteschlange keine Platzzahl; Karte, Status und Balken stehen in einem Rahmen.
+    await expect(page.getByTestId('termin-wartesatz')).toHaveCount(0)
+    await expect(page.getByTestId('termin-kopf')).toHaveCSS('border-top-width', '1px')
 
     await page.getByTestId('rueckmeldung-zusagen').click()
 
     await expect(page.getByTestId('termin-zusagestatus')).toContainText('Du hast zugesagt.')
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('9 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('9 Zusagen – Mindestanzahl von 6 erreicht')
     // Die Schaltflaeche, die der Fokus hielt, ist entfallen; er bleibt in der Leiste.
     await expect(page.getByTestId('rueckmeldung-absagen')).toBeFocused()
     expect(welt.rueckmeldungen).toEqual([{ terminId: 102, zusage: true, kopf: undefined }])
@@ -67,7 +70,9 @@ test.describe('Dashboard: naechster Termin', () => {
 
     await expect(page.getByTestId('teilnehmerliste-eintrag-2')).not.toContainText('wartet')
     await expect(page.getByTestId('teilnehmerliste-eintrag-3')).toContainText('wartet · Platz 1')
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('Alle 2 Plätze belegt, 1 auf der Warteschlange.')
+    await expect(page.getByTestId('termin-wartesatz')).toHaveText(
+      'Maximale Teilnehmerzahl von 2 erreicht, 1 auf der Warteschlange.',
+    )
   })
 
   test('weist auf einen abgesagten Termin davor hin und zeigt darunter den naechsten', async ({ page }) => {
@@ -123,7 +128,7 @@ test.describe('Beginn und Server-Entscheidung', () => {
     await sitzungNachbilden(page, { leerlaufSek: 900 })
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102 })])
     await page.goto('/')
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('8 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('8 Zusagen – Mindestanzahl von 6 erreicht')
 
     // Der Server hat den Beginn schon gesehen, die Uhr des Geraets noch nicht; inzwischen hat jemand zugesagt.
     welt.konfliktBeiRueckmeldung = 'begonnen'
@@ -132,7 +137,7 @@ test.describe('Beginn und Server-Entscheidung', () => {
 
     await expect(page.getByTestId('rueckmeldung-fehler')).toContainText('Der Termin ist geschlossen.')
     // Nach dem Fehler wird neu gelesen: Der fremde Stand erscheint, ohne dass jemand neu laedt.
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('9 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('9 Zusagen – Mindestanzahl von 6 erreicht')
     // Der eigene Stand bleibt unveraendert: nicht gemeldet, die Aktion steht wieder bereit.
     await expect(page.getByTestId('termin-zusagestatus')).toContainText('Noch nicht gemeldet.')
     await expect(page.getByTestId('rueckmeldung-zusagen')).toBeEnabled()
@@ -175,13 +180,13 @@ test.describe('Aktualisierung im Hintergrund', () => {
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102 })])
     await page.clock.install()
     await page.goto('/')
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('8 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('8 Zusagen – Mindestanzahl von 6 erreicht')
 
     welt.modelle[0].zusagen.push({ name: 'Beispielspieler 20', gast: false })
     welt.modelle[0].teilnehmerVersion += 1
     await page.clock.runFor(21_000)
 
-    await expect(page.getByTestId('termin-platzsatz')).toHaveText('9 von 22 Plätzen belegt.')
+    await expect(page.getByTestId('termin-balken-text')).toHaveText('9 Zusagen – Mindestanzahl von 6 erreicht')
     // Jeder Lesevorgang im Hintergrund traegt den Kopf; sonst bliebe die Sitzung durch die offene Ansicht ewig offen.
     expect(welt.listenabrufe.length).toBeGreaterThan(1)
     expect(welt.listenabrufe.every((k) => k === 'true')).toBe(true)

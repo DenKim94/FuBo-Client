@@ -53,13 +53,13 @@ export default function Zusagestatus({
         : 'Du hast zugesagt.'
   } else if (rueckmeldung === false) {
     zustand = 'abgesagt'
-    icon = 'cancel_circle_icon_dark'
+    icon = 'cancel_circle_icon_red'
     text = 'Du hast abgesagt.'
   } else {
     zustand = 'offen'
     icon = 'info_circle_icon'
-    text = 'Noch nicht gemeldet.'
-    zusatz = 'Bitte melde dich bis zum Beginn.'
+    text = 'Anmeldung ausstehend.'
+    zusatz = 'Bitte gib eine Ruckmeldung zur Teilnahme ab.'
   }
 
   return (
