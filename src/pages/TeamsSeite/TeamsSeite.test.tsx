@@ -91,7 +91,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
     rendern('/teams/102', terminModell({ terminId: 102 }))
     const leer = await screen.findByTestId('teams-nicht-generiert')
     expect(leer).toHaveTextContent('Noch keine Einteilung')
-    expect(leer).toHaveTextContent('Sobald jemand die Teams generiert, erscheinen sie hier.')
+    expect(leer).toHaveTextContent('Sobald jemand die Teams generiert hat, erscheinen sie hier.')
     expect(screen.queryByTestId('teams-anzeige')).not.toBeInTheDocument()
     expect(screen.getByTestId('teams-generieren')).toHaveTextContent('Teams generieren')
   })

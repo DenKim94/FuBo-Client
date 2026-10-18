@@ -30,10 +30,34 @@ export const ADMIN_PFADE = {
   passwortVergessen: '/admin/passwort/vergessen',
   /** Stufe `PIN_VERIFIED`: Passwort vergessen, Schritt 2 (PIN und neues Passwort). */
   passwortNeu: '/admin/passwort/neu',
-  /** Rolle `ADMIN`: Dashboard (bis C7 ein Platzhalter). */
+  /** Rolle `ADMIN`: Dashboard mit Teilnehmerübersicht und Verwaltungsliste (C7). */
   start: '/admin',
   /** Rolle `ADMIN`: Passwort im angemeldeten Zustand ändern. */
   passwortAendern: '/admin/passwort/aendern',
+  /** Rolle `ADMIN`: Spielerprofile, Liste (C7, Stufe 2). */
+  profile: '/admin/profile',
+  /** Rolle `ADMIN`: Profil anlegen. Steht als statisches Segment vor `:spielerId`. */
+  profilNeu: '/admin/profile/neu',
+  /** Rolle `ADMIN`: ein Profil bearbeiten. */
+  profilBearbeiten: (spielerId: number) => `/admin/profile/${String(spielerId)}`,
+  /** Rolle `ADMIN`: Terminliste (C7, Stufe 3). */
+  termine: '/admin/termine',
+  /** Rolle `ADMIN`: Termin oder Serie anlegen. Steht als statisches Segment vor `:terminId`. */
+  terminNeu: '/admin/termine/neu',
+  /** Rolle `ADMIN`: Verwaltungsansicht eines Termins. */
+  terminVerwaltung: (terminId: number) => `/admin/termine/${String(terminId)}`,
+  /** Rolle `ADMIN`: Gastplätze (C8, bis dahin ein Platzhalter). */
+  gaeste: '/admin/gaeste',
+  /** Rolle `ADMIN`: Konfiguration (C8, bis dahin ein Platzhalter). */
+  konfiguration: '/admin/konfiguration',
+  /** Rolle `ADMIN`: Teams ohne Termin (C8, bis dahin ein Platzhalter). */
+  teams: '/admin/teams',
+  /** Rolle `ADMIN`: zentrale PIN ändern. */
+  pin: '/admin/pin',
+  /** Rolle `ADMIN`: Anmeldenamen ändern, Schritt 1 (neuen Namen anfordern). */
+  nameAendern: '/admin/name/aendern',
+  /** Rolle `ADMIN`: Anmeldenamen ändern, Schritt 2 (Bestätigungs-PIN eingeben). */
+  nameBestaetigen: '/admin/name/bestaetigen',
 } as const
 
 /**

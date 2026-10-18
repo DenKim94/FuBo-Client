@@ -72,7 +72,7 @@ test.describe('Rahmen und Navigation', () => {
   test('haelt den Adminbereich ohne Sitzung geschlossen', async ({ page }) => {
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/pin\/pruefen$/)
-    await expect(page.getByTestId('platzhalter-c7')).toBeHidden()
+    await expect(page.getByTestId('admin-dashboard')).toBeHidden()
   })
 
   test('haelt die Admin-Anmeldung ohne Sitzung geschlossen und oeffnet sie nach der PIN', async ({ page }) => {

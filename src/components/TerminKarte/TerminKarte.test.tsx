@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { createRef } from 'react'
 import { describe, expect, test } from 'vitest'
 import TerminKarte from './TerminKarte'
 
@@ -15,6 +16,12 @@ describe('TerminKarte', () => {
   test('nutzt in Listen eine Ueberschrift der Ebene 2', () => {
     render(<TerminKarte termin={geplant} ebene={2} />)
     expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
+  })
+
+  test('nutzt unter einer Abschnittsueberschrift (Admin-Dashboard) die Ebene 3', () => {
+    render(<TerminKarte termin={geplant} ebene={3} />)
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('19:00 Uhr')
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
   })
 
@@ -45,5 +52,22 @@ describe('TerminKarte', () => {
 
     rerender(<TerminKarte termin={geplant} />)
     expect(screen.queryByTestId('termin-karte-status')).not.toBeInTheDocument()
+  })
+
+  test('macht die Ueberschrift mit ueberschriftRef zum Fokusziel', () => {
+    const ref = createRef<HTMLHeadingElement>()
+    render(<TerminKarte termin={geplant} ueberschriftRef={ref} />)
+
+    const titel = screen.getByRole('heading', { level: 1 })
+    expect(ref.current).toBe(titel)
+    expect(titel).toHaveAttribute('tabindex', '-1')
+    ref.current?.focus()
+    expect(titel).toHaveFocus()
+  })
+
+  test('ohne ueberschriftRef ist die Ueberschrift kein Tabstopp und kein Fokusziel', () => {
+    render(<TerminKarte termin={geplant} />)
+
+    expect(screen.getByRole('heading', { level: 1 })).not.toHaveAttribute('tabindex')
   })
 })

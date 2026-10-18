@@ -21,8 +21,8 @@ describe('Zusagestatus', () => {
     render(<Zusagestatus rueckmeldung={null} />)
     const status = screen.getByTestId('zusagestatus')
     expect(status).toHaveAttribute('data-zustand', 'offen')
-    expect(screen.getByText('Noch nicht gemeldet.')).toBeInTheDocument()
-    expect(screen.getByText('Bitte melde dich bis zum Beginn.')).toBeInTheDocument()
+    expect(screen.getByText('Anmeldung ausstehend.')).toBeInTheDocument()
+    expect(screen.getByText('Bitte gib eine Rückmeldung zur Teilnahme ab.')).toBeInTheDocument()
     expect(screen.queryByText('Du hast abgesagt.')).not.toBeInTheDocument()
   })
 
@@ -48,7 +48,7 @@ describe('Zusagestatus', () => {
 
   test('laesst den Zusatzsatz in der kompakten Form weg', () => {
     render(<Zusagestatus rueckmeldung={null} kompakt />)
-    expect(screen.getByText('Noch nicht gemeldet.')).toBeInTheDocument()
-    expect(screen.queryByText('Bitte melde dich bis zum Beginn.')).not.toBeInTheDocument()
+    expect(screen.getByText('Anmeldung ausstehend.')).toBeInTheDocument()
+    expect(screen.queryByText('Bitte gib eine Rückmeldung zur Teilnahme ab.')).not.toBeInTheDocument()
   })
 })

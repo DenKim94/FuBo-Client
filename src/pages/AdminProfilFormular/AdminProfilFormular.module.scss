@@ -1,0 +1,65 @@
+@use '@/styles/globalVars';
+
+.seite {
+  // Nimmt die Resthoehe des Inhalts ein, damit die Aktionsleiste unten sitzt.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bereich {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block: var(--abstand-m);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+// Fehler, Grund und Schaltflaeche gehoeren in eine Spalte der Aktionsleiste.
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--abstand-xs);
+}
+
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}
+
+// Abschnitt „Status“: Sperren und Entfernen, getrennt von den Feldern.
+.status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-start: var(--abstand-m);
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.statusTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.statusZeile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--abstand-s);
+}
+
+.statusText {
+  line-height: var(--zeilenhoehe);
+}

@@ -46,6 +46,10 @@ export type TerminModell = {
   ergebnis: ErgebnisModell | null
   /** Verbrauchte Laeufe je `teilnehmerVersion`. */
   laeufe: Record<number, number>
+  /** Stand des Datensatzes fuer die Verwaltung (`version` der Einzelansicht); jede Aenderung zaehlt hoch (C7). */
+  version: number
+  /** Serie, zu der der Termin gehoert, oder `null` (C7). */
+  serieId: number | null
 }
 
 /** Das erfasste Ergebnis eines Termins, wie `Ergebnis` es liefert. */
@@ -110,6 +114,8 @@ export function terminModell(teil: Partial<TerminModell> & { terminId: number })
     kontingent: 2,
     laeufe: {},
     ergebnis: null,
+    version: 1,
+    serieId: null,
     ...teil,
   }
 }
@@ -127,7 +133,7 @@ export function inMinuten(minuten: number): { datum: string; uhrzeit: string } {
 function uebersicht(m: TerminModell) {
   return {
     terminId: m.terminId,
-    serieId: null,
+    serieId: m.serieId,
     datum: m.datum,
     uhrzeit: m.uhrzeit,
     ort: m.ort,
@@ -141,7 +147,7 @@ function uebersicht(m: TerminModell) {
 function details(m: TerminModell) {
   return {
     ...uebersicht(m),
-    version: 1,
+    version: m.version,
     teilnehmerliste: {
       minTeilnehmer: m.min,
       maxTeilnehmer: m.max,

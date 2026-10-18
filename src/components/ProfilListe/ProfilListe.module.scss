@@ -1,0 +1,66 @@
+@use '@/styles/globalVars';
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Die ganze Zeile ist der Link und das Tap-Ziel.
+.zeile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  min-block-size: var(--tapziel-min);
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  text-decoration: none;
+}
+
+// Das Adminprofil ist keine Bedienfläche: ruhiger Hintergrund, kein Link.
+.ohneZiel {
+  background: var(--farbe-flaeche);
+}
+
+.name {
+  overflow-wrap: anywhere;
+  font-weight: var(--gewicht-halbfett);
+}
+
+.kennzeichenListe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--abstand-xs) var(--abstand-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Symbol und Text: Die Aussage steht im Wort, nicht in der Farbe.
+.kennzeichen {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--abstand-xs);
+  padding-inline: var(--abstand-s);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-s);
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text);
+  font-size: var(--schrift-klein);
+  white-space: nowrap;
+}
+
+.bilanz {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}

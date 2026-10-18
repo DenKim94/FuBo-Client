@@ -5,6 +5,7 @@ import {
   beginnVon,
   datumKurz,
   datumLang,
+  datumListe,
   heuteIso,
   letzterAbgeschlossener,
   naechsterTermin,
@@ -18,6 +19,13 @@ import {
 function termin(id: number, datum: string, status: TerminUebersicht['status'], uhrzeit = '19:00:00'): TerminUebersicht {
   return { terminId: id, datum, uhrzeit, status, teilnehmerVersion: 0, zusagen: 0 }
 }
+
+describe('datumListe', () => {
+  test('Wochentag kurz mit genau einem Punkt, Tag und Monat zweistellig', () => {
+    expect(datumListe('2026-10-20')).toBe('Di., 20.10.')
+    expect(datumListe('2099-01-06')).toBe('Di., 06.01.')
+  })
+})
 
 describe('beginnVon', () => {
   test('baut den Beginn aus den Teilen in Ortszeit, nicht aus UTC', () => {

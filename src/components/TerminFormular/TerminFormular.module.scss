@@ -1,0 +1,7 @@
+@use '@/styles/globalVars';
+
+.felder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+}

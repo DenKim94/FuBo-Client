@@ -1,0 +1,17 @@
+@use '@/styles/globalVars';
+
+// Die Folgen stehen in ganzen Saetzen; die Kinder sind Absaetze.
+.folgen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+}
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-xs);
+}

@@ -123,7 +123,7 @@ test.describe('Admin-Anmeldung', () => {
 
     // Ziel nach der Admin-Anmeldung ist die Administration (E1), ohne „Zurueck".
     await expect(page).toHaveURL(/\/admin$/)
-    await expect(page.getByTestId('platzhalter-c7')).toBeVisible()
+    await expect(page.getByTestId('admin-dashboard')).toBeVisible()
     await expect(page.getByTestId('layout-zurueck')).toBeHidden()
     expect(server.sitzung.rolle).toBe('ADMIN')
   })
@@ -282,9 +282,9 @@ test.describe('Passwort ändern', () => {
   test('beendet die Sitzung und zeigt auf der PIN-Eingabe den Hinweis', async ({ page }) => {
     const server = await adminServer(page, { stage: 'PROFILE_AUTHENTICATED', rolle: 'ADMIN' })
     await page.goto('/admin')
-    await expect(page.getByTestId('platzhalter-c7')).toBeVisible()
+    await expect(page.getByTestId('admin-dashboard')).toBeVisible()
 
-    await page.getByTestId('admin-passwort-aendern-link').click()
+    await page.getByTestId('admin-link-passwort').click()
     await expect(page).toHaveURL(/\/admin\/passwort\/aendern$/)
     // Von hier fuehrt „Zurueck" zur Administration, nicht zum User-Dashboard.
     await expect(page.getByTestId('layout-zurueck')).toBeVisible()

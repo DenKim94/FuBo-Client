@@ -59,7 +59,7 @@ export default function Zusagestatus({
     zustand = 'offen'
     icon = 'info_circle_icon'
     text = 'Anmeldung ausstehend.'
-    zusatz = 'Bitte gib eine Ruckmeldung zur Teilnahme ab.'
+    zusatz = 'Bitte gib eine Rückmeldung zur Teilnahme ab.'
   }
 
   return (

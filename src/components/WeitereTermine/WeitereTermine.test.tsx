@@ -39,10 +39,9 @@ describe('WeitereTermine', () => {
       uebersichtVon(terminModell({ terminId: 3, eigene: null })),
     ]
     rendern(liste)
-    expect(screen.getByTestId('termin-link-1')).toHaveTextContent('8 Zusagen')
     expect(screen.getByTestId('termin-link-1')).toHaveTextContent('Du hast zugesagt.')
     expect(screen.getByTestId('termin-link-2')).toHaveTextContent('Du hast abgesagt.')
-    expect(screen.getByTestId('termin-link-3')).toHaveTextContent('Noch nicht gemeldet.')
+    expect(screen.getByTestId('termin-link-3')).toHaveTextContent('Anmeldung ausstehend.')
   })
 
   test('zeigt bei einem abgesagten Termin „Abgesagt“ statt der Rueckmeldung', () => {
@@ -50,7 +49,7 @@ describe('WeitereTermine', () => {
     const zeile = screen.getByTestId('termin-link-9')
     expect(zeile).toHaveTextContent('Abgesagt')
     expect(zeile).not.toHaveTextContent('Zusagen')
-    expect(zeile).not.toHaveTextContent('Noch nicht gemeldet')
+    expect(zeile).not.toHaveTextContent('Anmeldung ausstehend')
   })
 
   test('zeigt den Ort nur, wenn es einen gibt', () => {

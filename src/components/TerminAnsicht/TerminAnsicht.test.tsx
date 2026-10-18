@@ -2,9 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
-import { problem } from '@/test/mocks/problem'
+import { beispielAdminSitzung, problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'
 import { EIGENER_NAME, detailsVon, terminHandlers, terminModell, type TerminModell } from '@/test/mocks/termine'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
@@ -226,5 +226,86 @@ describe('TerminAnsicht', () => {
     expect(screen.getByTestId('termin-balken-text')).toHaveTextContent('9 Zusagen – Mindestanzahl von 6 erreicht')
     expect(screen.getByTestId('rueckmeldung-absagen')).toBeInTheDocument()
     expect(screen.queryByTestId('rueckmeldung-zusagen')).not.toBeInTheDocument()
+  })
+})
+
+describe('TerminAnsicht nurLesen (Admin, C7 E2)', () => {
+  /** Der Admin liest den Termin; seine Sitzung hat die Rolle ADMIN. */
+  function alsAdmin() {
+    mockServer.use(http.get('*/auth/session/lesen', () => HttpResponse.json(beispielAdminSitzung)))
+  }
+
+  test('zeigt dem Admin keinen Zusagestatus, keine Leiste und keine Verweise, aber Karte, Balken und Liste', async () => {
+    alsAdmin()
+    rendern({}, { nurLesen: true, verweise: true })
+
+    expect(await screen.findByTestId('termin-karte')).toBeInTheDocument()
+    expect(screen.getByTestId('termin-balken')).toBeInTheDocument()
+    expect(screen.getByTestId('teilnehmerliste')).toBeInTheDocument()
+    // Der Admin kann nicht zusagen: ein „Anmeldung ausstehend“ waere falsch.
+    expect(screen.queryByTestId('termin-zusagestatus')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Anmeldung ausstehend/)).not.toBeInTheDocument()
+    expect(screen.queryByTestId('aktionsleiste')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('termin-teams-link')).not.toBeInTheDocument()
+  })
+
+  test('blendet auch bei einem abgeschlossenen Termin den Ergebnisverweis aus', async () => {
+    alsAdmin()
+    rendern({ status: 'ABGESCHLOSSEN' }, { nurLesen: true, verweise: true })
+
+    expect(await screen.findByTestId('termin-abgeschlossen')).toBeInTheDocument()
+    expect(screen.queryByTestId('termin-ergebnis-link')).not.toBeInTheDocument()
+  })
+
+  test('zeigt Kinder und den Warteschlangensatz weiter an', async () => {
+    alsAdmin()
+    const welt = terminHandlers([terminModell({ terminId: 102, max: 6, zusagen: zusagen(8) })])
+    mockServer.use(...welt.handlers)
+    render(
+      <MemoryRouter>
+        <TerminAnsicht terminId={102} eingeklappt nurLesen>
+          <p data-testid="kind">Termin verwalten</p>
+        </TerminAnsicht>
+      </MemoryRouter>,
+      { wrapper: QueryUmgebung },
+    )
+
+    // Die Kinder stehen schon waehrend des Ladens da; der Satz kommt mit den Daten.
+    expect(screen.getByTestId('kind')).toBeInTheDocument()
+    expect(await screen.findByTestId('termin-wartesatz')).toHaveTextContent(
+      'Maximale Teilnehmerzahl von 6 erreicht, 2 auf der Warteschlange.',
+    )
+  })
+
+  test('ohne nurLesen bleibt das Standardverhalten: Zusagestatus, Leiste und Verweis', async () => {
+    rendern({}, { verweise: true })
+
+    expect(await screen.findByTestId('termin-zusagestatus')).toBeInTheDocument()
+    expect(screen.getByTestId('aktionsleiste')).toBeInTheDocument()
+    expect(screen.getByTestId('termin-teams-link')).toBeInTheDocument()
+  })
+})
+
+describe('TerminAnsicht ohneAktualisierung (Verwaltung, C7 4.1)', () => {
+  afterEach(() => vi.useRealTimers())
+
+  test('ruft nach 60 Sekunden Fake-Zeit nicht ein zweites Mal ab, der Kopf bleibt gesetzt', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'setTimeout'], shouldAdvanceTime: true })
+    const welt = rendern({}, { ohneAktualisierung: true, nurLesen: true })
+    expect(await screen.findByTestId('termin-karte')).toBeInTheDocument()
+
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(welt.protokoll.detailabrufe).toEqual(['true'])
+  })
+
+  test('mit Aktualisierung (Vorgabe) liest er im Takt weiter', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'setTimeout'], shouldAdvanceTime: true })
+    const welt = rendern({}, { nurLesen: true })
+    expect(await screen.findByTestId('termin-karte')).toBeInTheDocument()
+
+    await vi.advanceTimersByTimeAsync(45_000)
+
+    expect(welt.protokoll.detailabrufe.length).toBeGreaterThanOrEqual(2)
   })
 })

@@ -39,6 +39,10 @@ export type TerminModell = {
   /** Eigene Rückmeldung, dreiwertig. Bei `true` steht der eigene Name in `zusagen`. */
   eigene: boolean | null
   teilnehmerVersion: number
+  /** Stand des Datensatzes (optimistische Sperre, C7): steigt mit jedem Schreiben des Admins. */
+  version: number
+  /** Serie, aus der der Termin stammt; `null` bei einem Einzeltermin. */
+  serieId: number | null
   teams: TerminDetails['teams']
   /**
    * `teilnehmerVersion`, zu der die Einteilung erzeugt wurde. Gesetzt: `veraltet` folgt
@@ -72,6 +76,8 @@ export function terminModell(teil: Partial<TerminModell> & { terminId: number })
     ],
     eigene: null,
     teilnehmerVersion: 1,
+    version: 1,
+    serieId: null,
     teams: null,
     ergebnis: null,
     kontingent: 2,
@@ -84,7 +90,7 @@ export function terminModell(teil: Partial<TerminModell> & { terminId: number })
 export function uebersichtVon(modell: TerminModell): TerminUebersicht {
   return {
     terminId: modell.terminId,
-    serieId: null,
+    serieId: modell.serieId,
     datum: modell.datum,
     uhrzeit: modell.uhrzeit,
     ort: modell.ort,
@@ -103,7 +109,7 @@ export function uebersichtVon(modell: TerminModell): TerminUebersicht {
 export function detailsVon(modell: TerminModell): TerminDetails {
   return {
     ...uebersichtVon(modell),
-    version: 1,
+    version: modell.version,
     teilnehmerliste: {
       minTeilnehmer: modell.min,
       maxTeilnehmer: modell.max,

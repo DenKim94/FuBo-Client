@@ -106,6 +106,12 @@ export const handlers = [
   http.post('*/auth/passwort/bestaetigen', () => new HttpResponse(null, { status: 204 })),
   http.post('*/admin/passwort/aendern', () => new HttpResponse(null, { status: 204 })),
 
+  // Admin-Zugangsdaten (C7, Stufe 1): zentrale PIN und Anmeldename. Die Namensanforderung
+  // antwortet `202` ohne Rumpf, die Bestaetigung `204`.
+  http.post('*/admin/pin/aendern', () => new HttpResponse(null, { status: 204 })),
+  http.post('*/admin/name/aendern', () => new HttpResponse(null, { status: 202 })),
+  http.post('*/admin/name/bestaetigen', () => new HttpResponse(null, { status: 204 })),
+
   // Termine (C5). Die Vorgaben sind **zustandslos**: Eine Rückmeldung ändert
   // nichts, damit kein Test den Stand eines anderen erbt. Wer eine Änderung
   // beobachten will, installiert `terminHandlers()` (zustandsbehaftet).

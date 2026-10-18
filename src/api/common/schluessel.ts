@@ -28,4 +28,7 @@ export const schluessel = {
   termineVerlauf: ['termineVerlauf'] as const,
   bilanz: ['bilanz'] as const,
   pushStatus: ['push', 'status'] as const,
+  /** Admin-Abfragen. Wurzel `admin`: hebt sie von den Abfragen der Spieler ab. */
+  adminProfile: ['admin', 'profile'] as const,
+  adminSkills: ['admin', 'skills'] as const,
 } as const

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 import { ApiFehler } from '@/api/common/fehler'
 import type { TerminDetails } from '@/api/termine/termine'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
@@ -26,6 +26,24 @@ type TerminAnsichtEigenschaften = {
   eingeklappt: boolean
   /** Verweise auf Teams und Ergebnis unter dem Inhalt (Termin-Ansicht, 8). */
   verweise?: boolean
+  /**
+   * Nur lesen (Admin, C7 E2): kein `Zusagestatus`, keine `RueckmeldungLeiste` und
+   * keine Verweise auf Teams und Ergebnis. Der Admin hat weder eine Rückmeldung
+   * (`409 PROFIL_GESCHUETZT`) noch einen Zusagestatus; die Ansicht darf ihm keinen
+   * vortäuschen („Anmeldung ausstehend“ wäre falsch). Karte, Balken, Warteschlangensatz,
+   * Teilnehmerliste und `children` bleiben.
+   */
+  nurLesen?: boolean
+  /** Ebene der Überschrift der Terminkarte; Vorgabe 1. Das Admin-Dashboard setzt sie unter seine eigene Überschrift. */
+  kartenEbene?: 1 | 2 | 3
+  /**
+   * Liest den Termin **ohne Polling** (`useTermin(terminId, 0)`, C7 4.1): Die Verwaltungsansicht des Admins
+   * hält einen Stand, an dem ein Formular hängt; ein Abruf im Takt ersetzte ihn unter den Händen. Derselbe
+   * Schlüssel wie beim Polling – Dashboard-Karte und Verwaltung teilen sich die Abfrage.
+   */
+  ohneAktualisierung?: boolean
+  /** Fokusziel für die Überschrift der Terminkarte (siehe `TerminKarte`). */
+  ueberschriftRef?: Ref<HTMLHeadingElement>
   /**
    * Weitere Inhalte der Seite, die **vor** der Aktionsleiste stehen (Dashboard:
    * „Weitere Termine“). Die Leiste ist das letzte Element der Ansicht, damit sie
@@ -71,8 +89,17 @@ function warteschlangensatz(termin: TerminDetails): string | null {
  * Netzfehler und `≥ 500`), mit Daten eine `Fehlermeldung` über dem stehenden
  * Inhalt. `404` heißt: Der Termin ist entfernt – Leerzustand mit Rückweg.
  */
-export default function TerminAnsicht({ terminId, eingeklappt, verweise = false, children }: TerminAnsichtEigenschaften) {
-  const abfrage = useTermin(terminId)
+export default function TerminAnsicht({
+  terminId,
+  eingeklappt,
+  verweise = false,
+  nurLesen = false,
+  kartenEbene = 1,
+  ohneAktualisierung = false,
+  ueberschriftRef,
+  children,
+}: TerminAnsichtEigenschaften) {
+  const abfrage = useTermin(terminId, ohneAktualisierung ? 0 : undefined)
   const { sitzung, istGast } = useSitzung()
   const termin = abfrage.data
   const begonnen = useBegonnen(termin)
@@ -94,16 +121,18 @@ export default function TerminAnsicht({ terminId, eingeklappt, verweise = false,
         {nachladefehler && <Fehlermeldung fehler={nachladefehler} data-testid="termin-fehler-meldung" />}
 
         <div className={style.kopf} data-testid="termin-kopf">
-          <TerminKarte termin={termin} ebene={1} />
+          <TerminKarte termin={termin} ebene={kartenEbene} ueberschriftRef={ueberschriftRef} />
 
           {geplant && (
             <>
-              <Zusagestatus
-                rueckmeldung={termin.eigeneRueckmeldung ?? null}
-                wartet={eigener?.wartet}
-                warteplatz={eigener?.wartet ? eigener.position - liste.maxTeilnehmer : undefined}
-                data-testid="termin-zusagestatus"
-              />
+              {!nurLesen && (
+                <Zusagestatus
+                  rueckmeldung={termin.eigeneRueckmeldung ?? null}
+                  wartet={eigener?.wartet}
+                  warteplatz={eigener?.wartet ? eigener.position - liste.maxTeilnehmer : undefined}
+                  data-testid="termin-zusagestatus"
+                />
+              )}
               <div className={style.zusagen}>
                 <Fortschrittsbalken
                   wert={termin.zusagen}
@@ -141,12 +170,12 @@ export default function TerminAnsicht({ terminId, eingeklappt, verweise = false,
           />
         )}
 
-        {verweise && geplant && (
+        {verweise && !nurLesen && geplant && (
           <Textlink to={`/teams/${termin.terminId}`} data-testid="termin-teams-link">
             Teams ansehen
           </Textlink>
         )}
-        {verweise && termin.status === 'ABGESCHLOSSEN' && (
+        {verweise && !nurLesen && termin.status === 'ABGESCHLOSSEN' && (
           <Textlink to={`/ergebnisse/${termin.terminId}`} data-testid="termin-ergebnis-link">
             Ergebnis ansehen
           </Textlink>
@@ -155,7 +184,7 @@ export default function TerminAnsicht({ terminId, eingeklappt, verweise = false,
     )
 
     // Die Leiste nur, solange eine Rückmeldung möglich ist (E8).
-    if (geplant && !begonnen) {
+    if (geplant && !begonnen && !nurLesen) {
       leiste = <RueckmeldungLeiste eigeneRueckmeldung={termin.eigeneRueckmeldung ?? null} terminId={termin.terminId} />
     }
   } else if (abfrage.isPending) {

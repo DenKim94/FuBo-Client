@@ -6,9 +6,17 @@ import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import { ADMIN_PFADE, LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
-import Textlink from '@/components/Textlink/Textlink'
 import DashboardLayout from '@/layouts/DashboardLayout/DashboardLayout'
 import AdminAnmeldung from '@/pages/AdminAnmeldung/AdminAnmeldung'
+import AdminDashboard from '@/pages/AdminDashboard/AdminDashboard'
+import AdminNameAendern from '@/pages/AdminNameAendern/AdminNameAendern'
+import AdminNameBestaetigen from '@/pages/AdminNameBestaetigen/AdminNameBestaetigen'
+import AdminPin from '@/pages/AdminPin/AdminPin'
+import AdminProfile from '@/pages/AdminProfile/AdminProfile'
+import AdminProfilFormular from '@/pages/AdminProfilFormular/AdminProfilFormular'
+import AdminTermine from '@/pages/AdminTermine/AdminTermine'
+import AdminTerminDetail from '@/pages/AdminTerminDetail/AdminTerminDetail'
+import AdminTerminNeu from '@/pages/AdminTerminNeu/AdminTerminNeu'
 import Dashboard from '@/pages/Dashboard/Dashboard'
 import ErgebnisSeite from '@/pages/ErgebnisSeite/ErgebnisSeite'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
@@ -36,6 +44,15 @@ const ZUM_DASHBOARD: RoutenAngaben = { zurueck: LOGIN_PFADE.start }
  * gleichrangig: Von dort gibt es kein „Zurück“, die Tab-Leiste ist der Weg (C5, E12).
  */
 const OHNE_ZURUECK: RoutenAngaben = { ohneZurueck: true }
+
+/** Verwaltungsansichten direkt unter dem Admin-Dashboard: „Zurück“ führt immer dorthin (C7, E1). */
+const ZUM_ADMIN_DASHBOARD: RoutenAngaben = { zurueck: ADMIN_PFADE.start }
+
+/** Formular eines Profils: „Zurück“ führt zur Liste, nicht einen Schritt im Verlauf (C7, 7.3). */
+const ZUM_ADMIN_PROFILE: RoutenAngaben = { zurueck: ADMIN_PFADE.profile }
+
+/** Anlegen und Verwalten eines Termins: „Zurück“ führt zur Terminliste (C7, 8.3). */
+const ZUM_ADMIN_TERMINE: RoutenAngaben = { zurueck: ADMIN_PFADE.termine }
 
 /**
  * Routenbaum der Anwendung.
@@ -138,27 +155,46 @@ export const routen = createBrowserRouter([
                 path: 'admin',
                 children: [
                   // Startseite der Administration (E1): kein „Zurück“, das den
-                  // Admin ins User-Dashboard schickte. Der Platzhalter traegt den
-                  // Einstieg in „Passwort aendern“, bis das Dashboard in C7 folgt.
-                  {
-                    index: true,
-                    element: (
-                      <Platzhalter titel="Administration" paket="C7">
-                        <Textlink
-                          to={ADMIN_PFADE.passwortAendern}
-                          data-testid="admin-passwort-aendern-link"
-                        >
-                          Passwort ändern
-                        </Textlink>
-                      </Platzhalter>
-                    ),
-                    handle: { ohneZurueck: true } satisfies RoutenAngaben,
-                  },
+                  // Admin ins User-Dashboard schickte. Von hier erreicht er jede Verwaltung.
+                  { index: true, element: <AdminDashboard />, handle: OHNE_ZURUECK },
                   {
                     path: 'passwort/aendern',
                     element: <PasswortAendern />,
-                    handle: { zurueck: ADMIN_PFADE.start } satisfies RoutenAngaben,
+                    handle: ZUM_ADMIN_DASHBOARD,
                   },
+
+                  // --- Zugangsdaten (C7, Stufe 1) -----------------------------
+                  { path: 'pin', element: <AdminPin />, handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'name/aendern', element: <AdminNameAendern />, handle: ZUM_ADMIN_DASHBOARD },
+                  {
+                    path: 'name/bestaetigen',
+                    element: <AdminNameBestaetigen />,
+                    handle: { zurueck: ADMIN_PFADE.nameAendern } satisfies RoutenAngaben,
+                  },
+
+                  // --- Bis zur jeweiligen Stufe Platzhalter --------------------
+                  // Profile (Stufe 2) und Termine (Stufe 3) folgen in C7, die übrigen
+                  // drei Verwaltungen in C8. `neu` steht vor dem dynamischen Segment;
+                  // React Router wertet statische vor dynamischen Pfaden.
+                  // --- Spielerprofile (C7, Stufe 2) ---------------------------
+                  { path: 'profile', element: <AdminProfile />, handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'profile/neu', element: <AdminProfilFormular modus="neu" />, handle: ZUM_ADMIN_PROFILE },
+                  {
+                    path: 'profile/:spielerId',
+                    element: <AdminProfilFormular modus="bearbeiten" />,
+                    handle: ZUM_ADMIN_PROFILE,
+                  },
+                  { path: 'termine', element: <AdminTermine />, handle: ZUM_ADMIN_DASHBOARD },
+                  // „neu“ steht vor „:terminId“, damit der Pfad nicht als Id gelesen wird.
+                  { path: 'termine/neu', element: <AdminTerminNeu />, handle: ZUM_ADMIN_TERMINE },
+                  { path: 'termine/:terminId', element: <AdminTerminDetail />, handle: ZUM_ADMIN_TERMINE },
+                  { path: 'gaeste', element: <Platzhalter titel="Gastplätze" paket="C8" />, handle: ZUM_ADMIN_DASHBOARD },
+                  {
+                    path: 'konfiguration',
+                    element: <Platzhalter titel="Konfiguration" paket="C8" />,
+                    handle: ZUM_ADMIN_DASHBOARD,
+                  },
+                  { path: 'teams', element: <Platzhalter titel="Teams ohne Termin" paket="C8" />, handle: ZUM_ADMIN_DASHBOARD },
                 ],
               },
             ],

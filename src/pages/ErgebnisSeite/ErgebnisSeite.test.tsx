@@ -125,7 +125,7 @@ describe('ErgebnisSeite: Zustandsmatrix', () => {
   test('ABGESCHLOSSEN ohne Einteilung und ohne Ergebnis sagt, warum nichts einzutragen ist', async () => {
     rendern('/ergebnisse/102', abgeschlossen({ terminId: 102 }, false))
     expect(await screen.findByTestId('ergebnis-ohne-einteilung')).toHaveTextContent(
-      'Für diesen Termin wurde keine Einteilung erzeugt, ein Ergebnis lässt sich nicht eintragen.',
+      'Für diesen Termin wurden keine Teams eingeteilt, ein Ergebnis lässt sich daher nicht eintragen.',
     )
     expect(screen.queryByTestId('ergebnis-formular')).not.toBeInTheDocument()
     expect(screen.queryByTestId('aktionsleiste')).not.toBeInTheDocument()
@@ -134,7 +134,7 @@ describe('ErgebnisSeite: Zustandsmatrix', () => {
   test('GEPLANT nennt den Zeitpunkt, ab dem das Ergebnis geht, ohne Formular', async () => {
     rendern('/ergebnisse/102', terminModell({ terminId: 102 }))
     expect(await screen.findByTestId('ergebnis-noch-nicht')).toHaveTextContent(
-      'sobald der Termin abgeschlossen ist (30 Minuten nach Beginn)',
+      'Das Ergebnis lässt sich eintragen, sobald der Termin abgeschlossen ist.',
     )
     expect(screen.queryByTestId('ergebnis-formular')).not.toBeInTheDocument()
   })

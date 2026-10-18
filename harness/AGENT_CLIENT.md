@@ -143,7 +143,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Symbole über `Icon/eingebettet.ts` per `?raw`: `error_circle_icon`, `no_connection_icon_red`), `Feld` (`aktion`, `beschriebenDurch`, `ref`),
   `Auswahlliste`, `Erklaerung`, `Aktionsleiste`, `Dialog`, `Fortschrittsbalken`, `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`, `PinFeld`,
   `PasswortFeld`, `PasswortRegeln`, `Hinweis`, `Textlink`, `Restzeitbalken`, Hook `useSperre`; aus C5 `TabLeiste`, `TerminAnsicht`,
-  `Teilnehmerliste`, `TeamsAnzeige`, `ErgebnisAnzeige`, `ErgebnisFormular` u. a.
+  `Teilnehmerliste`, `TeamsAnzeige`, `ErgebnisAnzeige`, `ErgebnisFormular` u. a.; aus C7 `Bestaetigung` (Dialog für jede nicht umkehrbare Aktion), `Verwaltungsliste`,
+  `SkillFelder`, `ProfilListe`/`ProfilZeile`, `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`.
 - **Passwort- und Codefelder (C4):**
   - `PasswortFeld` (umhüllt `Feld`): Auge-Umschalter als reiner Symbol-`button` (`visibility_{on,off}_dark.png`) mit festem `aria-label`
     „Passwort anzeigen" und `aria-pressed`; Pflicht (kein Wiederholungsfeld); verbirgt beim Absenden wieder; `maxLength` 72; **kein `trim()`**;
@@ -179,6 +180,23 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   - **Uhr nie im Render** (`react-hooks` v7): `new Date()` nur in `select`, `queryFn` oder einem Hook mit Takt (`useVerlauf`, `useTermine`, `useBegonnen`).
   - **E2E:** `e2e/hilfen/{sitzung,termine,teams,ergebnisse}.ts` bilden Server und Sitzung (auch `GAST`) nach; Tests auf Detailrouten brauchen
     `termineNachbilden`. Alle drei Chromium-Projekte laufen lassen. Gegenproben: Auswertung nach „failed", Rückgabewert des Baus prüfen.
+- **Admin-Verwaltung (C7):**
+  - **Lesen ohne Polling und ohne `X-FuBo-Kein-Refresh`, `refetchOnWindowFocus: false`:** Formular- und Listenabfragen des Admins (das Öffnen der Seite ist eine Aktivität; ein Polling ohne Kopf hielte die Sitzung ewig offen,
+    ein Formular, das beim Fensterwechsel neu lädt, überschriebe Eingaben). Ausnahmen: Dashboard und Terminliste (`useTermine`, `useVerlauf`). **`useTermin(id, 0)` pollt nicht** (`TerminAnsicht ohneAktualisierung`).
+    Schreibende Admin-Aufrufe tragen keinen Kopf und werden nie wiederholt.
+  - **Voll-Update und Version:** Nach `409 DATEN_VERALTET` setzt das Formular auf den frisch gelesenen Stand zurück (`key={version}`), der Text sagt es; **nie** mit neuer `version` und alten Eingaben senden. Abfrage **und**
+    Mutation liegen im Elternbaustein, damit Meldung, Erfolgstext und Fokus den Neuaufbau überleben. Test mit `welt.fremdeAenderung()` (erhöht die `version`).
+  - **Ordnung:** Admin-Hooks in `src/hooks/admin/` (Test daneben), API-Dateien nach Thema (`adminProfile.ts`, `adminTermine.ts`, …; `admin.ts` nur für Zugangsdaten), Seiten flach `src/pages/Admin…`. **Pfade nur in `ADMIN_PFADE`**
+    (`zielpfad.ts`), „Zurück" als fester Pfad in `handle.zurueck`.
+  - **Skillwerte nur in `AdminProfilFormular`** (`SkillFelder`; mit C8: `differenzTeamstaerke` nur in `AdminTeams`). Kategorien, Grenzen und Reihenfolge kommen aus `GET /admin/skills/lesen`, nichts fest verdrahtet. Liste und Spieleransichten
+    zeigen keine Werte (nur das Kennzeichen „unvollständig"). Beim Bearbeiten geht nur Geändertes hinaus (`profilAenderung`, `aenderungKoerper`), beim Anlegen alle Kategorien.
+  - **`Bestaetigung` für jede nicht umkehrbare Aktion, mit den Folgen im Text:** bleibt bei einem Fehler offen und zeigt ihn, `art="gefahr"` fokussiert zuerst „Abbrechen", `festhalten` während der Mutation. Sperren/Entsperren ohne
+    Dialog, ausser das Sperren eines angemeldeten Profils. Bei `TERMIN_IN_VERWENDUNG`/`PROFIL_IN_VERWENDUNG` schliesst der Dialog, ein Hinweis nennt den Grund und bietet den richtigen Weg („Stattdessen absagen/sperren").
+  - **Mutationen, nach denen die Seite wechselt oder ausgehängt wird:** `mutateAsync` mit `try/catch`, nie `mutate(…, { onSuccess })`. Jede Mutation liest ihre Gruppe neu (`termineNeuLesen`, Versprechen zurückgeben) und bleibt bis dahin `pending`.
+  - **Aktionen ohne Wirkung sind `aria-disabled` mit Grund als Text** (`aria-describedby`), nicht `disabled`; im E2E `click({ force: true })`. Nach einem Statuswechsel gehört der Fokus auf die Überschrift der Karte.
+  - **Zeit:** keine Uhr im Render; Vergangenheit und Serienprüfung beim Absenden. Feldfehler des Servers nur an das Feld, das er meint (`TERMIN_BELEGT` am Uhrzeitfeld); Anzeigetext ist der Server-`detail`, Logik verzweigt über `code`.
+  - **Tests:** Seiten je Zustand (laden, leer, Fehler, Normalfall, jeder Fehlercode); `src/test/mocks/admin.ts` ist zustandsbehaftet (`adminWelt`, `protokoll`); E2E-Nachbildung `e2e/hilfen/admin.ts`; eine Layout-Schleife über alle Admin-Pfade
+    bei 360 px (`admin-layout.spec.ts`); Gegenproben (Skript wertet „failed" aus) für Nur-Geändertes, `key={version}`, Polling, Sperrdialog, `NAME_PIN_FALSCH`, `mutateAsync`, Übersprungenen-Absatz, Neulesen.
 - **Dialog:** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über `useId`, optional `symbol` (schmückend) und `beschreibungId`
   (`aria-describedby`). Unterbrechungsfeindliche Dialoge mit `festhalten`: weist Escape ab und öffnet wieder, wenn der Browser `cancel` überspringt
   (Close Watcher, Chrome 122; auch Zurück-Geste unter Android). Unten angedockt, Safe-Area im Dialog selbst. Abdunkelung über `--farbe-abdunkelung` direkt
@@ -205,7 +223,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **E2E-Sitzung** in `e2e/hilfen/sitzung.ts` (`sitzungNachbilden` mit `stage`, `rolle`; zählt verlängernde Abrufe). Relative Importe in `e2e/` mit Endung `.js`
   (NodeNext). Sieben Geräteprojekte gegen die gebaute Fassung, **drei Chromium und vier WebKit**; **die vier WebKit-Projekte sind seit dem 18.10.2026 abgeschaltet**
   (CI-Lauf vom 17.10.2026: Tests quer durch die Dateien rot, Ursache ungeklärt; `WEBKIT_E2E=1` schaltet sie in `playwright.config.ts` wieder ein, im CI zusätzlich
-  `webkit` in `playwright install`). Im CI läuft nur Chromium (321 Läufe, 3 Projekte); iPhone- und iPad-Verhalten bleibt Handprüfung. PWA-Tests (`e2e/*.pwa.spec.ts`, `pwa.spec.ts`) nur Chromium. Tab-Navigation ist in WebKit ohne Systemeinstellung nicht
+  `webkit` in `playwright install`). Im CI läuft nur Chromium (453 Läufe, 3 Projekte); iPhone- und iPad-Verhalten bleibt Handprüfung. PWA-Tests (`e2e/*.pwa.spec.ts`, `pwa.spec.ts`) nur Chromium. Tab-Navigation ist in WebKit ohne Systemeinstellung nicht
   möglich (`test.skip` für `webkit`, Handprüfung). API ohne Server über `page.route`. Klick auf `aria-disabled` mit `force: true`. Safe-Area,
   `beforeinstallprompt`, Web Push auf iOS bleiben Handprüfungen.
 - Validierung: `npm run lint`, `typecheck`, `test`, `build`, `test:e2e`; nach Abhängigkeitsänderungen `npm ci` in frischem Baum (`npm install` repariert die

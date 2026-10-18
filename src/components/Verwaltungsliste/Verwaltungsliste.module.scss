@@ -1,0 +1,75 @@
+@use '@/styles/globalVars';
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-l);
+}
+
+.gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+}
+
+.gruppenTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+  color: var(--farbe-text-schwach);
+}
+
+.eintraege {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Die ganze Zeile ist der Link und das Tap-Ziel (mindestens 56 px).
+.zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-m);
+  min-block-size: 3.5rem;
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  text-decoration: none;
+}
+
+.symbol {
+  flex: none;
+  display: inline-flex;
+}
+
+.texte {
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.titel {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.untertitel {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+  line-height: 1.35;
+}
+
+// Pfeil als Rahmen eines Quadrats, gedreht: kein Zeichen, das ein Screenreader liest.
+.pfeil {
+  flex: none;
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border-inline-end: 2px solid var(--farbe-rand-bedienbar);
+  border-block-start: 2px solid var(--farbe-rand-bedienbar);
+  transform: rotate(45deg);
+}

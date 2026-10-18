@@ -1,0 +1,48 @@
+@use '@/styles/globalVars';
+
+.seite {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-end: var(--abstand-m);
+}
+
+.verwaltung {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-l);
+}
+
+.abschnitt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-start: var(--abstand-m);
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.abschnittTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.formular {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--abstand-m);
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+  line-height: var(--zeilenhoehe);
+}
+
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--abstand-s);
+}

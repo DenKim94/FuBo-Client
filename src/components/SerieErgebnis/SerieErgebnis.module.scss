@@ -1,0 +1,46 @@
+@use '@/styles/globalVars';
+
+.ergebnis {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--abstand-m);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+
+  // Fokusziel nach Programm: den Ring zeichnet der globale `:focus-visible`-Stil.
+  &:focus-visible {
+    outline-offset: 0.25rem;
+  }
+}
+
+.uebersprungen {
+  margin: var(--abstand-xs) 0 0;
+  padding-inline-start: var(--abstand-l);
+}
+
+.termine {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-m);
+}
+
+.termine > li + li {
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+// Die ganze Zeile ist der Link und das Tap-Ziel.
+.zeile {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--tapziel-min);
+  padding: var(--abstand-s) var(--abstand-m);
+  color: inherit;
+  text-decoration: none;
+}

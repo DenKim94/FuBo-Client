@@ -184,7 +184,7 @@ test.describe('Tab Ergebnisse', () => {
     await page.goto('/ergebnisse')
 
     await expect(page.getByTestId('ergebnis-ohne-einteilung')).toContainText(
-      'Für diesen Termin wurde keine Einteilung erzeugt, ein Ergebnis lässt sich nicht eintragen.',
+      'Für diesen Termin wurden keine Teams eingeteilt, ein Ergebnis lässt sich daher nicht eintragen.',
     )
     await expect(page.getByTestId('aktionsleiste')).toHaveCount(0)
   })
@@ -226,11 +226,11 @@ test.describe('Ergebnis eines Termins', () => {
     expect(welt.detailabrufe).toHaveLength(0)
   })
 
-  test('nennt bei einem geplanten Termin den Zeitpunkt, ab dem das Ergebnis geht', async ({ page }) => {
+  test('sagt bei einem geplanten Termin, wann das Ergebnis geht', async ({ page }) => {
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102 })])
     await ergebnisseNachbilden(page, welt)
     await page.goto('/ergebnisse/102')
-    await expect(page.getByTestId('ergebnis-noch-nicht')).toContainText('30 Minuten nach Beginn')
+    await expect(page.getByTestId('ergebnis-noch-nicht')).toContainText('sobald der Termin abgeschlossen ist')
     await expect(page.getByTestId('aktionsleiste')).toHaveCount(0)
   })
 })

@@ -6,13 +6,13 @@
 >
 > Repository: **eigenständig mit Wurzel in `client/`** (GitHub, öffentlich, `FuBo-Client`), Branch `dev_client`. **Kein Monorepo**; das Backend
 > liegt in `FuBo-Server`. `PRJ_FuBo/`, `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
-> **Stand: 17.10.2026.** C0, C1, C3 abgeschlossen; C2, C4 und C5 umgesetzt (C6 ist in C5 aufgegangen). **C5 ist committet (`e9a85e6`), nicht
-> gepusht.** Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen: Handprüfung gegen den echten Server, iPhone; **WebKit-Projekte seit 18.10.2026 abgeschaltet** (siehe 5.4); Verifikation 5.2, nächste Schritte 6.
-> Nächster Meilenstein: **C7** (Admin-Verwaltung und Admin-Dashboard, Teil 1); die Umsetzungsanleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor
-> (drei Stufen, **27,5 h**). Die Stufen 4 und 5 (21,5 h) wurden am 18.10.2026 als **C8** ausgelagert (`harness/tmp/C8_UMSETZUNG.md`);
-> PWA/Push heisst seither **C9**, Abnahme/Deployment **C10**. Entscheidungen E1–E22 vom Entwickler noch zu bestätigen.
-> **Komprimierte Fassung vom 17.10.2026.** Die ausführliche Vorfassung liegt in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17c.md`, ältere
-> Fassungen ebenfalls in `archive/` (zuletzt `…-10-17b.md` vor C5, `…-10-17.md` vor C4, `…-10-04c.md` vor Abschluss C3).
+> **Stand: 18.10.2026.** C0, C1, C3 abgeschlossen; C2, C4, C5 und **C7** umgesetzt (C6 ist in C5 aufgegangen). **C5 ist committet (`e9a85e6`), nicht
+> gepusht; C7 ist umgesetzt und nicht committet** (Commit je Stufe auf Aufforderung). Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen: Handprüfung gegen den echten Server
+> (C5, C7), iPhone; **WebKit-Projekte seit 18.10.2026 abgeschaltet** (siehe 5.4); Verifikation 5.2, nächste Schritte 6.
+> Nächster Meilenstein: **C8** (Admin-Verwaltung, Teil 2: Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams, **21,5 h**); die Anleitung
+> `harness/tmp/C8_UMSETZUNG.md` liegt vor. PWA/Push heisst **C9**, Abnahme/Deployment **C10**. Die Entscheidungen E1–E22 von C7 wurden als bestätigt behandelt (2.).
+> **Komprimierte Fassung vom 18.10.2026.** Die Vorfassung (Stand vor C7) liegt in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-18c.md`, ältere
+> Fassungen ebenfalls in `archive/` (zuletzt `…-10-17c.md` vor C5, `…-10-17.md` vor C4, `…-10-04c.md` vor Abschluss C3).
 
 ---
 
@@ -71,7 +71,7 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
 - **Befund (E5):** Die drei Admin-Login-Endpunkte (`/auth/admin/anmelden`, `/auth/passwort/zuruecksetzen`, `/auth/passwort/bestaetigen`) verlangen `PIN_VERIFIED`,
   `/admin/passwort/aendern` die Rolle `ADMIN`. Der Einstieg „Als Admin anmelden" (`namensauswahl-admin-link`) steht **nur in der Namensauswahl**; die drei
   Admin-Login-Ansichten liegen hinter `LoginSchrittRoute schritt="name"`; „Zurück" führt zur Namensauswahl bzw. je einen Schritt zurück.
-- **E1:** Nach der Admin-Anmeldung `/admin` (Platzhalter bis C7, mit Link `admin-passwort-aendern-link`); `zielFuerStufe` kennt `istAdmin`.
+- **E1:** Nach der Admin-Anmeldung `/admin` (in C4 ein Platzhalter mit Link `admin-passwort-aendern-link`, seit C7 das Dashboard, Link `admin-link-passwort`); `zielFuerStufe` kennt `istAdmin`.
 - **E2/E3:** Reset in zwei Ansichten (`PasswortVergessen`, `PasswortNeu`), ein Formular für PIN und neues Passwort, **keine Wiederholung** (das Auge ist die
   einzige Kontrolle); 10–72 Zeichen, keine Zeichenklassen.
 - **E4:** Neutraler `Hinweis` über dem Formular der Zielseite (nach Reset auf der Admin-Anmeldung, nach Passwortwechsel auf der PIN-Eingabe) über
@@ -112,6 +112,32 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
 - **Häkchen im Kreis grün (18.10.2026):** `Icon` kennt `EIGENFARBEN`; `check_circle_icon` ist überall `var(--farbe-erfolg)` (TerminKarte „Abgeschlossen“, VerlaufListe, Zusagestatus, PasswortRegeln), unabhängig von der Umgebungsfarbe. Test in `Icon.test.tsx`.
 - **Kreuz im Kreis rot (18.10.2026):** `cancel_circle_icon_red` ist ebenso in `EIGENFARBEN` (`var(--farbe-fehler)`). Bis dahin nutzte der Code die graue Fassung `cancel_circle_icon_dark` (Zusagestatus „Du hast abgesagt“ schwarz, PasswortRegeln „Noch offen“ grau); beide Stellen verwenden jetzt `_red`. **Folge in `PasswortRegeln`:** Offene Regeln zeigen ein rotes Kreuz neben grauem Text, auch bevor etwas eingegeben wurde. `_dark` ist ungenutzt, die Datei bleibt.
 
+**Admin-Verwaltung, Teil 1 (C7, 18.10.2026; E1–E22 als bestätigt behandelt)** – Anleitung `harness/tmp/C7_UMSETZUNG.md`; drei Stufen, je grün:
+- **Ein Hub, keine Tab-Leiste (E1/E2):** `/admin` ist das Dashboard (Teilnehmerübersicht des nächsten Termins **lesend** über `TerminAnsicht nurLesen`: kein Zusagestatus, keine Leiste, keine Verweise
+  auf Teams/Ergebnisse) plus `Verwaltungsliste`. „Zurück" führt immer auf einen festen Pfad (`handle.zurueck`: `/admin`, `/admin/profile`, `/admin/termine`); Pfade nur in `ADMIN_PFADE`.
+  Bis C8 führen „Gastplätze", „Konfiguration" und „Teams ohne Termin" auf Platzhalter.
+- **Ordnung (E3):** Admin-Hooks in `src/hooks/admin/`, API-Dateien nach Thema (`adminProfile.ts`, `adminTermine.ts`, `skills.ts`, `terminEingabe.ts`; `admin.ts` für Zugangsdaten), Seiten flach `src/pages/Admin…`.
+- **Lesen (E4):** Admin-Abfragen ohne Polling, ohne `X-FuBo-Kein-Refresh`, `refetchOnWindowFocus: false`. Ausnahmen: Dashboard und Terminliste mit `useTermine`/`useVerlauf`; die Verwaltungsansicht
+  `useTermin(terminId, 0)` (Kopf, **kein** Polling; `TerminAnsicht` hat dafür `ohneAktualisierung`). Schreibende Admin-Aufrufe tragen keinen Kopf.
+- **`DATEN_VERALTET` (E5):** Das Formular setzt auf den frisch gelesenen Stand zurück (`key={termin.version}`), der Text sagt es, **nie** mit neuer `version` und alten Eingaben senden. Die Mutation liegt im
+  Elternbaustein (`TerminVerwaltung`), damit Meldung, „Gespeichert." und Fokus den Neuaufbau überleben.
+- **Zentrale PIN (E19):** vier Stellen, Dialog **vor** dem Senden (alle Angemeldeten werden abgemeldet), nach `204` räumt der Client auf (`sitzungsendeAusloesen` mit Hinweis).
+  **Anmeldename (E20):** zwei Ansichten (`/admin/name/aendern`, `/admin/name/bestaetigen`), 5-stellige PIN, Link „Ich habe bereits eine PIN", fester Satz statt Restzeit; `NAME_PIN_FALSCH` beendet die Sitzung **nicht**,
+  nach Erfolg bleibt sie, Hinweis „gilt ab der nächsten Anmeldung". Ein `400 felder.neuePin` schliesst den PIN-Dialog und zeigt den Text am Feld.
+- **Profile (E6–E8):** Skillfelder aus `GET /admin/skills/lesen` (nichts fest verdrahtet; Anlegen mit gerundeter Mitte **sichtbar** vorbelegt, alle Kategorien im Körper; Bearbeiten nur Geändertes); unvollständige
+  Karte in der Liste gekennzeichnet; **Skillwerte nur in `AdminProfilFormular`**, nie in Liste oder Spieleransichten. Sperren ohne Dialog, ausser das Profil ist `belegt`; Entfernen immer mit Dialog,
+  `PROFIL_IN_VERWENDUNG` ⇒ „Stattdessen sperren"; Adminprofil ohne Formular und Aktionen. Das Profilformular nutzt „Zustand beim Rendern anpassen" statt `key`.
+- **Termine (E9–E12):** Liste mit zwei unabhängigen Abschnitten („Kommende" `useTermine`, „Vergangene" `useVerlauf`), die kommende Liste gegen den Verlauf entdoppelt (Uhr einmal beim Einhängen gelesen).
+  Anlegen in einem Formular mit Umschalter Einzeltermin/Serie (Radiogruppe); Serie: Dialog „nicht mehr änderbar", Wochentag ohne Vorauswahl, `SerieErgebnis` mit angelegter Zahl und Übersprungenen (der Absatz zu den
+  Übersprungenen steht immer da); `TERMIN_BELEGT` mit festem UI-Text am Uhrzeitfeld. Ändern diffbasiert (`aenderungKoerper`; `""` leert den Ort), Speichern erst bei einer Änderung. Absagen (`/admin/termin/absagen`, ohne
+  `version`) und Abschliessen (`aendern` mit `status`) mit Dialog und Folgen; Entfernen nur für `GEPLANT`/`ABGESAGT`, `TERMIN_IN_VERWENDUNG` ⇒ Hinweis und „Stattdessen absagen" (nur bei `GEPLANT`). Nach einem Statuswechsel
+  liegt der Fokus auf der Überschrift der Karte. Eine Serie lässt sich nach dem Anlegen nicht mehr ändern, ihre Termine einzeln schon.
+- **Verschoben nach C8:** Skill-Stufe eines Gastes, Konfiguration, Gastverwaltung, Hallenabsage, Ergebniskorrektur, manuelle Teamgenerierung (E13–E18). **Push-Probeversand** → C9 (E21). **Meilensteinplan** (E22): C7 27,5 h, C8 21,5 h.
+- **Abweichungen von der Anleitung (zur Kenntnis):** Alias `admin-passwort-aendern-link` durch `admin-link-passwort` ersetzt; Tippfehler „Ruckmeldung" → „Rückmeldung" und Anpassung von 6 Unit- und 4 E2E-Erwartungen
+  an die Textänderungen des Entwicklers; „Gespeichert." und die Fokusrückgabe liegen im Elternbaustein; Status „Geplant" mit `info_circle_icon`; `refetchOnWindowFocus` für `useTermin` ist **nicht** abgeschaltet
+  (ein neuer Stand beim Zurückkehren baut das Formular neu auf, E5); der Konflikt in den E2E-Tests entsteht über den Helfer `fremdeAenderung` statt über eine zweite Seite (der Zustand liegt im Testprozess, das Ergebnis
+  ist gleich); Aktionen ohne Wirkung sind `aria-disabled` mit Grund statt `disabled`. **DESIGN.md (Abweichungen aus 1.3 der Anleitung) ist dem Entwickler zur Übernahme vorzulegen** (nicht im Repository).
+
 ## 3. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`. Kontrakt-Kopie `client/harness/assets/fubo-api.json` (**45 Operationen**, am 18.10.2026 erneut mit `server/fubo-api.json` abgeglichen, byteweise identisch);
 Generat `src/api/common/types/schema.d.ts` (`npm run api:typen`). Neu gegenüber 44: `POST /admin/name/bestaetigen`; `POST /admin/name/aendern` antwortet `202`
@@ -145,8 +171,8 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026.
 | C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **umgesetzt** (17.10.); offen Handprüfung gegen den echten Server; WebKit abgeschaltet |
 | C5 | Termin & Teilnahme, User-Dashboard, Teams, Ergebnisse, Verlauf (C6 aufgegangen) | 31,5 | **umgesetzt und committet** (`e9a85e6`, 17.10.); offen Handprüfung, iPhone, WebKit im CI |
 | C6 | (in C5 aufgegangen) | – | entfällt |
-| C7 | Admin-Verwaltung und Admin-Dashboard, Teil 1 (Rahmen, Zugang, Profile, Termine) | **27,5** (Plan bisher 20, ursprünglich 49 für C7 gesamt) | Anleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor; Umsetzung offen |
-| C8 | Admin-Verwaltung, Teil 2 (Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams); am 18.10.2026 aus C7 ausgelagert | **21,5** | Anleitung `harness/tmp/C8_UMSETZUNG.md` liegt vor; setzt C7 voraus; Umsetzung offen |
+| C7 | Admin-Verwaltung und Admin-Dashboard, Teil 1 (Rahmen, Zugang, Profile, Termine) | **27,5** (Plan bisher 20, ursprünglich 49 für C7 gesamt) | **umgesetzt** (18.10., drei Stufen grün), **nicht committet**; offen Handprüfung 12.3–12.12 der Anleitung, Sichtprüfung 360 px mit Tastatur |
+| C8 | Admin-Verwaltung, Teil 2 (Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams); am 18.10.2026 aus C7 ausgelagert | **21,5** | Anleitung `harness/tmp/C8_UMSETZUNG.md` liegt vor; C7 ist die Voraussetzung und steht; Umsetzung offen |
 | C9 | PWA-Onboarding & Push (A25) (bisher C8) | 14 | offen |
 | C10 | Abnahme, WCAG 2.1 AA, Deployment (bisher C9) | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
 
@@ -163,7 +189,7 @@ Summe 164,5 h (C7 und C8 zusammen mit 49 statt 20 h; C5 und C6 = 26 h geplant, 3
   `src/api/ergebnis/` (`ergebnisErfassen`, `ergebnisText.ts`/`ergebnisSatz`); `src/api/bilanz/bilanz.ts`.
 - **Query-Client** (`src/app/queryClient.ts`): Wiederholung nur bei `≥ 500`, Mutationen nie; `istSitzungsende` leert den Cache und ruft den `SitzungsWaechter`.
 - **Routing** (`src/app/`): `routen.tsx`; Guards `LoginSchrittRoute`, `GeschuetzteRoute`, `AdminRoute`; `zielpfad.ts`; `routenAngaben.ts`. Alle vier Tab-Routen sind ausgebaut,
-  der Platzhalter dient nur noch `/einstellungen` und `/admin`.
+  der Platzhalter dient nur noch `/einstellungen` und den C8-Einträgen `/admin/gaeste`, `/admin/konfiguration`, `/admin/teams`.
 - **Hooks:** `useSitzung`, `useVerbindung`, `useSitzungswechsel`, `usePinPruefen`, `useNamensliste` (Polling 5 s mit Kopf), `useNameWaehlen` (liest bei `NAME_BELEGT` neu),
   `useGastAnmelden`, `useRestlaufzeit`, `useSitzungErneuern`, `useAbmelden`, `useSperre`, `useNavigationsHinweis`, `useAdminAnmelden`, `usePasswortAnfordern`,
   `usePasswortBestaetigen`, `usePasswortAendern`; C5: `useTermine` (Polling), `useTermin`, `useRueckmeldung`, `useBegonnen`, `useTerminParameter`, `useTeamsGenerieren`,
@@ -174,11 +200,19 @@ Summe 164,5 h (C7 und C8 zusammen mit 49 statt 20 h; C5 und C6 = 26 h geplant, 3
   `Fortschrittsbalken`, `Icon`, `Ladespinner`, `Leerzustand`, `OfflineHinweis`, `Platzhalter`, `PinFeld`, `PasswortFeld`, `PasswortRegeln`, `Hinweis`, `Textlink`, `Restzeitbalken`;
   C5: `TabLeiste`, `TerminKarte`, `Zusagestatus`, `Teilnehmerliste`, `RueckmeldungLeiste`, `TerminAnsicht`, `WeitereTermine`, `TeamsAnzeige`, `TeamsLeiste`, `BilanzKarte`,
   `ErgebnisAnzeige`, `ErgebnisFormular`, `VerlaufListe`.
+- **C7 – Datenzugriff:** `src/api/admin/` (`admin.ts` Zugang; `adminProfile.ts`: lesen, anlegen, bearbeiten, blockieren, entfernen; `skills.ts`: `mitte`, `skillZahl`, `skillsVollstaendig`, `skillsAenderung`,
+  `profilAenderung`; `adminTermine.ts`: `terminAnlegen`, `serieAnlegen`, `terminAendern`, `terminAbsagen`, `terminEntfernen`; `terminEingabe.ts`: Grenzen, `anlegenKoerper`, `aenderungKoerper`, `serieKoerper`, `serieFehler`,
+  `liegtInVergangenheit`, `alsSerie`); `terminZeit.ts` neu `datumListe`; Schlüssel `adminProfile`, `adminSkills`. **Hooks** in `src/hooks/admin/`: `usePinAendern`, `useNameAnfordern`, `useNameBestaetigen`, `useProfile`,
+  `useSkillKategorien`, `useProfilAnlegen/-Bearbeiten/-Blockieren/-Entfernen`, `useTerminAnlegen/-Aendern/-Absagen/-Entfernen`, `useSerieAnlegen`, `termineNeuLesen` (Gruppe `termine`, `terminAlle`, `termineVerlauf`, als
+  Versprechen zurückgegeben); dazu `useSpielerParameter`. **Seiten:** `AdminDashboard`, `AdminPin`, `AdminNameAendern`, `AdminNameBestaetigen`, `AdminProfile`, `AdminProfilFormular` (mit `ProfilStatus`),
+  `AdminTermine`, `AdminTerminNeu` (mit `SerieFelder`), `AdminTerminDetail` (mit `TerminVerwaltung`, `TerminAendernFormular`, `WeitereAktionen`). **Bausteine:** `Bestaetigung`, `Verwaltungsliste`, `SkillFelder`, `ProfilListe`/`ProfilZeile`,
+  `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; `TerminAnsicht` neu `nurLesen`, `ohneAktualisierung`, `ueberschriftRef`; `TerminKarte` neu `ueberschriftRef`.
 - **Test-Stub und Mocks:** `src/test/setup.ts` (jsdom-`<dialog>`); `src/test/mocks/termine.ts` (zustandsbehafteter Server `terminHandlers()`, `terminModell`, `teamsAus`,
-  `beispielErgebnis`, `beispielBilanz`), `problem.ts`; E2E-Nachbildungen `e2e/hilfen/{sitzung,termine,teams,ergebnisse}.ts`.
+  `beispielErgebnis`, `beispielBilanz`; `TerminModell` mit `version`, `serieId`), `problem.ts`, **`admin.ts`** (zustandsbehaftet: `adminWelt()`, `adminHandler()`, `protokoll`, `fremdeAenderung()`, `terminInVerwendung`);
+  E2E-Nachbildungen `e2e/hilfen/{sitzung,termine,teams,ergebnisse,admin}.ts` (`adminNachbilden`, `terminverwaltungNachbilden`, `beispielProfile`).
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests (Stand nach C5):** 638 Unit-Tests in 83 Dateien; E2E u. a. `admin.spec.ts` (16 Fälle), `layout.spec.ts`, `sitzung-ablauf.spec.ts` (15 Fälle), `namensauswahl.spec.ts`,
-  `pwa.spec.ts` (nur Chromium), `termine`, `tabs`, `teams`, `ergebnisse`, `verlauf`. CI: Job `pruefen` (Lint, Typen, Bau, Unit) und Job `e2e` (**nur Chromium, 3 Projekte, 321 Läufe**; die vier WebKit-Projekte sind seit 18.10.2026 abgeschaltet, 5.4).
+- **Tests (Stand nach C7):** **975 Unit-Tests in 111 Dateien**; E2E **453 Läufe in 3 Chromium-Projekten** (450 bestanden, 3 übersprungen), neu `admin-dashboard`, `admin-zugang`, `admin-profile`, `admin-termine`, `admin-layout`. Früherer Stand (C5): 638 Unit-Tests in 83 Dateien; E2E u. a. `admin.spec.ts` (16 Fälle), `layout.spec.ts`, `sitzung-ablauf.spec.ts` (15 Fälle), `namensauswahl.spec.ts`,
+  `pwa.spec.ts` (nur Chromium), `termine`, `tabs`, `teams`, `ergebnisse`, `verlauf`. CI: Job `pruefen` (Lint, Typen, Bau, Unit) und Job `e2e` (**nur Chromium, 3 Projekte, 453 Läufe**; die vier WebKit-Projekte sind seit 18.10.2026 abgeschaltet, 5.4).
 
 ### 5.2 Verifikation
 Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
@@ -190,6 +224,13 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
   ohne Bestätigung, Bilanzkarte für Gast, abgesagter Termin als Link, Verlauf mit Polling/ohne Kopf); **äquivalente Mutation:** `deutlich` bei `U` ungefiltert senden (zwei Riegel).
   Sichtprüfung bei 360 × 780 über die Layout-Fälle der E2E-Specs, nicht per Auge.
   **Nicht geprüft:** WebKit-Projekte (abgeschaltet, 5.4), Handprüfung gegen den echten Server, iPhone, Bilanz für GAST am echten Server, Reihenfolge der Teilnehmerliste nach Absage und Zusage.
+- **C7 (18.10.2026), je Stufe grün:** `lint` (inkl. `e2e/`), `typecheck --force`, **975 Unit-Tests** (Seiten 285, Hooks/API/App 395, Bausteine/Layouts 295), Bau, ein `fetch(` (`httpService.ts`), kein Hexwert ausserhalb der
+  Tokendatei, keine verwaisten `/admin`-Pfade im Code, Skillwerte nur in Profilformular, `adminProfile.ts`, `skills.ts`, Profilliste (nur „unvollständig"-Kennzeichen) und Mocks, **keine** in Spieleransichten;
+  **E2E-Vollauf 447 bestanden, 3 übersprungen** (Cloud-Kopie, 3 Chromium-Projekte; gutartige ECONNREFUSED-Proxyzeilen von nicht nachgebildeten Aufrufen), danach die Layout-Schleife `admin-layout.spec.ts` (alle Admin-Pfade bei 360 × 780, 3 Läufe) einzeln grün. **Gegenproben** (Skript `test-results/gegenproben.py`, wertet „failed" aus):
+  M2 (alle Kategorien statt Geändertem; 15 Unit- und 3 E2E-Läufe rot), M3 (`key={version}` fehlt; 3 rot), M4 (Polling an beiden Stellen; je ≥ 1 rot), M5 (Sperrdialog entfällt; 2 rot), M8 (`NAME_PIN_FALSCH` beendet die Sitzung; 5 rot),
+  M9 (`mutate` + `onSuccess` statt `mutateAsync` bei Anlegen, Termin entfernen, Profil entfernen; je ≥ 1 rot), M10 (Absatz zu den Übersprungenen entfällt; 2 rot), M14 (`terminAlle` nicht neu gelesen; 6 rot) – alle Mutanten erkannt, keiner äquivalent.
+  **Nicht geprüft:** Handprüfung 12.3–12.12 der Anleitung gegen den echten Server (zentrale PIN, Anmeldename mit E-Mail, Profile, Serie mit Kollision, Konflikt mit zwei Browsern, Abschliessen und Ergebnisse, Entfernen), Sichtprüfung bei 360 px
+  mit geöffneter Tastatur (die E2E-Fälle prüfen Überhang und Tap-Ziele bei 360 px, nicht die Tastatur), iPhone.
 
 ### 5.3 Fallen, die aufgetreten sind
 - **Ein `202` ohne Rumpf** hätte `aufrufen` (`json()` auf leerem Rumpf) abstürzen lassen; `202`/`204` zentral als „kein Rumpf".
@@ -218,6 +259,18 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
 - **C5 – MSW:** der erste passende Handler gewinnt, `mockServer.use()` stellt voran; `onUnhandledRequest: 'error'` macht fehlende Handler sichtbar.
 - **C5 – Uhr im Render** ist unter `react-hooks` v7 ein Lintfehler; Tests mit Datum relativ zu heute (Verlauf liest nur 60 Tage).
 - **C5 – Aktionsleiste und Dialog:** Leiste = letztes Kind der Seite; geschlossener `<dialog>` in ihrem Behälter; `aria-disabled` hält den Fokus.
+- **C7 – `mutateAsync` auch beim Anlegen absichern:** Hängt eine Seite beim Neulesen aus (Entfernen eines Termins/Profils, Termin ändert Status), gehen `mutate(…, { onSuccess })`-Rückrufe verloren. Regressionstests hängen die Seite
+  absichtlich aus (Hülle mit `useTermine`/Listenabfrage, die das Formular nach dem Anlegen entfernt).
+- **C7 – Eine Mutation endet erst mit dem Neulesen** (`termineNeuLesen` gibt das Versprechen zurück): Hook- und Seitentests brauchen beobachtete Abfragen daneben, sonst wird nichts neu gelesen und die Mutation endet zu früh.
+- **C7 – `mockServer.use(a, b)`:** der erste Handler im Aufruf gewinnt, spätere Aufrufe stellen voran; dasselbe gilt für `page.route` (zuletzt angemeldet gewinnt). Reihenfolge der Prüfungen im Mock `aendern`:
+  404, `TERMIN_GESCHLOSSEN`, `DATEN_VERALTET`, 400, `TERMIN_BELEGT`.
+- **C7 – Fokus nach einem Statuswechsel:** Mit dem Wechsel verschwinden die Aktionen samt Auslöser, der Dialog gibt den Fokus an ein Element zurück, das es nicht mehr gibt. Lösung: Merker (`useRef`) plus erzwungener Render,
+  Effekt fokussiert die Überschrift der Karte (`ueberschriftRef`, `tabIndex={-1}`); ohne den erzwungenen Render läuft der Effekt nicht mehr, wenn der neue Stand vor dem Aufruf eintraf.
+- **C7 – `key={version}` baut das Formular neu auf:** „Gespeichert." und der Fokus auf „Speichern" müssen im Elternbaustein liegen (Zustand + Rückrufe mit `useCallback`).
+- **C7 – Geschlossene `<dialog>` bleiben im DOM:** Tests prüfen `not.toBeVisible()`, nicht `not.toBeInTheDocument()`; einen Dialog, der mit dem Erfolg samt Abschnitt verschwindet, ausgenommen.
+- **C7 – Die Uhr nicht im Render:** `min` der Datumsfelder und „heute" über `useState(() => heuteIso(new Date()))`, `Date.now()` nur in Absenden-Handlern; die Vergangenheitsprüfung läuft beim Absenden.
+- **C7 – `Auswahlliste` im E2E:** `selectOption` geht nicht (Combobox); Auslöser klicken, dann `<test-id>-option-<wert>`.
+- **C7 – `tsc -b` aus `client/` starten**, nicht aus `src/`; **grosse Heredocs** mit device-bash scheitern an `spawn E2BIG` (Dateien in Teilen schreiben); Löschen im verbundenen Ordner ist gesperrt (Sicherungsdateien der Gegenproben nach `test-results/sicherung/`, nicht in `src/`).
 - **C5 – E2E-Nachbildung ohne Termin-Route** leitet `GET /termine/:id/lesen` an den Vorschau-Server (HTML): Tests auf `teams/:id`/`ergebnisse/:id` brauchen `termineNachbilden`.
 
 ### 5.4 Bewusst offen
@@ -231,7 +284,10 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
 - „nicht gefunden" liest beim Direkteinstieg keine Sitzung; der Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
 - **C4:** `PasswortFeld` kürzt längere Passwörter beim Einfügen still (`maxLength` 72, folgt dem Vertrag/BCrypt); läuft die `PIN_VERIFIED`-Sitzung beim Warten auf die Reset-E-Mail ab, ist der
   `navigate`-Zustand weg, der Vorgang auf dem Server aber gültig (Weg: PIN → Name → „Als Admin anmelden" → „Passwort vergessen?" → „Ich habe bereits eine PIN"); Verhalten auf iOS (`one-time-code`,
-  Passwortmanager, Kleinschreibung) nur per Handprüfung. Die Namensänderung (`/admin/name/*`) ist noch nicht angebunden → C7.
+  Passwortmanager, Kleinschreibung) nur per Handprüfung. Die Namensänderung (`/admin/name/*`) ist seit C7 angebunden.
+- **C7:** Die Gültigkeitsdauer der Namens-PIN steht nicht im Vertrag (Satz im UI ohne Zahl: „nur kurz gültig, fünf Versuche"); für die Handprüfung notieren und beim Server anfragen. `useTermin` liest beim Zurückkehren in den Tab
+  neu (`refetchOnWindowFocus` nicht abgeschaltet): hat sich die `version` geändert, baut sich das offene Formular neu auf (E5, Eingaben gehen verloren). Die kommende Terminliste wird einmal beim Einhängen gegen den Verlauf entdoppelt
+  (die Uhr läuft danach nicht weiter). Ein Serienlauf mit mehr als 52 Terminen scheitert am Server; der Client prüft das Zählen vor dem Senden nicht, sondern zeigt die Serverzahl.
 - **Leerlauf-Fenster ≤ 2 Minuten** (Konfiguration erlaubt ab 1): Der Ablauf-Dialog erschiene nach jedem Verlängern sofort wieder. Vorschlag: Mindestwert im Server anheben (z. B. 5 Minuten) oder
   Warnzeit als Anteil des Fensters.
 - **Die Geräteuhr bestimmt, wann der Dialog erscheint** (Server liefert nur Zeitpunkte); abgemeldet wird nur auf Anweisung des Servers. Verbesserung über den `Date`-Header möglich.
@@ -247,17 +303,18 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
   haben keine eigene Ansicht in DESIGN.md.
 
 ## 6. Nächste Schritte
-1. **Push von `dev_client`** (C5 ist committet, `e9a85e6`) und CI-Lauf nur mit Chromium (nach der Abschaltung der WebKit-Projekte, 5.4); **WebKit-Ursache klären** (Trace aus dem Artefakt `playwright-report`, ggf. lokal `WEBKIT_E2E=1 npx playwright test`).
+1. **C7 committen (auf Aufforderung, je Stufe oder gesammelt) und `dev_client` pushen** (C5 ist committet, `e9a85e6`; Löschfreigabe für die Sperrdateien in `.git`) und CI-Lauf nur mit Chromium (nach der Abschaltung der WebKit-Projekte, 5.4); **WebKit-Ursache klären** (Trace aus dem Artefakt `playwright-report`, ggf. lokal `WEBKIT_E2E=1 npx playwright test`).
 2. **Handprüfung C5 gegen eine laufende Serverinstanz** (5.2 „Nicht geprüft"; C5-Anleitung 12): Zusage/Absage und Reihenfolge, Teams generieren (Kontingent, Ersetzen, `veraltet`, Beginn), Termin 10 Minuten
    in der Zukunft anlegen und 30–35 Minuten nach Beginn Ergebnis erfassen (zwei Geräte → Hinweis), Bilanz für Spieler und Gast, Verlauf, iPhone. Danach den Hinweistext für `false → true` festlegen.
-   Mit C7 Stufe 3 wird ein Teil davon ohne Wartezeit möglich (Termin abschließen).
+   Seit C7 Stufe 3 geht ein Teil davon ohne Wartezeit (Termin abschliessen; Teams vorher generieren, mindestens `minTeilnehmer` Zusagen).
 3. **C4 abnehmen** (Handprüfung, iPhone, Passwortmanager).
-4. **C7 beginnen** nach Bestätigung der Entscheidungen E1–E22 (`harness/tmp/C7_UMSETZUNG.md`): drei Stufen (Rahmen/Dashboard/Zugang 8 h, Profile 8,5 h, Termine 11 h), je Stufe grün und einzeln
-   committet (auf Aufforderung). Dazu gehört die Namensänderung des Admins. **Danach C8** (`harness/tmp/C8_UMSETZUNG.md`): Konfiguration/Gastplätze/Gast-Stufe 10,5 h,
-   Halle/Ergebniskorrektur/manuelle Teams 11 h; dazu gehört die Ergebnis-Korrektur.
+4. **C7 abnehmen:** Handprüfung 12.3–12.12 der Anleitung gegen eine laufende Serverinstanz (zentrale PIN mit zweitem Gerät, Anmeldename mit E-Mail und Dauer der Namens-PIN notieren, Profile inkl. Sperren eines angemeldeten
+   Spielers, Termine/Serie mit Kollision, Konflikt mit zwei Browsern, Abschliessen, Entfernen); Sichtprüfung bei 360 px mit geöffneter Tastatur (Dashboard, PIN, Name, Liste, Formulare, alle Dialoge); DESIGN.md-Abweichungen
+   aus 1.3 dem Entwickler vorlegen. **Danach C8** (`harness/tmp/C8_UMSETZUNG.md`): Konfiguration/Gastplätze/Gast-Stufe 10,5 h, Halle/Ergebniskorrektur/manuelle Teams 11 h; dazu gehört die Ergebnis-Korrektur
+   (`ergebnisKorrigieren` liegt in `admin.ts`, die Ansicht fehlt) und die Skill-Stufe eines Gastes.
 5. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS); iPhone-/iPad-Layout von Hand, solange WebKit abgeschaltet ist.
 6. **Server-Track:** Vertragslücke freie Gastplätze (3); Verhalten von `GET /bilanz/lesen` für Gäste klären; Kontingent der Teamgenerierung in der Antwort anbieten; Anfragen aus C7 und C8 (1.4 der C7- und der C8-Anleitung:
-   ADMIN-Lesezugriff auf `/termine/*`, Gast-Stufe lesbar, Mindestwert Leerlauf, Gültigkeit der Namens-PIN).
+   ADMIN-Lesezugriff auf `/termine/*`, Gast-Stufe lesbar, Mindestwert Leerlauf), **Gültigkeitsdauer der Namens-PIN dokumentieren** (offen aus C7).
 7. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus, `FUBO_INITIAL_PIN` vierstellig.
 8. **Aufräumen** (nur im lokalen Terminal; die Agentenumgebung darf es ohne Freigabe nicht): `PRJ_FuBo/_zu_loeschen/e2e-kopie.tgz`, verwaiste `.git/objects/tmp_obj_*`, übrige Sperrdateien.
 

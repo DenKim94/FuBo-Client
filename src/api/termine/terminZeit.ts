@@ -44,6 +44,22 @@ export function datumKurz(datum: string): string {
 }
 
 /**
+ * Datum für die Terminliste des Admins: „Di., 20.10.“ (Wochentag kurz, Tag und Monat zweistellig).
+ *
+ * Der Wochentag kommt aus `Intl` ohne Punkt und bekommt **immer genau einen**; ältere und neuere
+ * ICU-Daten schreiben das „Di.“ verschieden.
+ *
+ * @param datum Datum `YYYY-MM-DD`.
+ */
+export function datumListe(datum: string): string {
+  const [jahr, monat, tag] = datumsteile(datum)
+  const wochentag = new Intl.DateTimeFormat('de-DE', { weekday: 'short' })
+    .format(new Date(jahr, monat - 1, tag, 12))
+    .replace(/\.$/, '')
+  return `${wochentag}., ${String(tag).padStart(2, '0')}.${String(monat).padStart(2, '0')}.`
+}
+
+/**
  * Datum ausgeschrieben für Screenreader: „Dienstag, 29. Juli“.
  *
  * @param datum Datum `YYYY-MM-DD`.

@@ -19,7 +19,7 @@ test.describe('Dashboard: naechster Termin', () => {
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102 })])
     await page.goto('/')
 
-    await expect(page.getByTestId('termin-zusagestatus')).toContainText('Noch nicht gemeldet.')
+    await expect(page.getByTestId('termin-zusagestatus')).toContainText('Anmeldung ausstehend.')
     await expect(page.getByTestId('termin-balken-text')).toHaveText('8 Zusagen – Mindestanzahl von 6 erreicht')
     // Ohne Warteschlange keine Platzzahl; Karte, Status und Balken stehen in einem Rahmen.
     await expect(page.getByTestId('termin-wartesatz')).toHaveCount(0)
@@ -139,7 +139,7 @@ test.describe('Beginn und Server-Entscheidung', () => {
     // Nach dem Fehler wird neu gelesen: Der fremde Stand erscheint, ohne dass jemand neu laedt.
     await expect(page.getByTestId('termin-balken-text')).toHaveText('9 Zusagen – Mindestanzahl von 6 erreicht')
     // Der eigene Stand bleibt unveraendert: nicht gemeldet, die Aktion steht wieder bereit.
-    await expect(page.getByTestId('termin-zusagestatus')).toContainText('Noch nicht gemeldet.')
+    await expect(page.getByTestId('termin-zusagestatus')).toContainText('Anmeldung ausstehend.')
     await expect(page.getByTestId('rueckmeldung-zusagen')).toBeEnabled()
   })
 
