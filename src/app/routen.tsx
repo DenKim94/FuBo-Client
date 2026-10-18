@@ -126,7 +126,7 @@ export const routen = createBrowserRouter([
           // (A25d), weil die zugehoerigen Endpunkte dort mit `403` antworten.
           {
             path: 'einstellungen',
-            element: <Platzhalter titel="Einstellungen" paket="C8" />,
+            element: <Platzhalter titel="Einstellungen" paket="C9" />,
             handle: ZUM_DASHBOARD,
           },
 

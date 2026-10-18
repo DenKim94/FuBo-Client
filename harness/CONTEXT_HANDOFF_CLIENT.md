@@ -8,8 +8,9 @@
 > liegt in `FuBo-Server`. `PRJ_FuBo/`, `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
 > **Stand: 17.10.2026.** C0, C1, C3 abgeschlossen; C2, C4 und C5 umgesetzt (C6 ist in C5 aufgegangen). **C5 ist committet (`e9a85e6`), nicht
 > gepusht.** Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen: Handprüfung gegen den echten Server, iPhone; **WebKit-Projekte seit 18.10.2026 abgeschaltet** (siehe 5.4); Verifikation 5.2, nächste Schritte 6.
-> Nächster Meilenstein: **C7** (Admin-Verwaltung und Admin-Dashboard); die Umsetzungsanleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor
-> (fünf Stufen, **49 h** statt 20 h, Entscheidungen E1–E22 vom Entwickler noch zu bestätigen).
+> Nächster Meilenstein: **C7** (Admin-Verwaltung und Admin-Dashboard, Teil 1); die Umsetzungsanleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor
+> (drei Stufen, **27,5 h**). Die Stufen 4 und 5 (21,5 h) wurden am 18.10.2026 als **C8** ausgelagert (`harness/tmp/C8_UMSETZUNG.md`);
+> PWA/Push heisst seither **C9**, Abnahme/Deployment **C10**. Entscheidungen E1–E22 vom Entwickler noch zu bestätigen.
 > **Komprimierte Fassung vom 17.10.2026.** Die ausführliche Vorfassung liegt in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-17c.md`, ältere
 > Fassungen ebenfalls in `archive/` (zuletzt `…-10-17b.md` vor C5, `…-10-17.md` vor C4, `…-10-04c.md` vor Abschluss C3).
 
@@ -88,7 +89,7 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
 - **Teams:** `POST /teams/generieren` ohne Kopf; Ersetzen einer **aktuellen** Einteilung fragt nach; Kontingent nur über `409 KONTINGENT_ERSCHOEPFT` (Seite merkt sich
   `teilnehmerVersion`, sperrt per `aria-disabled` bis zur Änderung, E15); `veraltet` versteckt nichts. Nach `TEAMS_FIXIERT`/`TERMIN_GESCHLOSSEN` und `404` liest der Hook
   den Termin neu (Erweiterung gegenüber der Vorgabe).
-- **Ergebnis:** Der **erste Eintrag gilt**, nicht löschbar (Korrektur nur Admin, `ergebnisKorrigieren` im Datenzugriff und Mock, Ansicht → C7). Radiogruppe „Wer hat
+- **Ergebnis:** Der **erste Eintrag gilt**, nicht löschbar (Korrektur nur Admin, `ergebnisKorrigieren` im Datenzugriff und Mock, Ansicht → C8). Radiogruppe „Wer hat
   gewonnen?" und Haken „Deutlicher Sieg" (bei `U` gesperrt und zurückgesetzt; `ergebnisErfassen` sendet dann `false`). Bestätigungsdialog mit `ergebnisSatz`.
   `409 ERGEBNIS_VORHANDEN` = Hinweis „Das Ergebnis war bereits erfasst; es gilt der erste Eintrag." (E17). Fokus nach Abschluss auf die Überschrift der Anzeige.
   Zustandsmatrix: Anzeige / Formular / „Keine Einteilung" / „erst nach Abschluss" / „abgesagt". Bilanz **nicht für Gäste**; dreimal `0` ⇒ „Noch keine Spiele gewertet.".
@@ -115,7 +116,7 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
 Siehe `AGENT_CLIENT.md`. Kontrakt-Kopie `client/harness/assets/fubo-api.json` (**45 Operationen**, am 18.10.2026 erneut mit `server/fubo-api.json` abgeglichen, byteweise identisch);
 Generat `src/api/common/types/schema.d.ts` (`npm run api:typen`). Neu gegenüber 44: `POST /admin/name/bestaetigen`; `POST /admin/name/aendern` antwortet `202`
 (Namensänderung mit E-Mail-PIN, Client-Seite in C7). `202` ohne Rumpf liefert `aufrufen` wie `204` als `undefined` (mit Gegenprobe). `servers` im Vertrag nennt
-`https://tunnel-fubo-app.{domain}`; `AGENT.md`/Hosting-Notizen sprechen noch von `api.<domain>` – bei C9 klären; der Client nutzt `VITE_API_BASE_URL`.
+`https://tunnel-fubo-app.{domain}`; `AGENT.md`/Hosting-Notizen sprechen noch von `api.<domain>` – bei C10 klären; der Client nutzt `VITE_API_BASE_URL`.
 
 **Vertragsänderung vom 18.10.2026 (nur Beschreibungen, keine neuen Operationen oder Schemas; Generat neu erzeugt, nur Kommentare):**
 - `GET /termine/lesen`: Ohne `ab` liefert der Server **alle** Termine, auch vergangene (vorher „ab heute“). Folge im Client: `useTermine` ruft jetzt mit `ab` = heute
@@ -144,11 +145,12 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026.
 | C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **umgesetzt** (17.10.); offen Handprüfung gegen den echten Server; WebKit abgeschaltet |
 | C5 | Termin & Teilnahme, User-Dashboard, Teams, Ergebnisse, Verlauf (C6 aufgegangen) | 31,5 | **umgesetzt und committet** (`e9a85e6`, 17.10.); offen Handprüfung, iPhone, WebKit im CI |
 | C6 | (in C5 aufgegangen) | – | entfällt |
-| C7 | Admin-Verwaltung und Admin-Dashboard | **49** (Plan bisher 20) | Anleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor; Umsetzung offen |
-| C8 | PWA-Onboarding & Push (A25) | 14 | offen |
-| C9 | Abnahme, WCAG 2.1 AA, Deployment | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
+| C7 | Admin-Verwaltung und Admin-Dashboard, Teil 1 (Rahmen, Zugang, Profile, Termine) | **27,5** (Plan bisher 20, ursprünglich 49 für C7 gesamt) | Anleitung `harness/tmp/C7_UMSETZUNG.md` liegt vor; Umsetzung offen |
+| C8 | Admin-Verwaltung, Teil 2 (Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams); am 18.10.2026 aus C7 ausgelagert | **21,5** | Anleitung `harness/tmp/C8_UMSETZUNG.md` liegt vor; setzt C7 voraus; Umsetzung offen |
+| C9 | PWA-Onboarding & Push (A25) (bisher C8) | 14 | offen |
+| C10 | Abnahme, WCAG 2.1 AA, Deployment (bisher C9) | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
 
-Summe 164,5 h (C7 mit 49 statt 20 h; C5 und C6 = 26 h geplant, 31,5 h veranschlagt). C1 bis C8 sind nicht blockiert (Server S0–S8 vollständig).
+Summe 164,5 h (C7 und C8 zusammen mit 49 statt 20 h; C5 und C6 = 26 h geplant, 31,5 h veranschlagt). C1 bis C9 sind nicht blockiert (Server S0–S8 vollständig).
 
 ## 5. Code-Zustand
 
@@ -250,10 +252,11 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
    in der Zukunft anlegen und 30–35 Minuten nach Beginn Ergebnis erfassen (zwei Geräte → Hinweis), Bilanz für Spieler und Gast, Verlauf, iPhone. Danach den Hinweistext für `false → true` festlegen.
    Mit C7 Stufe 3 wird ein Teil davon ohne Wartezeit möglich (Termin abschließen).
 3. **C4 abnehmen** (Handprüfung, iPhone, Passwortmanager).
-4. **C7 beginnen** nach Bestätigung der Entscheidungen E1–E22 (`harness/tmp/C7_UMSETZUNG.md`): fünf Stufen (Rahmen/Dashboard/Zugang 8 h, Profile 8,5 h, Termine 12,5 h, Konfiguration/Gastplätze 9 h,
-   Halle/Ergebniskorrektur/manuelle Teams 11 h), je Stufe grün und einzeln committet (auf Aufforderung). Dazu gehören Ergebnis-Korrektur und Namensänderung des Admins.
+4. **C7 beginnen** nach Bestätigung der Entscheidungen E1–E22 (`harness/tmp/C7_UMSETZUNG.md`): drei Stufen (Rahmen/Dashboard/Zugang 8 h, Profile 8,5 h, Termine 11 h), je Stufe grün und einzeln
+   committet (auf Aufforderung). Dazu gehört die Namensänderung des Admins. **Danach C8** (`harness/tmp/C8_UMSETZUNG.md`): Konfiguration/Gastplätze/Gast-Stufe 10,5 h,
+   Halle/Ergebniskorrektur/manuelle Teams 11 h; dazu gehört die Ergebnis-Korrektur.
 5. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS); iPhone-/iPad-Layout von Hand, solange WebKit abgeschaltet ist.
-6. **Server-Track:** Vertragslücke freie Gastplätze (3); Verhalten von `GET /bilanz/lesen` für Gäste klären; Kontingent der Teamgenerierung in der Antwort anbieten; Anfragen aus C7 (1.4 der C7-Anleitung:
+6. **Server-Track:** Vertragslücke freie Gastplätze (3); Verhalten von `GET /bilanz/lesen` für Gäste klären; Kontingent der Teamgenerierung in der Antwort anbieten; Anfragen aus C7 und C8 (1.4 der C7- und der C8-Anleitung:
    ADMIN-Lesezugriff auf `/termine/*`, Gast-Stufe lesbar, Mindestwert Leerlauf, Gültigkeit der Namens-PIN).
 7. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus, `FUBO_INITIAL_PIN` vierstellig.
 8. **Aufräumen** (nur im lokalen Terminal; die Agentenumgebung darf es ohne Freigabe nicht): `PRJ_FuBo/_zu_loeschen/e2e-kopie.tgz`, verwaiste `.git/objects/tmp_obj_*`, übrige Sperrdateien.

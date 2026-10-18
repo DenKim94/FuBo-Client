@@ -27,7 +27,7 @@ type LeerzustandEigenschaften = {
  * **Trägt immer Grund und nächsten Schritt**, nie nur „Keine Daten“: Eine leere
  * Fläche lässt offen, ob noch geladen wird, etwas kaputt ist oder es wirklich
  * nichts gibt. Deshalb sind `titel` und `text` Pflicht. Die fachlichen Texte
- * kommen aus den Paketen C5 bis C8.
+ * kommen aus den Paketen C5 bis C9.
  *
  * Ohne `role`: Ein Leerzustand ist ein Ergebnis, kein Ereignis, und soll nicht
  * wie ein Fehler vorgelesen werden.
