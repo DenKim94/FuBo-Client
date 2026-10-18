@@ -669,9 +669,9 @@ export interface paths {
         };
         /**
          * Terminliste lesen
-         * @description Liefert die Termine ab einem Stichtag in zeitlicher Reihenfolge – je Termin die Stammdaten, die Zahl der Zusagen und die eigene Rückmeldung. Erreichbar ab der Stufe `PROFILE_AUTHENTICATED`, **auch für Gäste**: Ein Gast, der Termine nicht sieht, kann nicht zusagen, und der Gast-Login aus A8 wäre ohne Zweck.
+         * @description Liefert die Termine in zeitlicher Reihenfolge, auf Wunsch ab einem Stichtag – je Termin die Stammdaten, die Zahl der Zusagen und die eigene Rückmeldung. Erreichbar ab der Stufe `PROFILE_AUTHENTICATED`, **auch für Gäste**: Ein Gast, der Termine nicht sieht, kann nicht zusagen, und der Gast-Login aus A8 wäre ohne Zweck.
          *
-         *     **Vergangene Termine sind nicht enthalten**, solange sie nicht über `ab` angefragt werden. Das hält die Antwort klein und macht die Historie trotzdem erreichbar; S6 wird sie für die Ergebnisanzeige brauchen.
+         *     **Ohne `ab` sind alle Termine enthalten, auch vergangene** – die Liste beginnt dann beim ältesten Eintrag und enthält keine Untergrenze. Mit `ab` beginnt sie an diesem Tag. Die Antwort wächst damit mit der Zahl der Termine; ein Client, der nur kommende Termine anzeigen will, setzt `ab` auf den heutigen Tag.
          *
          *     **Abgesagte Termine bleiben in der Liste.** Der Spieler soll sehen, dass sein Training ausfällt, statt einen Termin vorzufinden, der spurlos verschwunden ist – `status` unterscheidet sie.
          */
@@ -969,7 +969,7 @@ export interface paths {
          *
          *     **Der Endpunkt liegt bewusst nicht unter `/admin/`.** Wer einträgt, ist der, der mit dem Telefon auf dem Platz steht – auch ein `GAST`. „Der erste Eintrag gilt" ergibt nur einen Sinn, wenn mehrere es versuchen dürfen. Korrigieren darf danach nur der Admin.
          *
-         *     **Zwei Vorbedingungen:** Der Termin ist `ABGESCHLOSSEN` (er wechselt 30 Minuten nach Beginn selbsttätig dorthin, A18), und es gibt eine Teameinteilung – ohne sie hätte das Ergebnis keine beteiligten Spieler.
+         *     **Zwei Vorbedingungen:** Der Termin ist `ABGESCHLOSSEN` (er wechselt 30 Minuten nach Beginn selbsttätig dorthin, A18 – war die Mindestzahl an Zusagen nicht erreicht, wird er stattdessen `ABGESAGT`), und es gibt eine Teameinteilung – ohne sie hätte das Ergebnis keine beteiligten Spieler.
          *
          *     **Die Bilanz aller Eingeteilten wird im selben Vorgang neu berechnet.** Gäste führen keine; der Auswechselspieler zählt mit.
          *
@@ -1821,8 +1821,8 @@ export interface components {
          * @description Zustand eines Termins (`spieltag.termin.status`).
          *
          *     - `GEPLANT` – der Regelfall. Nur in diesem Zustand lässt sich der Termin ändern oder absagen, und nur hier nimmt er Rückmeldungen an.
-         *     - `ABGESAGT` – **endgültig**. Es gibt keinen Weg zurück nach `GEPLANT`: Die Zusagen dazwischen sind unbrauchbar geworden. Wer den Termin doch braucht, **entfernt ihn und legt ihn neu an** – ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig.
-         *     - `ABGESCHLOSSEN` – der Termin hat stattgefunden. **Der Server setzt diesen Wert 30 Minuten nach Terminbeginn selbst** (A18), wenn bis dahin nicht abgesagt wurde; der Admin kann ihn über `/admin/termin/aendern` auch früher setzen. Der Übergang findet beim nächsten Lauf des Aufräumauftrags statt, also zwischen 30 und 35 Minuten nach Beginn.
+         *     - `ABGESAGT` – **endgültig**. Es gibt keinen Weg zurück nach `GEPLANT`: Die Zusagen dazwischen sind unbrauchbar geworden. Wer den Termin doch braucht, **entfernt ihn und legt ihn neu an** – ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig. **Den Wert setzt auch der Server selbst:** Hat ein geplanter Termin 30 Minuten nach Beginn weniger Zusagen als `minTeilnehmer`, wird er `ABGESAGT` statt `ABGESCHLOSSEN` (A18) – ohne dass jemand abgesagt hat und ohne Push-Nachricht. Die Rückmeldungen bleiben stehen; ein Ergebnis lässt sich für ihn nicht erfassen.
+         *     - `ABGESCHLOSSEN` – der Termin hat stattgefunden. **Der Server setzt diesen Wert 30 Minuten nach Terminbeginn selbst** (A18), wenn bis dahin nicht abgesagt wurde **und die Mindestzahl an Zusagen erreicht ist** (`minTeilnehmer`, gezählt werden Zusagen, keine Absagen); der Admin kann ihn über `/admin/termin/aendern` auch früher setzen. Der Übergang findet beim nächsten Lauf des Aufräumauftrags statt, also zwischen 30 und 35 Minuten nach Beginn.
          *
          *     **Der Status ist nicht der Torwächter für Rückmeldungen.** Ob noch zu- oder abgesagt werden darf, entscheidet die Uhrzeit des Termins (A7): Zwischen Beginn und Abschluss liegen 30 Minuten, in denen der Status noch `GEPLANT` ist und trotzdem niemand mehr melden kann.
          * @enum {string}
@@ -3720,7 +3720,7 @@ export interface operations {
     termineLesen: {
         parameters: {
             query?: {
-                /** @description Stichtag im Format `YYYY-MM-DD`; enthalten sind Termine **ab** diesem Tag einschließlich. Vorgabe ist der heutige Tag in der Zeitzone der Anwendung. */
+                /** @description Stichtag im Format `YYYY-MM-DD`; enthalten sind Termine **ab** diesem Tag einschließlich. Fehlt der Parameter, gibt es keine Untergrenze: Die Liste beginnt beim ältesten Termin. */
                 ab?: string;
             };
             header?: never;
@@ -3729,7 +3729,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Die Termine ab dem Stichtag, nach Datum und Uhrzeit sortiert. Leere Liste, wenn keiner passt. */
+            /** @description Die Termine ab dem Stichtag – ohne Stichtag alle Termine –, nach Datum und Uhrzeit sortiert. Leere Liste, wenn keiner passt. */
             200: {
                 headers: {
                     [name: string]: unknown;

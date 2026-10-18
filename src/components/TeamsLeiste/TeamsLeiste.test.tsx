@@ -29,7 +29,6 @@ function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeo
       veraltet={false}
       mindestzahlErreicht
       minTeilnehmer={6}
-      zusagen={8}
       begonnen={false}
       gesperrtDurchKontingent={false}
       beiErfolg={beiErfolg}
@@ -51,7 +50,6 @@ describe('TeamsLeiste', () => {
           veraltet={false}
           mindestzahlErreicht
           minTeilnehmer={6}
-          zusagen={8}
           begonnen={false}
           gesperrtDurchKontingent={false}
           beiErfolg={() => {}}
@@ -108,13 +106,13 @@ describe('TeamsLeiste', () => {
   })
 
   test('sperrt ohne Mindestzahl mit Grund aus Server-Werten und tut beim Tipp nichts', async () => {
-    const { welt } = rendern({ mindestzahlErreicht: false, minTeilnehmer: 6, zusagen: 4 })
+    const { welt } = rendern({ mindestzahlErreicht: false, minTeilnehmer: 6 })
     const knopf = screen.getByTestId('teams-generieren')
 
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
     // Nicht `disabled`: Der Fokus bleibt erreichbar, der Grund wird vorgelesen.
     expect(knopf).not.toBeDisabled()
-    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Es braucht mindestens 6 Zusagen, aktuell 4.')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Mindestens 6 Zusagen sind erforderlich.')
     expect(knopf).toHaveAttribute('aria-describedby', screen.getByTestId('teams-grund').id)
 
     await userEvent.click(knopf)
@@ -133,8 +131,8 @@ describe('TeamsLeiste', () => {
   })
 
   test('nennt zuerst die fehlende Mindestzahl, wenn beides zutrifft', () => {
-    rendern({ mindestzahlErreicht: false, gesperrtDurchKontingent: true, zusagen: 3 })
-    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Es braucht mindestens')
+    rendern({ mindestzahlErreicht: false, gesperrtDurchKontingent: true })
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Zusagen sind erforderlich')
   })
 
   test('zeigt nach begonnenem Termin nur „Die Einteilung steht fest.“', () => {
@@ -209,7 +207,6 @@ describe('TeamsLeiste', () => {
           veraltet={false}
           mindestzahlErreicht
           minTeilnehmer={6}
-          zusagen={8}
           begonnen={false}
           gesperrtDurchKontingent={false}
           beiErfolg={() => {}}

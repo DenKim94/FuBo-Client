@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
+import { heuteIso } from '@/api/termine/terminZeit'
 import { useTermin } from '@/hooks/useTermin'
 import { useTermine } from '@/hooks/useTermine'
 import { beispielTermine, terminHandlers, terminModell } from '@/test/mocks/termine'
@@ -27,8 +28,22 @@ describe('useTermine', () => {
     await waitFor(() => expect(welt.protokoll.listenabrufe.length).toBeGreaterThanOrEqual(3))
     // Sonst hielte allein das Polling die Sitzung am Leben (Falle aus C3).
     expect(welt.protokoll.listenabrufe.every((kopf) => kopf === 'true')).toBe(true)
-    // Das Dashboard fragt nie nach vergangenen Terminen: kein `ab`.
-    expect(welt.protokoll.stichtage.every((ab) => ab === null)).toBe(true)
+    // Ohne `ab` lieferte der Server alle Termine (Vertrag, 18.10.2026): Das Dashboard
+    // fragt immer ab heute.
+    expect(welt.protokoll.stichtage.every((ab) => ab === heuteIso(new Date()))).toBe(true)
+  })
+
+  test('zeigt keine vergangenen Termine', async () => {
+    const welt = terminHandlers([
+      terminModell({ terminId: 90, datum: '2020-01-06', status: 'ABGESAGT' }),
+      terminModell({ terminId: 91, datum: '2020-01-13', status: 'ABGESCHLOSSEN' }),
+      terminModell({ terminId: 102 }),
+    ])
+    mockServer.use(...welt.handlers)
+
+    const { result } = renderHook(() => useTermine(), { wrapper: QueryUmgebung })
+
+    await waitFor(() => expect(result.current.data?.map((t) => t.terminId)).toEqual([102]))
   })
 
   test('zeigt eine Aenderung am Server ohne Zutun der Ansicht', async () => {

@@ -22,8 +22,6 @@ type TeamsLeisteEigenschaften = {
   mindestzahlErreicht: boolean
   /** Server-Wert für den Grund-Text. */
   minTeilnehmer: number
-  /** Anzahl der Zusagen für den Grund-Text. */
-  zusagen: number
   /** Der Termin hat begonnen: keine Aktion mehr, die Einteilung steht fest (E8). */
   begonnen: boolean
   /** Der Server hat für diese `teilnehmerVersion` `KONTINGENT_ERSCHOEPFT` gemeldet (E15). */
@@ -72,7 +70,6 @@ export default function TeamsLeiste({
   erzeugtVon,
   mindestzahlErreicht,
   minTeilnehmer,
-  zusagen,
   begonnen,
   gesperrtDurchKontingent,
   beiKontingentErschoepft,
@@ -97,7 +94,7 @@ export default function TeamsLeiste({
   // Reihenfolge der Gründe: Die fehlende Mindestzahl ist behebbar durch Zusagen, das Kontingent durch Zeit und Änderung.
   let grund: string | null = null
   if (!mindestzahlErreicht) {
-    grund = `Es braucht mindestens ${String(minTeilnehmer)} Zusagen, aktuell ${String(zusagen)}.`
+    grund = `Mindestens ${String(minTeilnehmer)} Zusagen sind erforderlich.`
   } else if (gesperrtDurchKontingent) {
     grund =
       'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.'

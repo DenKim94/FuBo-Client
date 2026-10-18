@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { schluessel } from '@/api/common/schluessel'
 import { termineLesen, type TerminUebersicht } from '@/api/termine/termine'
+import { heuteIso } from '@/api/termine/terminZeit'
 
 /**
  * Abstand zwischen zwei Abrufen der Termine in Millisekunden (E6).
@@ -19,6 +20,12 @@ export const TERMINE_INTERVALL_MS = 20_000
  * selbst. Ohne den Kopf verlängerte allein die offene Ansicht die Sitzung, und
  * der Ablauf-Dialog käme nie (Falle aus C3).
  *
+ * **Stichtag heute (`ab`):** Seit der Vertragsänderung vom 18.10.2026 liefert
+ * `GET /termine/lesen` ohne `ab` **alle** Termine, auch vergangene. Das Dashboard
+ * will nur heutige und kommende; ohne `ab` füllte sich `abgesagtDavor` (siehe
+ * `naechsterTermin`) mit allen alten Absagen. Der Stichtag wird je Abruf in
+ * `queryFn` gebildet, nicht im Render – so wandert er über Mitternacht mit.
+ *
  * @param intervallMs Abstand der Abrufe; nur für Tests abweichend vom Standard.
  * @returns Das Abfrageobjekt; `data` ist die Liste in der Reihenfolge des Servers.
  */
@@ -27,7 +34,7 @@ export function useTermine(
 ): UseQueryResult<TerminUebersicht[], Error> {
   return useQuery({
     queryKey: schluessel.termine,
-    queryFn: () => termineLesen({ keinRefresh: true }),
+    queryFn: () => termineLesen({ ab: heuteIso(new Date()), keinRefresh: true }),
     refetchInterval: intervallMs,
     // Jede Anzeige soll den aktuellen Stand holen, nicht den von vor 30 Sekunden.
     staleTime: 0,

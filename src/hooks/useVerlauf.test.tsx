@@ -92,8 +92,8 @@ describe('useVerlauf', () => {
 
     await queryClient.invalidateQueries({ queryKey: schluessel.termine })
 
-    // Genau ein weiterer Abruf, und zwar ohne Stichtag: der der Terminliste.
+    // Genau ein weiterer Abruf, und zwar mit dem Stichtag heute: der der Terminliste.
     expect(w.protokoll.stichtage.length).toBe(vorher + 1)
-    expect(w.protokoll.stichtage.at(-1)).toBeNull()
+    expect(w.protokoll.stichtage.at(-1)).toBe(heuteIso(new Date()))
   })
 })

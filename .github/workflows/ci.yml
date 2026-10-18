@@ -24,7 +24,7 @@ jobs:
       - run: npm test
 
   e2e:
-    name: End-to-End (Chromium und WebKit)
+    name: End-to-End (Chromium)
     # Erst wenn Lint, Typen und Unit-Tests stehen: Die E2E-Suite ist der teuerste
     # Schritt und sagt bei einem Typfehler nichts Neues.
     needs: pruefen
@@ -40,14 +40,14 @@ jobs:
 
       - run: npm ci
 
-      # Beide Engines: Chromium fuer die Android- und Desktop-Projekte samt
-      # Service Worker, WebKit fuer die iPhone- und iPad-Projekte. Der WebKit-Build
-      # braucht unter Linux zusaetzliche Systembibliotheken (`--with-deps`).
-      # Anlass fuer WebKit in CI: Am 03.10.2026 standen die PIN-Kaestchen nur in
-      # Safari untereinander – ein Fehler, den reine Chromium-Laeufe nicht sehen.
-      - run: npx playwright install --with-deps chromium webkit
+      # Nur Chromium: Die vier WebKit-Projekte sind seit dem 18.10.2026 abgeschaltet
+      # (siehe `playwright.config.ts`, `WEBKIT_E2E`). Anlass fuer WebKit war der
+      # 03.10.2026: Die PIN-Kaestchen standen nur in Safari untereinander. Zum
+      # Wiedereinschalten `webkit` hier ergaenzen (`--with-deps chromium webkit`)
+      # und `WEBKIT_E2E: '1'` am Testschritt setzen.
+      - run: npx playwright install --with-deps chromium
 
-      # Alle sieben Geraeteprojekte. Ohne Server: Die Layout-Tests brauchen keine
+      # Die drei Chromium-Projekte. Ohne Server: Die Layout-Tests brauchen keine
       # API, die Namensauswahl bildet sie im Browser nach (`page.route`).
       - run: npx playwright test
 

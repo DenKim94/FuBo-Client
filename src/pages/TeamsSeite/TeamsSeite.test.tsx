@@ -153,7 +153,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
     const welt = rendern('/teams/102', terminModell({ terminId: 102, min: 20 }))
     const knopf = await screen.findByTestId('teams-generieren')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
-    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Es braucht mindestens 20 Zusagen, aktuell 8.')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Mindestens 20 Zusagen sind erforderlich.')
 
     await userEvent.click(knopf)
     expect(welt.protokoll.generierungen).toHaveLength(0)

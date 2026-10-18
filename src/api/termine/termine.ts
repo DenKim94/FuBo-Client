@@ -19,8 +19,10 @@ export type TerminStatus = components['schemas']['TerminStatus']
 /** Optionen von {@link termineLesen}. */
 export type TermineLesenOptionen = {
   /**
-   * Stichtag `YYYY-MM-DD`: liefert auch vergangene Termine ab diesem Tag
-   * (Verlauf). Ohne Angabe gilt „heute“ in der Zeitzone der Anwendung.
+   * Stichtag `YYYY-MM-DD` (einschließlich): untere Grenze der Liste. **Ohne Angabe
+   * gibt es keine Untergrenze** – die Liste beginnt beim ältesten Termin und
+   * enthält alle vergangenen (Vertrag, Stand 18.10.2026; vorher „ab heute“).
+   * Wer nur kommende Termine zeigt, setzt `ab` auf heute (`useTermine`).
    */
   ab?: string
   /** Hintergrundabruf: verlängert das gleitende Sitzungsfenster nicht (Polling). */
@@ -31,10 +33,16 @@ export type TermineLesenOptionen = {
  * Liest die Termine (`GET /termine/lesen`, Stufe `PROFILE_AUTHENTICATED`, auch GAST).
  *
  * Die Liste kommt **aufsteigend nach Beginn** sortiert und enthält abgesagte
- * Termine (`status = ABGESAGT`), damit niemand ins Leere läuft. Ohne `ab` fehlen
- * die vergangenen. **`ab` ist eine untere Grenze ohne Obergrenze und ohne Limit:**
- * Wer vergangene Termine will, bekommt auch alle künftigen und filtert selbst
+ * Termine (`status = ABGESAGT`), damit niemand ins Leere läuft. **Ohne `ab` sind
+ * auch alle vergangenen enthalten, die Antwort wächst mit der Zahl der Termine.**
+ * `ab` ist eine untere Grenze ohne Obergrenze und ohne Limit: Wer vergangene
+ * Termine will, bekommt auch alle künftigen und filtert selbst
  * (`vergangeneTermine`).
+ *
+ * **`ABGESAGT` setzt auch der Server selbst:** Hat ein geplanter Termin 30 Minuten
+ * nach Beginn weniger Zusagen als `minTeilnehmer`, wird er `ABGESAGT` statt
+ * `ABGESCHLOSSEN` – ohne Push-Nachricht, die Rückmeldungen bleiben, ein Ergebnis
+ * lässt sich nicht erfassen.
  *
  * @param optionen Stichtag und Schalter für Hintergrundabrufe; beides optional.
  */

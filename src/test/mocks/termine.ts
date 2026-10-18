@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw'
 import type { components } from '@/api/common/types/schema'
-import { beginnVon, heuteIso } from '@/api/termine/terminZeit'
+import { beginnVon } from '@/api/termine/terminZeit'
 import { problem } from './problem'
 
 type TerminUebersicht = components['schemas']['TerminUebersicht']
@@ -214,7 +214,8 @@ export type TerminProtokoll = {
  * erhöht `teilnehmerVersion`. Ein Termin, der nicht `GEPLANT` ist oder dessen
  * Beginn zurückliegt, antwortet `409 TERMIN_GESCHLOSSEN`.
  *
- * Ohne `ab` liefert die Liste ab heute, mit `ab` ab diesem Tag – wie der Server.
+ * Ohne `ab` liefert die Liste **alle** Termine, mit `ab` ab diesem Tag – wie der Server
+ * (Vertrag, Stand 18.10.2026; vorher „ab heute“).
  *
  * @param modelle Die Termine der nachgebildeten Welt; Reihenfolge wie vom Server (aufsteigend).
  */
@@ -235,8 +236,8 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
       const ab = new URL(request.url).searchParams.get('ab')
       protokoll.listenabrufe.push(request.headers.get('X-FuBo-Kein-Refresh'))
       protokoll.stichtage.push(ab)
-      const stichtag = ab ?? heuteIso(new Date())
-      return HttpResponse.json(modelle.filter((m) => m.datum >= stichtag).map(uebersichtVon))
+      const liste = ab ? modelle.filter((m) => m.datum >= ab) : modelle
+      return HttpResponse.json(liste.map(uebersichtVon))
     }),
 
     http.get('*/termine/:terminId/lesen', ({ params, request }) => {

@@ -141,7 +141,6 @@ function TeamsTermin({ terminId }: { terminId: number }) {
           erzeugtVon={teams?.erzeugtVon}
           mindestzahlErreicht={liste.mindestzahlErreicht}
           minTeilnehmer={liste.minTeilnehmer}
-          zusagen={termin.zusagen}
           begonnen={begonnen}
           gesperrtDurchKontingent={kontingentBei !== null && kontingentBei === termin.teilnehmerVersion}
           beiKontingentErschoepft={() =>
@@ -161,7 +160,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
     inhalt = (
       <Leerzustand
         titel="Termin nicht gefunden"
-        text="Dieser Termin existiert nicht mehr. Vielleicht wurde er entfernt."
+        text="Dieser Termin existiert nicht mehr."
         aktion={
           <Textlink to={LOGIN_PFADE.start} data-testid="teams-nicht-gefunden-zurueck">
             Zum Dashboard

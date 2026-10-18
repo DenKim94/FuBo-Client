@@ -129,7 +129,7 @@ test.describe('Tab Teams', () => {
     await teamsNachbilden(page, welt)
     await page.goto('/teams')
 
-    await expect(page.getByTestId('teams-grund')).toContainText('Es braucht mindestens 6 Zusagen, aktuell 4.')
+    await expect(page.getByTestId('teams-grund')).toContainText('Mindestens 6 Zusagen sind erforderlich.')
     await expect(page.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
     // `force`: Playwright haelt `aria-disabled` fuer „nicht bedienbar“; ein Finger tippt trotzdem.
     await page.getByTestId('teams-generieren').click({ force: true })
