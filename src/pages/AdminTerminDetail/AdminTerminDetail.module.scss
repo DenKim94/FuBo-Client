@@ -39,10 +39,3 @@
   color: var(--farbe-text-schwach);
   line-height: var(--zeilenhoehe);
 }
-
-.aktionen {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--abstand-s);
-}

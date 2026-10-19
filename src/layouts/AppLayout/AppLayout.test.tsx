@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
-import { RouterProvider, createMemoryRouter } from 'react-router'
+import { RouterProvider, createMemoryRouter, type Params } from 'react-router'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import type { SitzungZustand } from '@/hooks/useSitzung'
@@ -45,6 +45,12 @@ function layoutRendern(...eintraege: string[]) {
           { path: 'termine', element: <p>Termine</p> },
           { path: 'teams', element: <p>Teams</p> },
           { path: 'ergebnis', element: <p>Ergebnis</p>, handle: { zurueck: '/teams' } },
+          {
+            path: 'profil/:id/bearbeiten',
+            element: <p>Profil bearbeiten</p>,
+            handle: { zurueck: (p: Params) => `/profil/${p.id ?? ''}` },
+          },
+          { path: 'profil/:id', element: <p>Profilansicht</p> },
         ],
       },
     ],
@@ -123,6 +129,15 @@ describe('AppLayout', () => {
 
     expect(await screen.findByText('Teams')).toBeInTheDocument()
   })
+  test('das Ziel aus handle darf eine Funktion der Routenparameter sein', async () => {
+    verlaufsindexSetzen(1)
+    layoutRendern('/anmelden', '/profil/7/bearbeiten')
+
+    fireEvent.click(screen.getByTestId('layout-zurueck'))
+
+    expect(await screen.findByText('Profilansicht')).toBeInTheDocument()
+  })
+
   describe('Abmelden', () => {
     test('zeigt ohne Anmeldung keine Abmelden-Schaltflaeche', () => {
       // Login-Schritte und Admin-Anmeldung: Es gibt nichts abzumelden.

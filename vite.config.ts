@@ -73,8 +73,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,woff2}', 'icons/visibility_{on,off}_dark.png'],
       },
       devOptions: {
-        // Service Worker auch unter `npm run dev` pruefbar.
-        enabled: true,
+        // Service Worker unter `npm run dev` nur auf Wunsch (`npm run dev:pwa`). Sein fetch-Listener liegt vor jeder
+        // der rund 240 Modulanfragen des Dev-Servers; gemessen verlaengert das jedes Neuladen um 60-90 %
+        // (18.10.2026). Gebraucht wird er in der Entwicklung nur, um den Worker selbst zu pruefen (Offline-Seite,
+        // Aktualisierungshinweis, Push). E2E laeuft gegen `vite preview` und ist davon nicht betroffen.
+        enabled: process.env.PWA_DEV === '1',
         type: 'module',
         navigateFallback: 'index.html',
       },

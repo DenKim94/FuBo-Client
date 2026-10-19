@@ -18,6 +18,7 @@ const PFADE = [
   '/admin/profile',
   '/admin/profile/neu',
   '/admin/profile/1',
+  '/admin/profile/1/bearbeiten',
   '/admin/profile/2',
   '/admin/profile/99',
   '/admin/termine',

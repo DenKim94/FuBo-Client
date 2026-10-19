@@ -39,24 +39,17 @@ button.aktion {
   min-block-size: var(--tapziel-primaer);
 }
 
-// Abschnitt „Status“: Sperren und Entfernen, getrennt von den Feldern.
+// Abschnitt „Status“: Schalter und Entfernen, getrennt von den Feldern.
 .status {
   display: flex;
   flex-direction: column;
-  gap: var(--abstand-m);
-  padding-block-start: var(--abstand-m);
-  border-block-start: 1px solid var(--farbe-rand);
-}
-
-.statusTitel {
-  font-size: var(--schrift-basis);
-  font-weight: var(--gewicht-halbfett);
+  gap: var(--abstand-l);
 }
 
 .statusZeile {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--abstand-s);
 }
 

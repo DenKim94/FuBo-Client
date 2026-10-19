@@ -1,0 +1,77 @@
+@use '@/styles/globalVars';
+
+// Maße der Spur (lokal): 52 × 32 px mit einem Knopf von 24 px, wie im Prototyp.
+$spur-breite: 3.25rem;
+$spur-hoehe: 2rem;
+$knopf: 1.5rem;
+$rand: 0.25rem;
+
+.karte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-l);
+  background: var(--farbe-hintergrund);
+}
+
+.schalter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--abstand-m);
+  min-block-size: 3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--farbe-text);
+  text-align: start;
+}
+
+.schalter[aria-disabled='true'] {
+  cursor: progress;
+}
+
+.beschriftung {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Die Spur ist an der Farbe **und** an der Lage des Knopfs zu erkennen; der Zustand steht außerdem als Text daneben.
+.spur {
+  position: relative;
+  flex: none;
+  inline-size: $spur-breite;
+  block-size: $spur-hoehe;
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: 999px;
+  background: var(--farbe-flaeche-kraeftig);
+}
+
+.spurAn {
+  border-color: var(--farbe-primaer);
+  background: var(--farbe-primaer);
+}
+
+.knopf {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: $rand;
+  inline-size: $knopf;
+  block-size: $knopf;
+  border-radius: 999px;
+  background: var(--farbe-rand-bedienbar);
+  transform: translateY(-50%);
+}
+
+.spurAn .knopf {
+  inset-inline-start: calc(100% - #{$knopf} - #{$rand});
+  background: var(--farbe-primaer-kontrast);
+}
+
+.erklaerung {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+  line-height: var(--zeilenhoehe);
+}

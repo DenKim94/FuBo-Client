@@ -63,11 +63,21 @@ describe('AdminTerminNeu – Einzeltermin', () => {
   test('zeigt Überschrift, die Art-Auswahl mit „Einzeltermin“ als Vorgabe und die Felder', () => {
     rendern()
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Termin anlegen' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Neuer Termin' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Art' })).toBeInTheDocument()
     expect(screen.getByTestId('admin-art-einzel')).toBeChecked()
     expect(screen.getByTestId('admin-art-serie')).not.toBeChecked()
     expect(screen.getByTestId('termin-datum')).toHaveAttribute('min', heuteIso(new Date()))
+  })
+
+  test('„Abbrechen“ führt ohne Senden zur Terminliste', async () => {
+    const welt = rendern()
+    einzelFuellen()
+
+    await userEvent.click(screen.getByTestId('admin-termin-neu-abbrechen'))
+
+    expect(await screen.findByTestId('ziel')).toHaveTextContent('/admin/termine')
+    expect(welt.protokoll.terminAngelegt).toHaveLength(0)
   })
 
   test('ohne Datum und Uhrzeit ist der Knopf aria-disabled mit Grund und sendet nichts', async () => {
@@ -169,12 +179,22 @@ describe('AdminTerminNeu – Serie', () => {
   async function serieFuellen() {
     await userEvent.click(screen.getByTestId('admin-art-serie'))
     await userEvent.type(screen.getByTestId('serie-titel'), 'Beispielserie')
-    await userEvent.click(screen.getByTestId('serie-wochentag'))
-    await userEvent.click(screen.getByTestId('serie-wochentag-option-2'))
+    await userEvent.click(screen.getByTestId('serie-wochentag-2'))
     eintragen('serie-uhrzeit', '20:00')
     eintragen('serie-startdatum', '2099-01-01')
     eintragen('serie-enddatum', '2099-01-20')
   }
+
+  test('der Wochentag wird als Segment gewählt, genau eines ist gewählt', async () => {
+    rendern()
+    await userEvent.click(screen.getByTestId('admin-art-serie'))
+
+    await userEvent.click(screen.getByTestId('serie-wochentag-4'))
+    await userEvent.click(screen.getByTestId('serie-wochentag-2'))
+
+    expect(screen.getByTestId('serie-wochentag-2')).toBeChecked()
+    expect(screen.getByTestId('serie-wochentag-4')).not.toBeChecked()
+  })
 
   test('der Wechsel behält Datum, Uhrzeit und Ort', async () => {
     rendern()
@@ -185,14 +205,16 @@ describe('AdminTerminNeu – Serie', () => {
     expect(screen.getByTestId('serie-startdatum')).toHaveValue('2099-03-02')
     expect(screen.getByTestId('serie-uhrzeit')).toHaveValue('20:00')
     expect(screen.getByTestId('serie-ort')).toHaveValue('Beispielhalle')
-    expect(screen.getByTestId('serie-startdatum')).toHaveAccessibleDescription('Fällt es selbst auf den Wochentag, gehört es zur Serie.')
+    expect(screen.getByTestId('serie-startdatum')).toHaveAccessibleDescription('Fällt das Startdatum selbst auf den Wochentag, gehört es zur Serie.')
   })
 
   test('der Wochentag hat keine Vorauswahl; der Knopf nennt den Grund', async () => {
     rendern()
     await userEvent.click(screen.getByTestId('admin-art-serie'))
 
-    expect(screen.getByTestId('serie-wochentag')).toHaveTextContent('Bitte wählen')
+    const wochentage = within(screen.getByRole('group', { name: 'Wochentag' })).getAllByRole('radio')
+    expect(wochentage).toHaveLength(7)
+    expect(wochentage.some((radio) => (radio as HTMLInputElement).checked)).toBe(false)
     expect(screen.getByTestId('admin-termin-neu-absenden')).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('admin-termin-neu-absenden')).toHaveTextContent('Serie anlegen')
   })

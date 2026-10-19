@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, test, vi } from 'vitest'
 import type { SkillKategorie } from '@/api/admin/skills'
 import SkillFelder from './SkillFelder'
@@ -18,63 +19,69 @@ function rendern(teil: Partial<Parameters<typeof SkillFelder>[0]> = {}) {
 }
 
 describe('SkillFelder', () => {
-  test('baut je Kategorie ein Zahlenfeld mit Bezeichnung, Grenzen und Bereichshinweis', () => {
+  test('baut je Kategorie eine Gruppe mit einem Segment je Stufe von der unteren bis zur oberen Grenze', () => {
     rendern()
 
-    const zehn = screen.getByLabelText('Zehnerwert')
-    expect(zehn).toHaveAttribute('type', 'number')
-    expect(zehn).toHaveAttribute('inputmode', 'numeric')
-    expect(zehn).toHaveAttribute('min', '0')
-    expect(zehn).toHaveAttribute('max', '10')
-    expect(zehn).toHaveAttribute('step', '1')
-    expect(zehn).toHaveAccessibleDescription('0 bis 10')
-    const klein = screen.getByLabelText('Kleinwert')
-    expect(klein).toHaveAttribute('min', '1')
-    expect(klein).toHaveAttribute('max', '3')
-    expect(klein).toHaveAccessibleDescription('1 bis 3')
+    const zehn = screen.getByRole('group', { name: /Zehnerwert/ })
+    expect(within(zehn).getAllByRole('radio').map((r) => (r as HTMLInputElement).value)).toEqual(
+      Array.from({ length: 11 }, (_, i) => String(i)),
+    )
+    const klein = screen.getByRole('group', { name: /Kleinwert/ })
+    expect(within(klein).getAllByRole('radio').map((r) => (r as HTMLInputElement).value)).toEqual(['1', '2', '3'])
   })
 
-  test('die Gruppe heisst „Skillwerte“ und folgt der Reihenfolge der Kategorien', () => {
+  test('die Überschrift heisst „Skills“, die Gruppen folgen der Reihenfolge der Kategorien', () => {
     rendern()
 
-    expect(screen.getByRole('group', { name: 'Skillwerte' })).toBeInTheDocument()
-    const felder = screen.getAllByRole('spinbutton')
-    expect(felder.map((f) => f.getAttribute('data-testid'))).toEqual(['skill-ZEHN', 'skill-KLEIN'])
+    expect(screen.getByRole('heading', { level: 2, name: 'Skills' })).toBeInTheDocument()
+    const gruppen = screen.getAllByRole('group').map((g) => g.getAttribute('data-testid'))
+    expect(gruppen).toEqual(['skill-ZEHN', 'skill-KLEIN'])
   })
 
-  test('zeigt die Werte als Text, leer bleibt leer (nicht 0)', () => {
+  test('der gewählte Wert ist angehakt und steht als Zahl in der Legende, ohne Wert steht dort ein Strich', () => {
     rendern({ werte: { ZEHN: '0', KLEIN: '' } })
 
-    expect(screen.getByTestId('skill-ZEHN')).toHaveValue(0)
-    expect(screen.getByTestId('skill-KLEIN')).toHaveValue(null)
+    expect(screen.getByTestId('skill-ZEHN-0')).toBeChecked()
+    expect(screen.getByRole('group', { name: 'Zehnerwert 0' })).toBeInTheDocument()
+    const klein = screen.getByTestId('skill-KLEIN')
+    expect(within(klein).queryAllByRole('radio', { checked: true })).toHaveLength(0)
+    expect(screen.getByRole('group', { name: 'Kleinwert –' })).toBeInTheDocument()
   })
 
-  test('meldet die Eingabe mit Schlüssel und Text', () => {
+  test('meldet die Wahl mit Schlüssel und Text', async () => {
     const beiAenderung = rendern()
 
-    fireEvent.change(screen.getByTestId('skill-KLEIN'), { target: { value: '2' } })
+    await userEvent.click(screen.getByTestId('skill-KLEIN-2'))
 
     expect(beiAenderung).toHaveBeenCalledWith('KLEIN', '2')
   })
 
-  test('zeigt am Feld einen Text bei einem Wert ausserhalb des Bereichs, nicht bei leerem Feld', () => {
+  test('der Kopf nennt nur „Skills“, keinen Durchschnitt', () => {
+    rendern({ werte: { ZEHN: '5', KLEIN: '2' } })
+    expect(screen.getByRole('heading', { level: 2, name: 'Skills' })).toBeInTheDocument()
+    expect(screen.getByTestId('skill-felder')).not.toHaveTextContent('Ø')
+  })
+
+  test('ein Wert ausserhalb des Bereichs wählt kein Segment an', () => {
     rendern({ werte: { ZEHN: '11', KLEIN: '' } })
 
-    expect(screen.getByLabelText('Zehnerwert')).toHaveAccessibleDescription(/Bitte eine ganze Zahl von 0 bis 10 eintragen/)
-    expect(screen.getByLabelText('Kleinwert')).not.toHaveAttribute('aria-invalid')
+    expect(within(screen.getByTestId('skill-ZEHN')).queryAllByRole('radio', { checked: true })).toHaveLength(0)
   })
 
-  test('der Fehlertext des Servers geht dem eigenen Hinweis vor', () => {
-    rendern({ werte: { ZEHN: '11', KLEIN: '2' }, fehler: { ZEHN: 'Der Wert ist zu hoch.' } })
+  test('der Fehlertext des Servers steht an der Gruppe', () => {
+    rendern({ werte: { ZEHN: '5', KLEIN: '2' }, fehler: { ZEHN: 'Der Wert ist zu hoch.' } })
 
-    expect(screen.getByLabelText('Zehnerwert')).toHaveAccessibleDescription(/Der Wert ist zu hoch\./)
+    expect(screen.getByTestId('skill-ZEHN')).toHaveAccessibleDescription(/Der Wert ist zu hoch\./)
+    expect(screen.getByTestId('skill-ZEHN-fehler')).toHaveTextContent('Der Wert ist zu hoch.')
+    expect(screen.queryByTestId('skill-KLEIN-fehler')).not.toBeInTheDocument()
   })
 
-  test('kennzeichnet nicht bewertete Kategorien', () => {
-    rendern({ werte: { ZEHN: '5', KLEIN: '' }, nichtBewertet: ['KLEIN'] })
+  test('kennzeichnet nicht bewertete Kategorien, solange nichts gewählt ist', async () => {
+    rendern({ werte: { ZEHN: '5', KLEIN: '' }, nichtBewertet: ['KLEIN', 'ZEHN'] })
 
-    expect(screen.getByLabelText('Kleinwert')).toHaveAccessibleDescription('Noch nicht bewertet. 1 bis 3')
-    expect(screen.getByLabelText('Zehnerwert')).toHaveAccessibleDescription('0 bis 10')
+    expect(screen.getByTestId('skill-KLEIN')).toHaveAccessibleDescription('Noch nicht bewertet.')
+    // Eine Kategorie mit Wert braucht den Hinweis nicht, auch wenn sie in der Liste steht.
+    expect(screen.getByTestId('skill-ZEHN')).not.toHaveAccessibleDescription('Noch nicht bewertet.')
   })
 
   test('der Satz zur Vorbelegung steht nur auf Verlangen da', () => {
@@ -88,9 +95,21 @@ describe('SkillFelder', () => {
     expect(screen.getByTestId('skill-vorbelegt-hinweis')).toHaveTextContent('Bitte prüfe jeden Wert.')
   })
 
-  test('schreibgeschützt, solange gesendet wird', () => {
-    rendern({ schreibgeschuetzt: true })
+  test('schreibgeschützt, solange gesendet wird: die Wahl meldet nichts', async () => {
+    const beiAenderung = rendern({ schreibgeschuetzt: true })
 
-    expect(screen.getByTestId('skill-ZEHN')).toHaveAttribute('readonly')
+    await userEvent.click(screen.getByTestId('skill-KLEIN-3'))
+
+    expect(beiAenderung).not.toHaveBeenCalled()
+  })
+
+  test('die Skala kommt aus den Daten: eine andere Grenze ergibt andere Stufen', () => {
+    rendern({
+      kategorien: [{ schluessel: 'X', bezeichnung: 'Xwert', gewicht: 1, reihenfolge: 1, minWert: 0, maxWert: 6 }],
+      werte: { X: '3' },
+    })
+
+    expect(within(screen.getByTestId('skill-X')).getAllByRole('radio')).toHaveLength(7)
+    expect(screen.getByTestId('skill-X-3')).toBeChecked()
   })
 })

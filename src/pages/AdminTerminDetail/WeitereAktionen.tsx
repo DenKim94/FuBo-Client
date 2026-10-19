@@ -6,6 +6,7 @@ import { ADMIN_PFADE } from '@/app/schutz/zielpfad'
 import Bestaetigung from '@/components/Bestaetigung/Bestaetigung'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Hinweis from '@/components/Hinweis/Hinweis'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useTerminAbsagen } from '@/hooks/admin/useTerminAbsagen'
 import { useTerminAendern } from '@/hooks/admin/useTerminAendern'
 import { useTerminEntfernen } from '@/hooks/admin/useTerminEntfernen'
@@ -106,7 +107,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         </Hinweis>
       )}
 
-      <div className={style.aktionen}>
+      <Knopfgruppe untereinander>
         {geplant && (
           <CustomButton
             art="sekundaer"
@@ -151,7 +152,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
             Termin entfernen
           </CustomButton>
         )}
-      </div>
+      </Knopfgruppe>
 
       <Bestaetigung
         offen={dialog === 'abschliessen'}

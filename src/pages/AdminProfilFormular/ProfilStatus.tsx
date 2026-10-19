@@ -7,6 +7,7 @@ import Bestaetigung from '@/components/Bestaetigung/Bestaetigung'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Hinweis from '@/components/Hinweis/Hinweis'
+import Schalter from '@/components/Schalter/Schalter'
 import { useProfilBlockieren } from '@/hooks/admin/useProfilBlockieren'
 import { useProfilEntfernen } from '@/hooks/admin/useProfilEntfernen'
 import style from './AdminProfilFormular.module.scss'
@@ -16,15 +17,17 @@ const FEHLER_ERSATZ_SPERREN = 'Die Sperre konnte nicht geändert werden. Bitte v
 const FEHLER_ERSATZ_ENTFERNEN = 'Das Profil konnte nicht entfernt werden. Bitte versuche es erneut.'
 
 /**
- * Abschnitt „Status“ eines Spielerprofils (C7, 7.4): Sperren, Entsperren und Entfernen.
+ * Abschnitt „Status“ eines Spielerprofils (C7, 7.4; Prototyp 09b): Schalter „Aktiv in der Auswahlliste“ und Entfernen.
  *
  * Eigener Abschnitt unterhalb der Felder, **nicht** in der Aktionsleiste: Die Leiste gehört der
  * häufigen, ungefährlichen Aktion (Speichern). Beide Aktionen entfallen beim Adminprofil (es hat
  * dieses Formular nicht).
  *
- * - **Sperren/Entsperren:** ohne Dialog, **ausser** beim Sperren eines gerade angemeldeten Profils
- *   (`belegt`): Der Spieler wird sofort abgemeldet, das nennt die `Bestaetigung`. Die Schaltfläche
- *   bleibt dasselbe Element und wechselt nur Beschriftung und Zustandstext; der Fokus bleibt.
+ * - **Sperren/Entsperren:** Der Schalter „Aktiv in der Auswahlliste“ ist die frühere Schaltfläche „Profil sperren“.
+ *   **Er wirkt sofort und gehört nicht zum Speichern** des Formulars (eigener Endpunkt `blockieren`); der Satz
+ *   darunter sagt es. Ohne Dialog, **ausser** beim Sperren eines gerade angemeldeten Profils (`belegt`): Der
+ *   Spieler wird sofort abgemeldet, das nennt die `Bestaetigung`. Der Schalter bleibt dasselbe Element und
+ *   wechselt nur den Zustand; der Fokus bleibt.
  * - **Entfernen:** immer mit `Bestaetigung` (nicht umkehrbar). `409 PROFIL_IN_VERWENDUNG` schliesst
  *   den Dialog und bietet „Stattdessen sperren“ an – der richtige Weg für ein Profil mit Daten.
  *   Nach dem Erfolg geht es mit `mutateAsync` zur Liste (die Seite wird ausgehängt).
@@ -76,25 +79,20 @@ export default function ProfilStatus({ profil }: { profil: SpielerDetails }) {
   }
 
   return (
-    <section className={style.status} aria-labelledby="admin-profil-status-titel" data-testid="admin-profil-status">
-      <h2 id="admin-profil-status-titel" className={style.statusTitel}>
-        Status
-      </h2>
-
+    <section className={style.status} aria-label="Status des Profils" data-testid="admin-profil-status">
       <div className={style.statusZeile}>
-        <p className={style.statusText} data-testid="admin-profil-sperre-text">
-          {gesperrt
-            ? 'Gesperrt: erscheint nicht mehr in der Namensauswahl, der Name bleibt belegt.'
-            : 'Aktiv: Das Profil steht in der Namensauswahl.'}
-        </p>
-        <CustomButton
-          art="sekundaer"
-          laedt={blockieren.isPending && !sperrDialog}
-          onClick={sperrenAnstossen}
+        <Schalter
+          beschriftung="Aktiv in der Auswahlliste"
+          an={!gesperrt}
+          beiUmschalten={sperrenAnstossen}
+          beschaeftigt={blockieren.isPending && !sperrDialog}
+          erklaerung={
+            gesperrt
+              ? 'Gesperrt: erscheint nicht mehr in der Namensauswahl, der Name bleibt belegt. Gilt sofort, ohne Speichern.'
+              : 'Aktiv: Das Profil steht in der Namensauswahl. Das Sperren gilt sofort, ohne Speichern.'
+          }
           data-testid="admin-profil-sperren"
-        >
-          {gesperrt ? 'Profil entsperren' : 'Profil sperren'}
-        </CustomButton>
+        />
         {blockieren.error !== null && !sperrDialog && (
           <Fehlermeldung fehler={blockieren.error} ersatz={FEHLER_ERSATZ_SPERREN} data-testid="admin-profil-status-fehler" />
         )}
@@ -115,7 +113,7 @@ export default function ProfilStatus({ profil }: { profil: SpielerDetails }) {
           </>
         )}
         <CustomButton
-          art="gefahr"
+          art="gefahrUmriss"
           onClick={() => {
             entfernen.reset()
             setEntfernenDialog(true)

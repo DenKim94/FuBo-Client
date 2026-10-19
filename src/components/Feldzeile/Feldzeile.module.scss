@@ -1,0 +1,12 @@
+@use '@/styles/globalVars';
+
+.zeile {
+  display: grid;
+  align-items: start;
+  gap: var(--abstand-m);
+}
+
+// Ohne diese Regel dehnt ein Feld mit festem Mindestmaß (Datum, Uhrzeit) seine Spalte über die Zeile hinaus.
+.zeile > * {
+  min-inline-size: 0;
+}

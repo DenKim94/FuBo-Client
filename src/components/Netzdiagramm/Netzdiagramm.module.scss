@@ -1,0 +1,38 @@
+@use '@/styles/globalVars';
+
+// Die Zeichnung füllt die Breite der Karte, aber nicht mehr als nötig; die Schrift skaliert mit der `viewBox`
+// (15 Einheiten ≈ 14 px bei voller Breite). Beschriftungen dürfen über den Rand der Zeichenfläche ragen.
+.zeichnung {
+  inline-size: 100%;
+  max-inline-size: 22rem;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.ring,
+.achse {
+  fill: none;
+  stroke: var(--farbe-rand);
+  stroke-width: 1;
+}
+
+.flaeche {
+  fill: color-mix(in srgb, var(--farbe-primaer) 18%, transparent);
+  stroke: var(--farbe-primaer);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.ecke {
+  fill: var(--farbe-primaer);
+}
+
+.beschriftung {
+  fill: var(--farbe-text);
+  font-size: 15px;
+  font-weight: var(--gewicht-halbfett);
+}
+
+.wert {
+  font-weight: 700;
+}

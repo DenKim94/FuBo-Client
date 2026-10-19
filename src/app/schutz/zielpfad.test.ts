@@ -22,7 +22,8 @@ describe('ADMIN_PFADE (C7, 6.1)', () => {
   })
 
   test('bildet die Pfade mit Parameter aus der Id', () => {
-    expect(ADMIN_PFADE.profilBearbeiten(7)).toBe('/admin/profile/7')
+    expect(ADMIN_PFADE.profilDetail(7)).toBe('/admin/profile/7')
+    expect(ADMIN_PFADE.profilBearbeiten(7)).toBe('/admin/profile/7/bearbeiten')
     expect(ADMIN_PFADE.terminVerwaltung(102)).toBe('/admin/termine/102')
   })
 

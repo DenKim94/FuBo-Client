@@ -7,6 +7,7 @@ import {
   liegtInVergangenheit,
   serieFehler,
   serieKoerper,
+  WOCHENTAGE,
   type SerieWerte,
 } from './terminEingabe'
 
@@ -113,5 +114,14 @@ describe('Serie', () => {
       enddatum: '2099-03-15',
     })
     expect(serieKoerper({ ...gueltig, ort: ' Beispielhalle ' }).ort).toBe('Beispielhalle')
+  })
+})
+
+describe('WOCHENTAGE', () => {
+  test('sieben Tage von Montag (1) bis Sonntag (7) mit Kurzform für die Segmente', () => {
+    expect(WOCHENTAGE.map((t) => t.wert)).toEqual(['1', '2', '3', '4', '5', '6', '7'])
+    expect(WOCHENTAGE.map((t) => t.kurz)).toEqual(['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'])
+    expect(WOCHENTAGE[0]?.text).toBe('Montag')
+    expect(WOCHENTAGE[6]?.text).toBe('Sonntag')
   })
 })

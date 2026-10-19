@@ -1,6 +1,7 @@
 import type { Ref } from 'react'
 import { ORT_MAX, ORT_ZAEHLER_AB, type TerminWerte } from '@/api/admin/terminEingabe'
 import Feld from '@/components/Feld/Feld'
+import Feldzeile from '@/components/Feldzeile/Feldzeile'
 import style from './TerminFormular.module.scss'
 
 /** Fehlertexte je Feld; `null`/fehlend heisst: kein Fehler. */
@@ -29,6 +30,9 @@ type TerminFormularEigenschaften = {
 /**
  * Gemeinsame Felder von „Einzeltermin anlegen“ und „Termin ändern“ (C7, 5.7): Datum, Uhrzeit, Ort.
  *
+ * **Datum und Uhrzeit stehen nebeneinander** (Prototyp 10c: das Datum nimmt den Rest, die Uhrzeit ein festes Maß),
+ * der Ort darunter über die ganze Breite.
+ *
  * **Controlled, ohne Wissen über Senden oder Diff:** Der Elternbaustein hält die Werte und entscheidet, was
  * hinausgeht. Er prüft auch, ob der Zeitpunkt in der Vergangenheit liegt – **im Submit-Handler mit
  * `Date.now()`**; das Formular liest keine Uhr. `min` am Datumsfeld ist nur eine Eingabehilfe (die
@@ -50,31 +54,33 @@ export default function TerminFormular({
   const ortLaenge = werte.ort.length
   return (
     <div className={style.felder} data-testid={`${vorsatz}-formular`}>
-      <Feld
-        ref={datumRef}
-        type="date"
-        beschriftung="Datum"
-        value={werte.datum}
-        min={min}
-        onChange={(e) => {
-          beiAenderung('datum', e.target.value)
-        }}
-        fehler={fehler.datum}
-        readOnly={schreibgeschuetzt}
-        data-testid={`${vorsatz}-datum`}
-      />
-      <Feld
-        ref={uhrzeitRef}
-        type="time"
-        beschriftung="Uhrzeit"
-        value={werte.uhrzeit}
-        onChange={(e) => {
-          beiAenderung('uhrzeit', e.target.value)
-        }}
-        fehler={fehler.uhrzeit}
-        readOnly={schreibgeschuetzt}
-        data-testid={`${vorsatz}-uhrzeit`}
-      />
+      <Feldzeile spalten="1fr 7.5rem" gestapelt={Boolean(fehler.datum) || Boolean(fehler.uhrzeit)} data-testid={`${vorsatz}-datum-uhrzeit`}>
+        <Feld
+          ref={datumRef}
+          type="date"
+          beschriftung="Datum"
+          value={werte.datum}
+          min={min}
+          onChange={(e) => {
+            beiAenderung('datum', e.target.value)
+          }}
+          fehler={fehler.datum}
+          readOnly={schreibgeschuetzt}
+          data-testid={`${vorsatz}-datum`}
+        />
+        <Feld
+          ref={uhrzeitRef}
+          type="time"
+          beschriftung="Uhrzeit"
+          value={werte.uhrzeit}
+          onChange={(e) => {
+            beiAenderung('uhrzeit', e.target.value)
+          }}
+          fehler={fehler.uhrzeit}
+          readOnly={schreibgeschuetzt}
+          data-testid={`${vorsatz}-uhrzeit`}
+        />
+      </Feldzeile>
       <Feld
         type="text"
         beschriftung="Ort (optional)"

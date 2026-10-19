@@ -94,4 +94,21 @@ describe('CustomButton', () => {
     expect(knopf).toHaveFocus()
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
   })
+
+  test('„gefahrUmriss“ ist eine eigene Art, nicht die der vollen Gefahr-Schaltfläche', () => {
+    render(
+      <>
+        <CustomButton art="gefahrUmriss" data-testid="umriss">
+          Entfernen
+        </CustomButton>
+        <CustomButton art="gefahr" data-testid="voll">
+          Absagen
+        </CustomButton>
+      </>,
+    )
+
+    expect(screen.getByTestId('umriss').className).toMatch(/gefahrUmriss/)
+    expect(screen.getByTestId('voll').className).not.toMatch(/gefahrUmriss/)
+    expect(screen.getByTestId('umriss')).toHaveAttribute('type', 'button')
+  })
 })

@@ -32,18 +32,14 @@
   font-weight: var(--gewicht-halbfett);
 }
 
+// Jede Karte hat ihren eigenen Rahmen (Prototyp 10); die Liste hält nur den Abstand.
 .liste {
   display: flex;
   flex-direction: column;
+  gap: var(--abstand-s);
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--farbe-rand);
-  border-radius: var(--radius-m);
-}
-
-.liste > li + li {
-  border-block-start: 1px solid var(--farbe-rand);
 }
 
 // Die Aktion in Daumenhoehe (64 px); mit dem Elementnamen davor gewinnt die Regel gegen die Groesse des CustomButton.

@@ -17,6 +17,8 @@ import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import Bestaetigung from '@/components/Bestaetigung/Bestaetigung'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
+import Segmente from '@/components/Segmente/Segmente'
 import SerieErgebnis from '@/components/SerieErgebnis/SerieErgebnis'
 import TerminFormular, { type TerminFormularFehler } from '@/components/TerminFormular/TerminFormular'
 import { useSerieAnlegen } from '@/hooks/admin/useSerieAnlegen'
@@ -36,8 +38,10 @@ type Art = 'einzel' | 'serie'
 /**
  * Termin oder Serie anlegen (`/admin/termine/neu`, C7 8.3).
  *
- * **Eine Seite, zwei Arten:** Die Radiogruppe „Art“ wechselt zwischen Einzeltermin (Vorgabe) und Serie. Beide
- * teilen sich Datum (bei der Serie das Startdatum), Uhrzeit und Ort; der Wechsel behält sie.
+ * **Eine Seite, zwei Arten:** Der Umschalter oben (Segmente „Einzeltermin“ und „Serie“, Prototyp 10b; technisch eine
+ * Radiogruppe) wechselt zwischen Einzeltermin (Vorgabe) und Serie und entscheidet über die folgenden Felder – keine
+ * leeren Blindfelder. Beide teilen sich Datum (bei der Serie das Startdatum), Uhrzeit und Ort; der Wechsel behält sie.
+ * „Abbrechen“ in der Leiste führt ohne Senden zur Terminliste.
  *
  * - **Einzeltermin:** Erfolg leitet mit `mutateAsync` zur Verwaltung des neuen Termins (Hinweis „Termin
  *   angelegt.“). `409 TERMIN_BELEGT` steht am Zeitfeld, die Eingaben bleiben. Die Vergangenheitsprüfung
@@ -170,37 +174,21 @@ export default function AdminTerminNeu() {
   return (
     <form className={style.seite} onSubmit={absenden} noValidate data-testid="admin-termin-neu">
       <div className={style.bereich}>
-        <h1 className={style.titel}>Termin anlegen</h1>
+        <h1 className={style.titel}>Neuer Termin</h1>
 
-        <fieldset className={style.gruppe}>
-          <legend className={style.legende}>Art</legend>
-          <label className={style.option}>
-            <input
-              type="radio"
-              name="art"
-              value="einzel"
-              checked={einzel}
-              onChange={() => {
-                artWaehlen('einzel')
-              }}
-              data-testid="admin-art-einzel"
-            />
-            <span>Einzeltermin</span>
-          </label>
-          <label className={style.option}>
-            <input
-              type="radio"
-              name="art"
-              value="serie"
-              checked={!einzel}
-              onChange={() => {
-                artWaehlen('serie')
-              }}
-              data-testid="admin-art-serie"
-            />
-            <span>Serie</span>
-          </label>
-        </fieldset>
+        <Segmente
+          legende="Art"
+          legendeVersteckt
+          optionen={[
+            { wert: 'einzel', text: 'Einzeltermin' },
+            { wert: 'serie', text: 'Serie' },
+          ]}
+          wert={art}
+          beiAenderung={(wert) => {
+            artWaehlen(wert === 'serie' ? 'serie' : 'einzel')
+          }}
+          data-testid="admin-art"
+        />
 
         {einzel ? (
           <TerminFormular
@@ -236,18 +224,27 @@ export default function AdminTerminNeu() {
               {grund}
             </p>
           )}
-          <CustomButton
-            type="submit"
-            art="primaer"
-            breit
-            className={style.aktion}
-            laedt={laeuft && !dialog}
-            aria-disabled={grund !== null ? true : undefined}
-            aria-describedby={grund !== null ? grundId : undefined}
-            data-testid="admin-termin-neu-absenden"
-          >
-            {einzel ? 'Termin anlegen' : 'Serie anlegen'}
-          </CustomButton>
+          <Knopfgruppe>
+            <CustomButton
+              art="sekundaer"
+              className={style.aktion}
+              onClick={() => void navigate(ADMIN_PFADE.termine)}
+              data-testid="admin-termin-neu-abbrechen"
+            >
+              Abbrechen
+            </CustomButton>
+            <CustomButton
+              type="submit"
+              art="primaer"
+              className={style.aktion}
+              laedt={laeuft && !dialog}
+              aria-disabled={grund !== null ? true : undefined}
+              aria-describedby={grund !== null ? grundId : undefined}
+              data-testid="admin-termin-neu-absenden"
+            >
+              {einzel ? 'Termin anlegen' : 'Serie anlegen'}
+            </CustomButton>
+          </Knopfgruppe>
         </div>
 
         <Bestaetigung

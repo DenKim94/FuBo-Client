@@ -3,6 +3,7 @@ import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Icon from '@/components/Icon/Icon'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useAbmelden } from '@/hooks/useAbmelden'
 import { useRestlaufzeit, WARNZEIT_MS } from '@/hooks/useRestlaufzeit'
 import { useSitzungErneuern } from '@/hooks/useSitzungErneuern'
@@ -116,7 +117,7 @@ export default function SitzungAblaufDialog() {
 
       {fehler && <Fehlermeldung fehler={fehler} data-testid="sitzung-ablauf-fehler" />}
 
-      <div className={style.aktionen}>
+      <Knopfgruppe untereinander className={style.aktionen}>
         {verlaengerbar ? (
           <CustomButton
             art="primaer"
@@ -149,7 +150,7 @@ export default function SitzungAblaufDialog() {
         >
           Abmelden
         </CustomButton>
-      </div>
+      </Knopfgruppe>
 
       <p className={style.hinweis}>Ohne Reaktion wirst du automatisch abgemeldet.</p>
     </Dialog>

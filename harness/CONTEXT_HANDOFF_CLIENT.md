@@ -6,12 +6,13 @@
 >
 > Repository: **eigenständig mit Wurzel in `client/`** (GitHub, öffentlich, `FuBo-Client`), Branch `dev_client`. **Kein Monorepo**; das Backend
 > liegt in `FuBo-Server`. `PRJ_FuBo/`, `PRJ_FuBo/harness/` und `client/harness/tmp/` sind nicht versioniert.
-> **Stand: 18.10.2026.** C0, C1, C3 abgeschlossen; C2, C4, C5 und **C7** umgesetzt (C6 ist in C5 aufgegangen). **C5 ist committet (`e9a85e6`), nicht
-> gepusht; C7 ist umgesetzt und nicht committet** (Commit je Stufe auf Aufforderung). Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen: Handprüfung gegen den echten Server
+> **Stand: 18.10.2026.** C0, C1, C3 abgeschlossen; C2, C4, C5 und **C7** umgesetzt (C6 ist in C5 aufgegangen). **C5 ist committet (`e9a85e6`), C7 ebenfalls (`3a7c8c6`, Stand `git log` vom 18.10.2026); die
+> Design-Überarbeitung der Admin-Ansichten ist umgesetzt und nicht committet** (Commit auf Aufforderung). Unit-Tests, Lint, Typen, Bau und E2E in Chromium grün; offen: Handprüfung gegen den echten Server
 > (C5, C7), iPhone; **WebKit-Projekte seit 18.10.2026 abgeschaltet** (siehe 5.4); Verifikation 5.2, nächste Schritte 6.
 > Nächster Meilenstein: **C8** (Admin-Verwaltung, Teil 2: Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams, **21,5 h**); die Anleitung
 > `harness/tmp/C8_UMSETZUNG.md` liegt vor. PWA/Push heisst **C9**, Abnahme/Deployment **C10**. Die Entscheidungen E1–E22 von C7 wurden als bestätigt behandelt (2.).
-> **Komprimierte Fassung vom 18.10.2026.** Die Vorfassung (Stand vor C7) liegt in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-18c.md`, ältere
+> **Komprimierte Fassung vom 18.10.2026, ergänzt am selben Tag um die Design-Überarbeitung der Admin-Ansichten (Profile, Termine; 2. und 5.).** Die Vorfassung (Stand vor dieser Überarbeitung) liegt in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-18d.md`,
+> die von vor C7 in `archive/CONTEXT_HANDOFF_CLIENT_2026-10-18c.md`, ältere
 > Fassungen ebenfalls in `archive/` (zuletzt `…-10-17c.md` vor C5, `…-10-17.md` vor C4, `…-10-04c.md` vor Abschluss C3).
 
 ---
@@ -125,10 +126,10 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
   **Anmeldename (E20):** zwei Ansichten (`/admin/name/aendern`, `/admin/name/bestaetigen`), 5-stellige PIN, Link „Ich habe bereits eine PIN", fester Satz statt Restzeit; `NAME_PIN_FALSCH` beendet die Sitzung **nicht**,
   nach Erfolg bleibt sie, Hinweis „gilt ab der nächsten Anmeldung". Ein `400 felder.neuePin` schliesst den PIN-Dialog und zeigt den Text am Feld.
 - **Profile (E6–E8):** Skillfelder aus `GET /admin/skills/lesen` (nichts fest verdrahtet; Anlegen mit gerundeter Mitte **sichtbar** vorbelegt, alle Kategorien im Körper; Bearbeiten nur Geändertes); unvollständige
-  Karte in der Liste gekennzeichnet; **Skillwerte nur in `AdminProfilFormular`**, nie in Liste oder Spieleransichten. Sperren ohne Dialog, ausser das Profil ist `belegt`; Entfernen immer mit Dialog,
+  Karte in der Liste gekennzeichnet; **Skillwerte nur in `AdminProfilDetail` und `AdminProfilFormular`**, nie in Liste oder Spieleransichten. Sperren ohne Dialog, ausser das Profil ist `belegt`; Entfernen immer mit Dialog,
   `PROFIL_IN_VERWENDUNG` ⇒ „Stattdessen sperren"; Adminprofil ohne Formular und Aktionen. Das Profilformular nutzt „Zustand beim Rendern anpassen" statt `key`.
 - **Termine (E9–E12):** Liste mit zwei unabhängigen Abschnitten („Kommende" `useTermine`, „Vergangene" `useVerlauf`), die kommende Liste gegen den Verlauf entdoppelt (Uhr einmal beim Einhängen gelesen).
-  Anlegen in einem Formular mit Umschalter Einzeltermin/Serie (Radiogruppe); Serie: Dialog „nicht mehr änderbar", Wochentag ohne Vorauswahl, `SerieErgebnis` mit angelegter Zahl und Übersprungenen (der Absatz zu den
+  Anlegen in einem Formular mit Umschalter Einzeltermin/Serie (seit der Design-Überarbeitung `Segmente`, technisch weiter eine Radiogruppe); Serie: Dialog „nicht mehr änderbar", Wochentag ohne Vorauswahl, `SerieErgebnis` mit angelegter Zahl und Übersprungenen (der Absatz zu den
   Übersprungenen steht immer da); `TERMIN_BELEGT` mit festem UI-Text am Uhrzeitfeld. Ändern diffbasiert (`aenderungKoerper`; `""` leert den Ort), Speichern erst bei einer Änderung. Absagen (`/admin/termin/absagen`, ohne
   `version`) und Abschliessen (`aendern` mit `status`) mit Dialog und Folgen; Entfernen nur für `GEPLANT`/`ABGESAGT`, `TERMIN_IN_VERWENDUNG` ⇒ Hinweis und „Stattdessen absagen" (nur bei `GEPLANT`). Nach einem Statuswechsel
   liegt der Fokus auf der Überschrift der Karte. Eine Serie lässt sich nach dem Anlegen nicht mehr ändern, ihre Termine einzeln schon.
@@ -137,6 +138,34 @@ Offline-Fällen. Bei 320 px scrollt die Namensauswahl mit Gastbereich um 25 px �
   an die Textänderungen des Entwicklers; „Gespeichert." und die Fokusrückgabe liegen im Elternbaustein; Status „Geplant" mit `info_circle_icon`; `refetchOnWindowFocus` für `useTermin` ist **nicht** abgeschaltet
   (ein neuer Stand beim Zurückkehren baut das Formular neu auf, E5); der Konflikt in den E2E-Tests entsteht über den Helfer `fremdeAenderung` statt über eine zweite Seite (der Zustand liegt im Testprozess, das Ergebnis
   ist gleich); Aktionen ohne Wirkung sind `aria-disabled` mit Grund statt `disabled`. **DESIGN.md (Abweichungen aus 1.3 der Anleitung) ist dem Entwickler zur Übernahme vorzulegen** (nicht im Repository).
+
+**Design-Überarbeitung der Admin-Ansichten (18.10.2026, Auftrag des Entwicklers, Vorlage `FuBo_Design_Prototypen.html`; Bildschirme 09b/09c, 10, 10b/10c)** – bestehende Logik und Anforderungen blieben (Skala aus `GET /admin/skills/lesen`, nur Geändertes senden, Dialoge, Test-IDs der Logik):
+1. **Terminverwaltung:** „Termin abschliessen/absagen/entfernen“ sind gleich breit (`Knopfgruppe untereinander`).
+2. **Profile in drei Ansichten:** Liste → **Profilansicht** `/admin/profile/:id` (neu, `AdminProfilDetail`: Name, Spielzahl, Kennzeichen, **Netzdiagramm**, Werte als Balken mit Zahl, „Skills bearbeiten“) → **Formular** `/admin/profile/:id/bearbeiten` (Name,
+   Skills als **Segmente** 0 bis N, Schalter „Aktiv in der Auswahlliste“, „Profil entfernen“). Listenzeilen führen zur Ansicht. Speichern führt zur Ansicht mit „Gespeichert.“, „Abbrechen“ ohne Senden dorthin; „Zurück“ im Formular führt
+   zur Ansicht desselben Profils (`handle.zurueck` kann jetzt eine **Funktion der Routenparameter** sein). `ProfilLader` hält Laden/Fehler/„nicht gefunden“/Adminprofil für Ansicht und Formular an einer Stelle. Neu: `ADMIN_PFADE.profilDetail`,
+   `profilBearbeiten` hängt `/bearbeiten` an.
+3. **Termine:** Terminliste als **Karten** (Datum und Uhrzeit, Marke „Serie“/„Einzeltermin“, Ort, Status mit Zusagen, „Bearbeiten“ (bei Abgesagt/Abgeschlossen „Öffnen“) und „Entfernen“ nebeneinander gleich breit; „Entfernen“ nur bei `GEPLANT`/`ABGESAGT`,
+   mit `Bestaetigung` in der Liste, Hinweise `admin-termine-entfernt/-verschwunden/-in-verwendung`, Fokus danach auf der Überschrift). „Termin anlegen“ unten. **„Neuer Termin“:** Umschalter Einzeltermin/Serie als `Segmente`, Serie mit Wochentag-
+   Chips Mo–So, Start- und Enddatum nebeneinander, Uhrzeit und Ort (optional) nebeneinander (`Feldzeile`), unten „Abbrechen“ und „Termin anlegen“/„Serie anlegen“; beim Einzeltermin Datum und Uhrzeit nebeneinander.
+- **Entscheidungen und Begründungen:**
+  - **Primärfarbe bleibt das Grün der App**, nicht das Blau des Prototyps (die App-Tokens gelten; keine neuen Farben, nur Variablen).
+  - **Der Schalter wirkt sofort** (eigener Endpunkt `blockieren`) und gehört nicht zum Speichern; ein Satz unter dem Schalter sagt es. Ein angemeldetes Profil verlangt beim Sperren weiter die Bestätigung.
+  - **Segmente statt Zahlenfeld** für die Skills: Ungültige Werte lassen sich nicht mehr eingeben; „Noch nicht bewertet“ (Lücke in der Karte) bleibt ohne gewählte Stufe und wird nur mit Wert gesendet. Die Skala ist ein Datenwert (jede Kategorie hat ihre Grenzen,
+    Torwart 0–3 hat vier Stufen); der Kopf der Ansicht nennt die Skala samt jeder Kategorie mit eigenem Bereich: „Skalierung 0–6 (Torwart 0–3)“ (`skalaText`: häufigster Bereich als Skala, bei Gleichstand der erste; Entscheidung des Entwicklers vom 18.10.2026). **Alle Balken und Stufenreihen sind gleich breit**; die Füllung ist der Anteil am eigenen Bereich (E2E prüft Breite und Lage).
+  - **Gleich breite Schaltflächen über ein Raster** (`grid-auto-columns: minmax(0, 1fr)`): Der Browsertest zeigte bei `flex: 1` 3,75 px Unterschied (Rand und Innenabstand verschieden).
+  - **Wiederverwendung statt Nachbau:** `ProfilKennzeichen` (Liste und Ansicht, gleiche Test-IDs), `ProfilLader`, `Segmente` (Art, Wochentag, Skills), `Feldzeile`; `CustomButton` neu `art="gefahrUmriss"`.
+- **Abweichungen vom Prototyp (zur Kenntnis):** kein Link „Netzdiagramm ›“ in der Bearbeiten-Ansicht (die Ansicht ist eine Route davor); der **Serien-Titel bleibt** (Pflichtfeld des Servers, der Prototyp zeigt keinen); die Serienmarke zeigt **kein „bis <Datum>“**
+  (die Termine tragen nur `serieId`, das Enddatum fehlt in den Daten); die Spielzahl im Kopf der Ansicht ist aus vorhandenen Daten berechnet (kein neuer Abruf); das Netzdiagramm hat **fünf bis n Achsen aus den Kategorien**, nicht fest fünf.
+  **Bekannt:** Bei 320 px sind sieben Segmente schmaler als 44 px (bei 360 px mindestens 44 px, vom E2E in allen Läufen geprüft); eine Fehlermeldung in einer halben Spalte stapelt die Zeile (`gestapelt`), statt in kurze Zeilen umzubrechen.
+- **DESIGN.md:** Die Abweichungen sind dem Entwickler zur Übernahme vorzulegen (Dokument nicht im Repository).
+
+**Nachträge vom 18.10.2026 (Abend, Auftrag des Entwicklers):**
+1. **Skillstufen mit seitlichem Abstand:** Die Stufenreihen halten in der Karte 8 px Abstand zum Rand (`--segmente-einzug` gilt jetzt für die ganze Gruppe, auch die Reihe). Damit sieben Stufen bei 360 px trotzdem 44 px breit bleiben, **gehört die Lücke zum Tap-Ziel**: Jedes Segment trägt 1 px Innenabstand je Seite, die Reihe gleicht das mit −1 px aus (Rechnung in `Segmente.module.scss`: 44,6 px Tap-Ziel, 42,6 px sichtbar). E2E prüft Abstand und Breite.
+2. **Durchschnitt „Ø“ im Skills-Kopf entfernt** (auf Wunsch); `durchschnittText` samt Tests entfallen.
+3. **Alle nebeneinander oder untereinander liegenden Schaltflächen sind gleich breit.** Grundlage ist `Knopfgruppe` (Raster mit `minmax(0, 1fr)`, `untereinander` für Spalten; angelegt in einer parallelen Sitzung, übernommen). Die Aufrufer-Klassen an der Gruppe tragen nur noch Abstand (kein `display`, das mit dem Raster der Gruppe konkurrierte); die Verhältnisse 1 : 1,4 aus dem Prototyp (`.knoepfe`) sind entfallen. **`Aktionsleiste` ist selbst ein solches Raster**: Zwei Schaltflächen direkt darin (Zusagen/Absagen) sind gleich breit. **Ausnahme:** „Zurück“ und „Abmelden“ in der Kopfzeile sind keine Gruppe (sie stehen an den gegenüberliegenden Enden) und bleiben inhaltsbreit.
+4. **Service Worker unter `npm run dev` nur auf Wunsch:** `npm run dev:pwa` (setzt `PWA_DEV=1`). Gemessen verlängerte der Worker jedes Neuladen im Dev-Modus um 60–90 % (sein `fetch`-Listener liegt vor jeder der ~240 Modulanfragen). E2E läuft gegen `vite preview` und ist nicht betroffen. Ein schon registrierter Worker bleibt im Browser, bis er unter „Application → Service Workers“ entfernt wird.
+5. **Admin-Bereich als Lazy Routes:** Alle Admin-Seiten (einschliesslich Admin-Anmeldung und Passwortschritte) stehen in `src/app/adminSeiten.ts` und werden über `adminSeite((s) => <s.Seite />)` in `routen.tsx` **als ein gemeinsames Paket** nachgeladen (ein Abruf beim Betreten, danach jeder Wechsel im Bereich ohne Nachladen). Beim Direktaufruf zeigt die Wurzel `StartLader` (gleicher Kreis wie `index.html`, `hydrateFallbackElement`). Hauptpaket **534 → 425 kB** (gzip 168 → 135 kB), Admin-Paket 110 kB (gzip 34 kB); die Vite-Warnung zur Paketgröße entfällt. **Kein Schutz:** Der Code wird vor `AdminRoute` geladen, enthält aber keine Daten. Der Service Worker legt das Admin-Paket weiter in den Precache (im Hintergrund, nicht beim Seitenaufbau). `routen.test.tsx` prüft, dass `routen.tsx` keine Admin-Seite fest importiert; `e2e/nachladen.spec.ts` prüft, dass ein Spieler das Paket nie anfordert und der Admin es genau einmal lädt.
 
 ## 3. Schnittstelle zum Server
 Siehe `AGENT_CLIENT.md`. Kontrakt-Kopie `client/harness/assets/fubo-api.json` (**45 Operationen**, am 18.10.2026 erneut mit `server/fubo-api.json` abgeglichen, byteweise identisch);
@@ -171,7 +200,7 @@ Mid-Level-Entwickler, KI-gestützt, ca. 6,5 h/Woche. Schnitt vom 25.09.2026.
 | C4 | Admin-Zugang, Passwort-Reset und -wechsel | 8 | **umgesetzt** (17.10.); offen Handprüfung gegen den echten Server; WebKit abgeschaltet |
 | C5 | Termin & Teilnahme, User-Dashboard, Teams, Ergebnisse, Verlauf (C6 aufgegangen) | 31,5 | **umgesetzt und committet** (`e9a85e6`, 17.10.); offen Handprüfung, iPhone, WebKit im CI |
 | C6 | (in C5 aufgegangen) | – | entfällt |
-| C7 | Admin-Verwaltung und Admin-Dashboard, Teil 1 (Rahmen, Zugang, Profile, Termine) | **27,5** (Plan bisher 20, ursprünglich 49 für C7 gesamt) | **umgesetzt** (18.10., drei Stufen grün), **nicht committet**; offen Handprüfung 12.3–12.12 der Anleitung, Sichtprüfung 360 px mit Tastatur |
+| C7 | Admin-Verwaltung und Admin-Dashboard, Teil 1 (Rahmen, Zugang, Profile, Termine) | **27,5** (Plan bisher 20, ursprünglich 49 für C7 gesamt) | **umgesetzt und committet** (`3a7c8c6`, 18.10., drei Stufen grün); danach Design-Überarbeitung (2.), **nicht committet**; offen Handprüfung 12.3–12.12 der Anleitung, Sichtprüfung 360 px mit Tastatur |
 | C8 | Admin-Verwaltung, Teil 2 (Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur, manuelle Teams); am 18.10.2026 aus C7 ausgelagert | **21,5** | Anleitung `harness/tmp/C8_UMSETZUNG.md` liegt vor; C7 ist die Voraussetzung und steht; Umsetzung offen |
 | C9 | PWA-Onboarding & Push (A25) (bisher C8) | 14 | offen |
 | C10 | Abnahme, WCAG 2.1 AA, Deployment (bisher C9) | 12 | offen; **blockiert**, bis `app.<domain>` in Cloudflare Pages steht |
@@ -204,15 +233,15 @@ Summe 164,5 h (C7 und C8 zusammen mit 49 statt 20 h; C5 und C6 = 26 h geplant, 3
   `profilAenderung`; `adminTermine.ts`: `terminAnlegen`, `serieAnlegen`, `terminAendern`, `terminAbsagen`, `terminEntfernen`; `terminEingabe.ts`: Grenzen, `anlegenKoerper`, `aenderungKoerper`, `serieKoerper`, `serieFehler`,
   `liegtInVergangenheit`, `alsSerie`); `terminZeit.ts` neu `datumListe`; Schlüssel `adminProfile`, `adminSkills`. **Hooks** in `src/hooks/admin/`: `usePinAendern`, `useNameAnfordern`, `useNameBestaetigen`, `useProfile`,
   `useSkillKategorien`, `useProfilAnlegen/-Bearbeiten/-Blockieren/-Entfernen`, `useTerminAnlegen/-Aendern/-Absagen/-Entfernen`, `useSerieAnlegen`, `termineNeuLesen` (Gruppe `termine`, `terminAlle`, `termineVerlauf`, als
-  Versprechen zurückgegeben); dazu `useSpielerParameter`. **Seiten:** `AdminDashboard`, `AdminPin`, `AdminNameAendern`, `AdminNameBestaetigen`, `AdminProfile`, `AdminProfilFormular` (mit `ProfilStatus`),
+  Versprechen zurückgegeben); dazu `useSpielerParameter`. **Seiten:** `AdminDashboard`, `AdminPin`, `AdminNameAendern`, `AdminNameBestaetigen`, `AdminProfile`, `AdminProfilDetail` (neu), `AdminProfilFormular` (mit `ProfilStatus`),
   `AdminTermine`, `AdminTerminNeu` (mit `SerieFelder`), `AdminTerminDetail` (mit `TerminVerwaltung`, `TerminAendernFormular`, `WeitereAktionen`). **Bausteine:** `Bestaetigung`, `Verwaltungsliste`, `SkillFelder`, `ProfilListe`/`ProfilZeile`,
-  `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; `TerminAnsicht` neu `nurLesen`, `ohneAktualisierung`, `ueberschriftRef`; `TerminKarte` neu `ueberschriftRef`.
+  `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; **neu mit der Design-Überarbeitung:** `Segmente`, `Schalter`, `Feldzeile`, `Netzdiagramm` (mit `netzdiagrammGeometrie.ts`: Geometrie), `ProfilKennzeichen`, `ProfilLader`, `skills.ts` mit `skalaText`, `Knopfgruppe`, `StartLader`, `app/adminSeiten.ts`, `CustomButton` mit `gefahrUmriss`; `TerminAnsicht` neu `nurLesen`, `ohneAktualisierung`, `ueberschriftRef`; `TerminKarte` neu `ueberschriftRef`.
 - **Test-Stub und Mocks:** `src/test/setup.ts` (jsdom-`<dialog>`); `src/test/mocks/termine.ts` (zustandsbehafteter Server `terminHandlers()`, `terminModell`, `teamsAus`,
   `beispielErgebnis`, `beispielBilanz`; `TerminModell` mit `version`, `serieId`), `problem.ts`, **`admin.ts`** (zustandsbehaftet: `adminWelt()`, `adminHandler()`, `protokoll`, `fremdeAenderung()`, `terminInVerwendung`);
   E2E-Nachbildungen `e2e/hilfen/{sitzung,termine,teams,ergebnisse,admin}.ts` (`adminNachbilden`, `terminverwaltungNachbilden`, `beispielProfile`).
 - **PWA:** Manifest, eigener Worker, `_headers`/`_redirects` nach den Cloudflare-Auflagen.
-- **Tests (Stand nach C7):** **975 Unit-Tests in 111 Dateien**; E2E **453 Läufe in 3 Chromium-Projekten** (450 bestanden, 3 übersprungen), neu `admin-dashboard`, `admin-zugang`, `admin-profile`, `admin-termine`, `admin-layout`. Früherer Stand (C5): 638 Unit-Tests in 83 Dateien; E2E u. a. `admin.spec.ts` (16 Fälle), `layout.spec.ts`, `sitzung-ablauf.spec.ts` (15 Fälle), `namensauswahl.spec.ts`,
-  `pwa.spec.ts` (nur Chromium), `termine`, `tabs`, `teams`, `ergebnisse`, `verlauf`. CI: Job `pruefen` (Lint, Typen, Bau, Unit) und Job `e2e` (**nur Chromium, 3 Projekte, 453 Läufe**; die vier WebKit-Projekte sind seit 18.10.2026 abgeschaltet, 5.4).
+- **Tests (Stand nach den Nachträgen vom 18.10.2026, Abend):** **1096 Unit-Tests in 120 Dateien**; E2E **483 Läufe in 3 Chromium-Projekten** (Vollauf 480 bestanden, 3 übersprungen; neu `nachladen.spec.ts`). Davor (Design-Überarbeitung): 1093 Unit-Tests, 477 E2E-Läufe. Stand nach C7 (davor): 975 Unit-Tests in 111 Dateien, 453 E2E-Läufe (450 bestanden, 3 übersprungen), neu `admin-dashboard`, `admin-zugang`, `admin-profile`, `admin-termine`, `admin-layout`. Früherer Stand (C5): 638 Unit-Tests in 83 Dateien; E2E u. a. `admin.spec.ts` (16 Fälle), `layout.spec.ts`, `sitzung-ablauf.spec.ts` (15 Fälle), `namensauswahl.spec.ts`,
+  `pwa.spec.ts` (nur Chromium), `termine`, `tabs`, `teams`, `ergebnisse`, `verlauf`. CI: Job `pruefen` (Lint, Typen, Bau, Unit) und Job `e2e` (**nur Chromium, 3 Projekte, 483 Läufe**; die vier WebKit-Projekte sind seit 18.10.2026 abgeschaltet, 5.4).
 
 ### 5.2 Verifikation
 Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
@@ -231,6 +260,12 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
   M9 (`mutate` + `onSuccess` statt `mutateAsync` bei Anlegen, Termin entfernen, Profil entfernen; je ≥ 1 rot), M10 (Absatz zu den Übersprungenen entfällt; 2 rot), M14 (`terminAlle` nicht neu gelesen; 6 rot) – alle Mutanten erkannt, keiner äquivalent.
   **Nicht geprüft:** Handprüfung 12.3–12.12 der Anleitung gegen den echten Server (zentrale PIN, Anmeldename mit E-Mail, Profile, Serie mit Kollision, Konflikt mit zwei Browsern, Abschliessen und Ergebnisse, Entfernen), Sichtprüfung bei 360 px
   mit geöffneter Tastatur (die E2E-Fälle prüfen Überhang und Tap-Ziele bei 360 px, nicht die Tastatur), iPhone.
+- **Design-Überarbeitung Admin (18.10.2026):** `lint` (inkl. `e2e/`), `typecheck --force`, **1090 Unit-Tests** (neu: `Segmente`, `Schalter`, `Feldzeile`, `Netzdiagramm`/`netzdiagrammGeometrie.ts`, `ProfilKennzeichen`, `AdminProfilDetail` mit den Zuständen von `ProfilLader`,
+  `durchschnittText`/`skalaText`, Entfernen aus der Terminliste, „Abbrechen“ im Termin- und Profilformular, `WOCHENTAGE.kurz`, `gefahrUmriss`, `routen`/`AppLayout` mit Funktion als `zurueck`; angepasst: `SkillFelder`, `AdminProfilFormular`,
+  `AdminTerminNeu`, `AdminTermine`, `AdminTerminZeile`, `zielpfad`), Bau, ein Browserlauf der drei Admin-Specs auf allen drei Chromium-Projekten (102 von 102), danach der Vollauf (Vollauf 474 bestanden, 3 übersprungen; Cloud-Kopie wie bei C5/C7, Konfiguration mit `launchOptions.executablePath` ausserhalb des Repos).
+  **Sichtprüfung** der sechs Ansichten bei 360 × 800 per Screenshot (Profilansicht, Formular, Terminliste, „Neuer Termin“ als Einzeltermin und Serie, Terminverwaltung) und zusätzlich über die Layout-Schleife; die E2E-Fälle prüfen Überhang, Höhe **und Breite** der Segmente
+  und die gleiche Breite der Schaltflächen. **Zwei Befunde des Browserlaufs, die die Unit-Tests nicht sahen:** sieben Segmente nur 42,6 px breit bei 360 px (Karte reicht seitdem bis an den Rand, Einzug über `--segmente-einzug`) und 3,75 px Breitenunterschied bei
+  `flex: 1` (Raster). **Nicht geprüft:** WebKit/iPhone, Handprüfung gegen den echten Server, 320 px, Tastaturansicht bei geöffneter Bildschirmtastatur, Gegenproben (keine neuen Mutanten gelaufen).
 
 ### 5.3 Fallen, die aufgetreten sind
 - **Ein `202` ohne Rumpf** hätte `aufrufen` (`json()` auf leerem Rumpf) abstürzen lassen; `202`/`204` zentral als „kein Rumpf".
@@ -244,6 +279,10 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
 - **Safari und `fit-content` an umbrechender Flex-Zeile:** Breite = ein Element; festes Raster.
 - **Playwright klickt nicht auf `aria-disabled`** (wartet): `force: true`.
 - **Umbenennen per Suchen und Ersetzen** traf Kommentare, Doku, Archive („Iconn"); Archive aus Git wiederhergestellt, Ordner `AppIcon` → `Icon`.
+- **Dateinamen, die sich nur in der Groß-/Kleinschreibung unterscheiden** (`Netzdiagramm.tsx` neben `netzdiagramm.ts`): Linux-Arbeitskopie und Cloud (Groß-/Kleinschreibung beachtet) sind grün, auf dem Mac (APFS ohne Unterscheidung) löst `./Netzdiagramm` auf die `.ts`-Datei auf ⇒ TS1192/TS1261 im Bau. Behoben durch `netzdiagrammGeometrie.ts`. **Prüfung vor jeder Übergabe:** `find src e2e -type f | tr A-Z a-z | sort | uniq -d` muss leer sein.
+- **Nachladen ändert die Reihenfolge der Stylesheets:** Das CSS des Admin-Pakets steht nach `global.scss`. Eine Modulklasse neben einer globalen Klasse (`style.legende` + `nurFuerScreenreader`) gewann danach die Breite ⇒ 16 px Überhang auf „Neuer Termin“ (nur E2E sah es). Keine Modulklasse mit einer globalen Klasse mischen, die dieselben Eigenschaften setzt.
+- **Lazy Routes in Vitest:** Der erste `import()` des Admin-Pakets übersetzt den ganzen Bereich und dauert länger als `findBy` wartet (1 s) ⇒ `routen.test.tsx` lädt `adminSeiten` in `beforeAll` vorab.
+- **Klasse des Aufrufers an `Knopfgruppe` ohne `display`/`flex`:** Gleich spezifische Regeln aus zwei Modulen gewinnen nach Reihenfolge im Bündel; ein `display: flex` des Aufrufers hätte das Raster still ersetzt.
 - **jsdom kennt `showModal` nicht** (Stub). **`::backdrop` erbte früher nichts** (eigenes Token). **`cancel` am Dialog ist nicht garantiert** (Wiederöffnen in `onClose`).
 - **Fokus bei Tab im modalen Dialog** geht kurz auf das Dokument; Fokusfalle mit einem Element **hinter** dem Dialog prüfen.
 - **Zwei `Date.now()` für „gleiche" Zeitpunkte** wichen um 1 ms ab (nur ein E2E-Projekt fiel auf): Mocks mit **einer** Uhrablesung (`sitzungMitRest`). **Eine Beispielsitzung mit festem
@@ -271,6 +310,11 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
 - **C7 – Die Uhr nicht im Render:** `min` der Datumsfelder und „heute" über `useState(() => heuteIso(new Date()))`, `Date.now()` nur in Absenden-Handlern; die Vergangenheitsprüfung läuft beim Absenden.
 - **C7 – `Auswahlliste` im E2E:** `selectOption` geht nicht (Combobox); Auslöser klicken, dann `<test-id>-option-<wert>`.
 - **C7 – `tsc -b` aus `client/` starten**, nicht aus `src/`; **grosse Heredocs** mit device-bash scheitern an `spawn E2BIG` (Dateien in Teilen schreiben); Löschen im verbundenen Ordner ist gesperrt (Sicherungsdateien der Gegenproben nach `test-results/sicherung/`, nicht in `src/`).
+- **Design – Radio mit `opacity: 0` über dem Segment:** Playwright klickt es und `check()` funktioniert; `toBeChecked()` auf dem Radio, nicht auf dem Text. Bei `Segmente` heisst das Segment `<id>-<wert>` (z. B. `skill-ANGRIFF-5`, `serie-wochentag-2`, `admin-art-serie`).
+- **Design – Zugänglicher Name einer Legende aus zwei `span`:** ohne Leerzeichen dazwischen „Zehnerwert5“ (jsdom und Screenreader verketten); ein `{' '}` zwischen Name und Wert in `SkillFelder`.
+- **Design – Mock-Reihenfolge:** Überschreibungen (`mockServer.use`) **nach** `adminHandler(welt)` anmelden, sonst gewinnt der Grundhandler (zuletzt angemeldet gewinnt); in `rendern`-Helfern, die selbst `adminHandler` anmelden, den Test inline bauen.
+- **Design – `fullPage`-Screenshots** zeigen die haftende `Aktionsleiste` mitten im Bild (kein Fehler, sie haftet am Fenster).
+- **Design – Eine Tarball-Kopie für die Cloud** gehört in `PRJ_FuBo/_zu_loeschen/` (nicht in einen nicht vorhandenen `outputs`-Ordner der Geräteshell); Löschen ist gesperrt, die Datei bleibt beim Aufräumen (6.9).
 - **C5 – E2E-Nachbildung ohne Termin-Route** leitet `GET /termine/:id/lesen` an den Vorschau-Server (HTML): Tests auf `teams/:id`/`ergebnisse/:id` brauchen `termineNachbilden`.
 
 ### 5.4 Bewusst offen
@@ -280,7 +324,7 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
   `playwright.config.ts` (`WEBKIT_AKTIV`/`OHNE_WEBKIT`, die vier WebKit-Projekte mit `testIgnore`), CI installiert nur Chromium. Wieder einschalten: `WEBKIT_E2E=1`, im CI `webkit` zu
   `playwright install` und `WEBKIT_E2E: '1'` am Testschritt. **Folge:** iPhone- und iPad-Layout (375/402 px, Tablet), Tab-Verhalten und Safari-Eigenheiten (z. B. PIN-Kästchen vom 03.10.2026)
   sind nicht mehr automatisch abgesichert – Handprüfung auf einem iPhone, besonders Neuladen von Schritt 2 der Passwort-Rücksetzung (der Balken ist reiner Schmuck, der feste Satz stimmt auch ohne).
-- `RoutenAngaben` kennt keine Zielangabe mit Parameter; „Zurück" geht von `teams/:terminId`/`ergebnisse/:terminId` einen Schritt im Verlauf, beim Direkteinstieg zur Startseite.
+- `RoutenAngaben.zurueck` darf seit der Design-Überarbeitung eine Funktion der Routenparameter sein (Profilformular → Profilansicht); „Zurück" von `teams/:terminId`/`ergebnisse/:terminId` geht weiter einen Schritt im Verlauf, beim Direkteinstieg zur Startseite.
 - „nicht gefunden" liest beim Direkteinstieg keine Sitzung; der Offline-Hinweis erscheint dort erst mit dem ersten Aufruf oder dem Ereignis `offline`.
 - **C4:** `PasswortFeld` kürzt längere Passwörter beim Einfügen still (`maxLength` 72, folgt dem Vertrag/BCrypt); läuft die `PIN_VERIFIED`-Sitzung beim Warten auf die Reset-E-Mail ab, ist der
   `navigate`-Zustand weg, der Vorgang auf dem Server aber gültig (Weg: PIN → Name → „Als Admin anmelden" → „Passwort vergessen?" → „Ich habe bereits eine PIN"); Verhalten auf iOS (`one-time-code`,
@@ -303,20 +347,21 @@ Frühere Läufe mit allen Gegenproben stehen in den Archivfassungen.
   haben keine eigene Ansicht in DESIGN.md.
 
 ## 6. Nächste Schritte
-1. **C7 committen (auf Aufforderung, je Stufe oder gesammelt) und `dev_client` pushen** (C5 ist committet, `e9a85e6`; Löschfreigabe für die Sperrdateien in `.git`) und CI-Lauf nur mit Chromium (nach der Abschaltung der WebKit-Projekte, 5.4); **WebKit-Ursache klären** (Trace aus dem Artefakt `playwright-report`, ggf. lokal `WEBKIT_E2E=1 npx playwright test`).
+1. **Die Design-Überarbeitung committen (auf Aufforderung; C7 ist committet) und `dev_client` pushen** (C5 ist committet, `e9a85e6`; Löschfreigabe für die Sperrdateien in `.git`) und CI-Lauf nur mit Chromium (nach der Abschaltung der WebKit-Projekte, 5.4); **WebKit-Ursache klären** (Trace aus dem Artefakt `playwright-report`, ggf. lokal `WEBKIT_E2E=1 npx playwright test`).
 2. **Handprüfung C5 gegen eine laufende Serverinstanz** (5.2 „Nicht geprüft"; C5-Anleitung 12): Zusage/Absage und Reihenfolge, Teams generieren (Kontingent, Ersetzen, `veraltet`, Beginn), Termin 10 Minuten
    in der Zukunft anlegen und 30–35 Minuten nach Beginn Ergebnis erfassen (zwei Geräte → Hinweis), Bilanz für Spieler und Gast, Verlauf, iPhone. Danach den Hinweistext für `false → true` festlegen.
    Seit C7 Stufe 3 geht ein Teil davon ohne Wartezeit (Termin abschliessen; Teams vorher generieren, mindestens `minTeilnehmer` Zusagen).
 3. **C4 abnehmen** (Handprüfung, iPhone, Passwortmanager).
-4. **C7 abnehmen:** Handprüfung 12.3–12.12 der Anleitung gegen eine laufende Serverinstanz (zentrale PIN mit zweitem Gerät, Anmeldename mit E-Mail und Dauer der Namens-PIN notieren, Profile inkl. Sperren eines angemeldeten
+4. **Design-Überarbeitung abnehmen (Sichtprüfung auf dem Telefon):** Profilansicht (Netzdiagramm lesbar, lange Namen), Skillstufen mit dem Daumen (sieben Segmente), Schalter „Aktiv in der Auswahlliste“ (sofort, angemeldetes Profil mit Dialog), Terminkarten, „Neuer Termin“ (Serie, Fehlertexte neben den halben Spalten); Skala im Kopf („Skalierung 0–6 (Torwart 0–3)“) ist entschieden und umgesetzt. Abweichungen dem Entwickler für DESIGN.md vorlegen.
+5. **C7 abnehmen:** Handprüfung 12.3–12.12 der Anleitung gegen eine laufende Serverinstanz (zentrale PIN mit zweitem Gerät, Anmeldename mit E-Mail und Dauer der Namens-PIN notieren, Profile inkl. Sperren eines angemeldeten
    Spielers, Termine/Serie mit Kollision, Konflikt mit zwei Browsern, Abschliessen, Entfernen); Sichtprüfung bei 360 px mit geöffneter Tastatur (Dashboard, PIN, Name, Liste, Formulare, alle Dialoge); DESIGN.md-Abweichungen
    aus 1.3 dem Entwickler vorlegen. **Danach C8** (`harness/tmp/C8_UMSETZUNG.md`): Konfiguration/Gastplätze/Gast-Stufe 10,5 h, Halle/Ergebniskorrektur/manuelle Teams 11 h; dazu gehört die Ergebnis-Korrektur
    (`ergebnisKorrigieren` liegt in `admin.ts`, die Ansicht fehlt) und die Skill-Stufe eines Gastes.
-5. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS); iPhone-/iPad-Layout von Hand, solange WebKit abgeschaltet ist.
-6. **Server-Track:** Vertragslücke freie Gastplätze (3); Verhalten von `GET /bilanz/lesen` für Gäste klären; Kontingent der Teamgenerierung in der Antwort anbieten; Anfragen aus C7 und C8 (1.4 der C7- und der C8-Anleitung:
+6. **C2-Restabnahme:** Zoom 200 % bei 360 px, echtes Telefon im Sonnenlicht (auch Safari/iOS); iPhone-/iPad-Layout von Hand, solange WebKit abgeschaltet ist.
+7. **Server-Track:** Vertragslücke freie Gastplätze (3); Verhalten von `GET /bilanz/lesen` für Gäste klären; Kontingent der Teamgenerierung in der Antwort anbieten; Anfragen aus C7 und C8 (1.4 der C7- und der C8-Anleitung:
    ADMIN-Lesezugriff auf `/termine/*`, Gast-Stufe lesbar, Mindestwert Leerlauf), **Gültigkeitsdauer der Namens-PIN dokumentieren** (offen aus C7).
-7. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus, `FUBO_INITIAL_PIN` vierstellig.
-8. **Aufräumen** (nur im lokalen Terminal; die Agentenumgebung darf es ohne Freigabe nicht): `PRJ_FuBo/_zu_loeschen/e2e-kopie.tgz`, verwaiste `.git/objects/tmp_obj_*`, übrige Sperrdateien.
+8. **Betrieb:** Custom Domain `app.<domain>`, Rocket Loader und Auto-Minify aus, `FUBO_INITIAL_PIN` vierstellig.
+9. **Aufräumen** (nur im lokalen Terminal; die Agentenumgebung darf es ohne Freigabe nicht): `PRJ_FuBo/_zu_loeschen/` (`e2e-kopie.tgz`, `client-e2e.tgz`, `src-neu.tgz`), verwaiste `.git/objects/tmp_obj_*`, übrige Sperrdateien.
 
 ## 7. Weitere Anweisungen
 - Repo-Wurzel `client/`, Branches `dev_xxx`; nichts nach `main` ohne ausdrückliche Anweisung; Commits nur auf Aufforderung.

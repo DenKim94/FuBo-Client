@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router'
 import AppLayout from '@/layouts/AppLayout/AppLayout'
 import type { RoutenAngaben } from '@/app/routenAngaben'
@@ -6,24 +7,12 @@ import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import { ADMIN_PFADE, LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import Platzhalter from '@/components/Platzhalter/Platzhalter'
+import StartLader from '@/components/StartLader/StartLader'
 import DashboardLayout from '@/layouts/DashboardLayout/DashboardLayout'
-import AdminAnmeldung from '@/pages/AdminAnmeldung/AdminAnmeldung'
-import AdminDashboard from '@/pages/AdminDashboard/AdminDashboard'
-import AdminNameAendern from '@/pages/AdminNameAendern/AdminNameAendern'
-import AdminNameBestaetigen from '@/pages/AdminNameBestaetigen/AdminNameBestaetigen'
-import AdminPin from '@/pages/AdminPin/AdminPin'
-import AdminProfile from '@/pages/AdminProfile/AdminProfile'
-import AdminProfilFormular from '@/pages/AdminProfilFormular/AdminProfilFormular'
-import AdminTermine from '@/pages/AdminTermine/AdminTermine'
-import AdminTerminDetail from '@/pages/AdminTerminDetail/AdminTerminDetail'
-import AdminTerminNeu from '@/pages/AdminTerminNeu/AdminTerminNeu'
 import Dashboard from '@/pages/Dashboard/Dashboard'
 import ErgebnisSeite from '@/pages/ErgebnisSeite/ErgebnisSeite'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
 import NichtGefunden from '@/pages/NichtGefunden/NichtGefunden'
-import PasswortAendern from '@/pages/PasswortAendern/PasswortAendern'
-import PasswortNeu from '@/pages/PasswortNeu/PasswortNeu'
-import PasswortVergessen from '@/pages/PasswortVergessen/PasswortVergessen'
 import PinEingabe from '@/pages/PinEingabe/PinEingabe'
 import TeamsSeite from '@/pages/TeamsSeite/TeamsSeite'
 import TerminDetail from '@/pages/TerminDetail/TerminDetail'
@@ -48,11 +37,41 @@ const OHNE_ZURUECK: RoutenAngaben = { ohneZurueck: true }
 /** Verwaltungsansichten direkt unter dem Admin-Dashboard: „Zurück“ führt immer dorthin (C7, E1). */
 const ZUM_ADMIN_DASHBOARD: RoutenAngaben = { zurueck: ADMIN_PFADE.start }
 
-/** Formular eines Profils: „Zurück“ führt zur Liste, nicht einen Schritt im Verlauf (C7, 7.3). */
+/** Anlegen und Profilansicht: „Zurück“ führt zur Liste, nicht einen Schritt im Verlauf (C7, 7.3). */
 const ZUM_ADMIN_PROFILE: RoutenAngaben = { zurueck: ADMIN_PFADE.profile }
+
+/**
+ * Bearbeiten eines Profils: „Zurück“ führt zur Profilansicht desselben Profils (Prototyp 09b → 09c). Ist die Id
+ * ungültig, zeigt die Seite „nicht gefunden“ und das Ziel ist die Liste.
+ */
+const ZUR_PROFILANSICHT: RoutenAngaben = {
+  zurueck: ({ spielerId }) =>
+    spielerId !== undefined && /^[1-9]\d*$/.test(spielerId)
+      ? ADMIN_PFADE.profilDetail(Number(spielerId))
+      : ADMIN_PFADE.profile,
+}
 
 /** Anlegen und Verwalten eines Termins: „Zurück“ führt zur Terminliste (C7, 8.3). */
 const ZUM_ADMIN_TERMINE: RoutenAngaben = { zurueck: ADMIN_PFADE.termine }
+
+/** Lädt alle Admin-Ansichten als ein gemeinsames Paket (Begründung in `adminSeiten.ts`). */
+const adminSeitenLaden = () => import('@/app/adminSeiten')
+
+/** Die Seiten aus `adminSeiten.ts`. */
+type AdminSeiten = Awaited<ReturnType<typeof adminSeitenLaden>>
+
+/**
+ * Lazy Route für eine Admin-Ansicht: Das Paket wird erst geladen, wenn eine Admin-Adresse angesteuert wird.
+ *
+ * Während des Ladens bleibt die bisherige Ansicht stehen (der Router wartet, bevor er wechselt); beim Direktaufruf
+ * einer Admin-Adresse zeigt die Wurzel `StartLader`. **Nachladen ist kein Schutz:** Wer eine Admin-Adresse
+ * aufruft, lädt den Code, bevor `AdminRoute` prüft. Der Code enthält keine Daten; die Durchsetzung liegt im Server.
+ *
+ * @param erzeugen Baut das Element aus den geladenen Seiten, etwa `(s) => <s.AdminTermine />`.
+ */
+function adminSeite(erzeugen: (seiten: AdminSeiten) => ReactElement) {
+  return async () => ({ element: erzeugen(await adminSeitenLaden()) })
+}
 
 /**
  * Routenbaum der Anwendung.
@@ -75,11 +94,16 @@ const ZUM_ADMIN_TERMINE: RoutenAngaben = { zurueck: ADMIN_PFADE.termine }
  *
  * Beide Guards sind Bedienkomfort, keine Sicherheitsmassnahme; die Durchsetzung
  * liegt in der Filterchain des Servers.
+ *
+ * **Admin-Ansichten werden nachgeladen** (`adminSeite`, 18.10.2026): Spieler laden
+ * den Admin-Bereich nie, der Start wird kleiner.
  */
 export const routen = createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
+    // Steht nur beim Start, solange ein nachgeladenes Paket fehlt (Direktaufruf einer Admin-Adresse).
+    hydrateFallbackElement: <StartLader />,
     children: [
       // --- Oeffentlich ---------------------------------------------------
       // Beim Start ohne Sitzung fuehrt `GeschuetzteRoute` von `/` hierher.
@@ -99,17 +123,17 @@ export const routen = createBrowserRouter([
           // Weg ausgeht (C4, 4.2). Die Folgeschritte gehen je einen Schritt zurück.
           {
             path: 'admin/anmelden',
-            element: <AdminAnmeldung />,
+            lazy: adminSeite((s) => <s.AdminAnmeldung />),
             handle: { zurueck: LOGIN_PFADE.name } satisfies RoutenAngaben,
           },
           {
             path: 'admin/passwort/vergessen',
-            element: <PasswortVergessen />,
+            lazy: adminSeite((s) => <s.PasswortVergessen />),
             handle: { zurueck: ADMIN_PFADE.anmelden } satisfies RoutenAngaben,
           },
           {
             path: 'admin/passwort/neu',
-            element: <PasswortNeu />,
+            lazy: adminSeite((s) => <s.PasswortNeu />),
             handle: { zurueck: ADMIN_PFADE.passwortVergessen } satisfies RoutenAngaben,
           },
         ],
@@ -156,19 +180,19 @@ export const routen = createBrowserRouter([
                 children: [
                   // Startseite der Administration (E1): kein „Zurück“, das den
                   // Admin ins User-Dashboard schickte. Von hier erreicht er jede Verwaltung.
-                  { index: true, element: <AdminDashboard />, handle: OHNE_ZURUECK },
+                  { index: true, lazy: adminSeite((s) => <s.AdminDashboard />), handle: OHNE_ZURUECK },
                   {
                     path: 'passwort/aendern',
-                    element: <PasswortAendern />,
+                    lazy: adminSeite((s) => <s.PasswortAendern />),
                     handle: ZUM_ADMIN_DASHBOARD,
                   },
 
                   // --- Zugangsdaten (C7, Stufe 1) -----------------------------
-                  { path: 'pin', element: <AdminPin />, handle: ZUM_ADMIN_DASHBOARD },
-                  { path: 'name/aendern', element: <AdminNameAendern />, handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'pin', lazy: adminSeite((s) => <s.AdminPin />), handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'name/aendern', lazy: adminSeite((s) => <s.AdminNameAendern />), handle: ZUM_ADMIN_DASHBOARD },
                   {
                     path: 'name/bestaetigen',
-                    element: <AdminNameBestaetigen />,
+                    lazy: adminSeite((s) => <s.AdminNameBestaetigen />),
                     handle: { zurueck: ADMIN_PFADE.nameAendern } satisfies RoutenAngaben,
                   },
 
@@ -177,17 +201,18 @@ export const routen = createBrowserRouter([
                   // drei Verwaltungen in C8. `neu` steht vor dem dynamischen Segment;
                   // React Router wertet statische vor dynamischen Pfaden.
                   // --- Spielerprofile (C7, Stufe 2) ---------------------------
-                  { path: 'profile', element: <AdminProfile />, handle: ZUM_ADMIN_DASHBOARD },
-                  { path: 'profile/neu', element: <AdminProfilFormular modus="neu" />, handle: ZUM_ADMIN_PROFILE },
+                  { path: 'profile', lazy: adminSeite((s) => <s.AdminProfile />), handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'profile/neu', lazy: adminSeite((s) => <s.AdminProfilFormular modus="neu" />), handle: ZUM_ADMIN_PROFILE },
+                  { path: 'profile/:spielerId', lazy: adminSeite((s) => <s.AdminProfilDetail />), handle: ZUM_ADMIN_PROFILE },
                   {
-                    path: 'profile/:spielerId',
-                    element: <AdminProfilFormular modus="bearbeiten" />,
-                    handle: ZUM_ADMIN_PROFILE,
+                    path: 'profile/:spielerId/bearbeiten',
+                    lazy: adminSeite((s) => <s.AdminProfilFormular modus="bearbeiten" />),
+                    handle: ZUR_PROFILANSICHT,
                   },
-                  { path: 'termine', element: <AdminTermine />, handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'termine', lazy: adminSeite((s) => <s.AdminTermine />), handle: ZUM_ADMIN_DASHBOARD },
                   // „neu“ steht vor „:terminId“, damit der Pfad nicht als Id gelesen wird.
-                  { path: 'termine/neu', element: <AdminTerminNeu />, handle: ZUM_ADMIN_TERMINE },
-                  { path: 'termine/:terminId', element: <AdminTerminDetail />, handle: ZUM_ADMIN_TERMINE },
+                  { path: 'termine/neu', lazy: adminSeite((s) => <s.AdminTerminNeu />), handle: ZUM_ADMIN_TERMINE },
+                  { path: 'termine/:terminId', lazy: adminSeite((s) => <s.AdminTerminDetail />), handle: ZUM_ADMIN_TERMINE },
                   { path: 'gaeste', element: <Platzhalter titel="Gastplätze" paket="C8" />, handle: ZUM_ADMIN_DASHBOARD },
                   {
                     path: 'konfiguration',

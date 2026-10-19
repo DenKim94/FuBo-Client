@@ -1,29 +1,49 @@
 @use '@/styles/globalVars';
 
-.gruppe {
+// Der Block ist eine Karte wie im Prototyp (09b). Kein seitlicher Innenabstand an der Karte: Den Einzug setzen die
+// Segmente selbst (`--segmente-einzug`), damit ihre Lücken zum Tap-Ziel zählen und sieben Stufen bei 360 px noch
+// 44 px breit sind (Rechnung in `Segmente.module.scss`). Kopf und Hinweis bekommen ihren Einzug einzeln.
+.karte {
+  --segmente-einzug: var(--abstand-s);
+
   display: flex;
   flex-direction: column;
   gap: var(--abstand-m);
-  min-inline-size: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
+  padding: var(--abstand-m) 0;
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-l);
+  background: var(--farbe-hintergrund);
+}
+
+.kopf {
+  padding-inline: var(--abstand-m);
 }
 
 .titel {
-  padding: 0;
   font-size: var(--schrift-basis);
   font-weight: var(--gewicht-halbfett);
 }
 
 .hinweis {
   margin: 0;
+  padding-inline: var(--abstand-m);
   color: var(--farbe-text-schwach);
   font-size: var(--schrift-klein);
 }
 
-.felder {
+.kategorien {
   display: flex;
   flex-direction: column;
   gap: var(--abstand-m);
+}
+
+.name {
+  font-weight: var(--gewicht-normal);
+  overflow-wrap: anywhere;
+}
+
+// Der gewählte Wert als Zahl: auch ohne den Farbwechsel des Segments lesbar.
+.wert {
+  flex: none;
+  font-weight: 700;
 }

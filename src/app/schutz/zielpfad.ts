@@ -38,8 +38,10 @@ export const ADMIN_PFADE = {
   profile: '/admin/profile',
   /** Rolle `ADMIN`: Profil anlegen. Steht als statisches Segment vor `:spielerId`. */
   profilNeu: '/admin/profile/neu',
-  /** Rolle `ADMIN`: ein Profil bearbeiten. */
-  profilBearbeiten: (spielerId: number) => `/admin/profile/${String(spielerId)}`,
+  /** Rolle `ADMIN`: Profilansicht mit Netzdiagramm; von dort geht es zum Bearbeiten. */
+  profilDetail: (spielerId: number) => `/admin/profile/${String(spielerId)}`,
+  /** Rolle `ADMIN`: ein Profil bearbeiten (Name, Skills, Status). */
+  profilBearbeiten: (spielerId: number) => `/admin/profile/${String(spielerId)}/bearbeiten`,
   /** Rolle `ADMIN`: Terminliste (C7, Stufe 3). */
   termine: '/admin/termine',
   /** Rolle `ADMIN`: Termin oder Serie anlegen. Steht als statisches Segment vor `:terminId`. */

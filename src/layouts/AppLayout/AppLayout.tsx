@@ -62,11 +62,14 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const istStartseite = pathname === LOGIN_PFADE.start
-  const angaben = useMatches().map((treffer) => treffer.handle as RoutenAngaben | undefined)
+  const treffer = useMatches()
+  const angaben = treffer.map((eintrag) => eintrag.handle as RoutenAngaben | undefined)
   // Eine Route kann die Schaltflaeche ueber ihr `handle` abbestellen (Login-Schritte).
   const ohneZurueck = angaben.some((angabe) => angabe?.ohneZurueck)
-  // Die innerste Route mit Zielangabe gilt.
-  const ziel = angaben.findLast((angabe) => angabe?.zurueck)?.zurueck
+  // Die innerste Route mit Zielangabe gilt; eine Funktion bekommt die Parameter ihrer Route.
+  const zielTreffer = treffer.findLast((eintrag) => (eintrag.handle as RoutenAngaben | undefined)?.zurueck)
+  const zielAngabe = (zielTreffer?.handle as RoutenAngaben | undefined)?.zurueck
+  const ziel = typeof zielAngabe === 'function' ? zielAngabe(zielTreffer?.params ?? {}) : zielAngabe
   const mitZurueck = !istStartseite && !ohneZurueck
   const { angemeldet } = useSitzung()
   const abmeldung = useAbmelden()

@@ -3,8 +3,8 @@
 > Gilt für den Agenten, der **ausschließlich die Frontend-Seite (`client/`)** bearbeitet.
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`.
-> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
-> `archive/AGENT_CLIENT_2026-10-17c.md`, ältere unter `archive/AGENT_CLIENT_2026-10-03.md` und `…-10-17.md`/`…-10-17b.md`.
+> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten. Die ausführliche Vorfassung mit allen Herleitungen liegt unter
+> `archive/AGENT_CLIENT_2026-10-17c.md`, die Fassung vor der Design-Überarbeitung unter `archive/AGENT_CLIENT_2026-10-18b.md`, ältere unter `archive/AGENT_CLIENT_2026-10-03.md` und `…-10-17.md`/`…-10-17b.md`.
 
 ### Rolle
 Senior-Frontend-Entwickler (TypeScript, React ab 19). Achtet auf Testbarkeit, Lesbarkeit, Zugänglichkeit und Performance;
@@ -132,19 +132,21 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 ### Implementierungs-Richtlinien
 - Bezeichner camelCase, Konstanten GROSS_MIT_UNTERSTRICH, **keine Umlaute in Bezeichnern**. JSDoc deutsch **mit** Umlauten; sichtbarer Text mit
   Umlauten.
+- **Keine Dateinamen im selben Ordner, die sich nur in der Groß-/Kleinschreibung unterscheiden** (`Netzdiagramm.tsx` und `netzdiagramm.ts`): Der Mac des Entwicklers unterscheidet sie nicht, der Bau bricht ab (TS1261), Linux und Cloud zeigen es nicht. Hilfsmodule bekommen einen eigenen Namen (`netzdiagrammGeometrie.ts`); vor der Übergabe `find src e2e -type f | tr A-Z a-z | sort | uniq -d` (muss leer sein).
 - Je Komponente eine `<Name>.module.scss`, Import heißt `style`. Lokale Variablen in der Datei, globale in `_globalVars.scss`. Sass mit
   `@use`/`@forward`; `darken()`/`lighten()`/`mix()` nicht verwenden.
 - **Kein Hexwert außerhalb von `src/styles/_globalVars.scss`.** Zwei Randrollen (`--farbe-rand` dekorativ, `--farbe-rand-bedienbar`), eigenes
   `--farbe-fokus`, `--farbe-link`, `--tapziel-min` (44 px), `--tapziel-primaer` (64 px). Zustände der Primäraktion über eigene Tokens, sonst
   `color-mix`. Fokusregel einmal in `_reset.scss`, ohne `border-radius: inherit`.
-- **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art`, `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
+- **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art` = `primaer`, `sekundaer`, `gefahr`, `gefahrUmriss` (leiser: weisser Grund, roter Rand, für Listen und „Entfernen“), `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
   `type="button"` vorbelegt, `ref`, `aria-disabled`-Stil; im Ladezustand Spinner allein mittig, Symbol und Text `opacity: 0`), `Ladespinner` (150 ms
   verzögert, `role="status"`, in Schaltflächen `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden Namen; offline nötige
   Symbole über `Icon/eingebettet.ts` per `?raw`: `error_circle_icon`, `no_connection_icon_red`), `Feld` (`aktion`, `beschriebenDurch`, `ref`),
   `Auswahlliste`, `Erklaerung`, `Aktionsleiste`, `Dialog`, `Fortschrittsbalken`, `Fehlermeldung`, `Fehlerzustand`, `Leerzustand`, `PinFeld`,
   `PasswortFeld`, `PasswortRegeln`, `Hinweis`, `Textlink`, `Restzeitbalken`, Hook `useSperre`; aus C5 `TabLeiste`, `TerminAnsicht`,
   `Teilnehmerliste`, `TeamsAnzeige`, `ErgebnisAnzeige`, `ErgebnisFormular` u. a.; aus C7 `Bestaetigung` (Dialog für jede nicht umkehrbare Aktion), `Verwaltungsliste`,
-  `SkillFelder`, `ProfilListe`/`ProfilZeile`, `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`.
+  `SkillFelder`, `ProfilListe`/`ProfilZeile`, `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; aus der Design-Überarbeitung (18.10.2026) `Segmente`, `Schalter`, `Feldzeile`, `Netzdiagramm`,
+  `ProfilKennzeichen`, `ProfilLader` (siehe unten, „Design-Überarbeitung Admin“).
 - **Passwort- und Codefelder (C4):**
   - `PasswortFeld` (umhüllt `Feld`): Auge-Umschalter als reiner Symbol-`button` (`visibility_{on,off}_dark.png`) mit festem `aria-label`
     „Passwort anzeigen" und `aria-pressed`; Pflicht (kein Wiederholungsfeld); verbirgt beim Absenden wieder; `maxLength` 72; **kein `trim()`**;
@@ -175,6 +177,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
     kein Fehler.
   - **Schreibende Hooks verdrängen ihren Aufrufer:** Liest der Hook den Termin vor dem Ende der Mutation neu und tauscht die Seite dabei die
     Komponente aus, kommen `mutate(…, { onSuccess })`-Rückrufe nicht an. Dort `mutateAsync` mit `try/catch`; Fokus über einen Effekt auf den Zielzustand.
+  - **Schaltflächen nebeneinander oder untereinander sind gleich breit** (Vorgabe 18.10.2026): immer über `Knopfgruppe` (oder direkt in der `Aktionsleiste`, die selbst ein gleich breites Raster ist), nie über `flex: 1` oder eigene Verhältnisse. Eine Klasse an der `Knopfgruppe` trägt nur Abstände, kein `display`.
+  - **Admin-Seiten nur über `src/app/adminSeiten.ts`** (ein nachgeladenes Paket, `adminSeite(...)` in `routen.tsx`); kein fester Import einer Admin-Seite in `routen.tsx` oder in Spielerseiten, sonst landet der Bereich wieder im Hauptpaket (Test in `routen.test.tsx`).
+  - **Service Worker in der Entwicklung:** `npm run dev` ohne, `npm run dev:pwa` mit Worker.
   - **Seiten mit `Aktionsleiste`:** Die Leiste ist das **letzte Kind** der Seite (Wurzel `flex: 1`, Spalte); ein geschlossener `<dialog>` steht in ihrem
     Behälter. Sperre einer Aktion = `aria-disabled` (Fokus bleibt) mit Grund als Text und `aria-describedby`.
   - **Uhr nie im Render** (`react-hooks` v7): `new Date()` nur in `select`, `queryFn` oder einem Hook mit Takt (`useVerlauf`, `useTermine`, `useBegonnen`).
@@ -187,13 +192,25 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   - **Voll-Update und Version:** Nach `409 DATEN_VERALTET` setzt das Formular auf den frisch gelesenen Stand zurück (`key={version}`), der Text sagt es; **nie** mit neuer `version` und alten Eingaben senden. Abfrage **und**
     Mutation liegen im Elternbaustein, damit Meldung, Erfolgstext und Fokus den Neuaufbau überleben. Test mit `welt.fremdeAenderung()` (erhöht die `version`).
   - **Ordnung:** Admin-Hooks in `src/hooks/admin/` (Test daneben), API-Dateien nach Thema (`adminProfile.ts`, `adminTermine.ts`, …; `admin.ts` nur für Zugangsdaten), Seiten flach `src/pages/Admin…`. **Pfade nur in `ADMIN_PFADE`**
-    (`zielpfad.ts`), „Zurück" als fester Pfad in `handle.zurueck`.
-  - **Skillwerte nur in `AdminProfilFormular`** (`SkillFelder`; mit C8: `differenzTeamstaerke` nur in `AdminTeams`). Kategorien, Grenzen und Reihenfolge kommen aus `GET /admin/skills/lesen`, nichts fest verdrahtet. Liste und Spieleransichten
+    (`zielpfad.ts`), „Zurück" als Pfad in `handle.zurueck` – **oder als Funktion der Routenparameter** (`(parameter) => string`, z. B. Formular → Ansicht desselben Profils; `AppLayout` wertet die innerste Route aus).
+  - **Skillwerte nur in `AdminProfilDetail` (Netzdiagramm, Balken) und `AdminProfilFormular`** (`SkillFelder`; mit C8: `differenzTeamstaerke` nur in `AdminTeams`). Kategorien, Grenzen und Reihenfolge kommen aus `GET /admin/skills/lesen`, nichts fest verdrahtet. Liste und Spieleransichten
     zeigen keine Werte (nur das Kennzeichen „unvollständig"). Beim Bearbeiten geht nur Geändertes hinaus (`profilAenderung`, `aenderungKoerper`), beim Anlegen alle Kategorien.
   - **`Bestaetigung` für jede nicht umkehrbare Aktion, mit den Folgen im Text:** bleibt bei einem Fehler offen und zeigt ihn, `art="gefahr"` fokussiert zuerst „Abbrechen", `festhalten` während der Mutation. Sperren/Entsperren ohne
     Dialog, ausser das Sperren eines angemeldeten Profils. Bei `TERMIN_IN_VERWENDUNG`/`PROFIL_IN_VERWENDUNG` schliesst der Dialog, ein Hinweis nennt den Grund und bietet den richtigen Weg („Stattdessen absagen/sperren").
   - **Mutationen, nach denen die Seite wechselt oder ausgehängt wird:** `mutateAsync` mit `try/catch`, nie `mutate(…, { onSuccess })`. Jede Mutation liest ihre Gruppe neu (`termineNeuLesen`, Versprechen zurückgeben) und bleibt bis dahin `pending`.
   - **Aktionen ohne Wirkung sind `aria-disabled` mit Grund als Text** (`aria-describedby`), nicht `disabled`; im E2E `click({ force: true })`. Nach einem Statuswechsel gehört der Fokus auf die Überschrift der Karte.
+  - **Design-Überarbeitung Admin (18.10.2026, Prototyp `FuBo_Design_Prototypen.html`; Entscheidungen und Abweichungen in `CONTEXT_HANDOFF_CLIENT.md`, 2.):**
+    - **Wenige, auf einen Blick sichtbare Wahlmöglichkeiten sind `Segmente`** (Art des Termins, Wochentag, Skillstufe): eine **Radiogruppe** (`fieldset`/`legend`, native Radios, Pfeiltasten), kein Slider und kein Menü. Keine Vorauswahl ist erlaubt
+      (`wert=""`). Test-IDs: Gruppe `<id>`, Segment `<id>-<wert>`. Der gewählte Skillwert steht zusätzlich als Zahl in der Legende („Angriff 4“), nie allein als Farbe. Die Skalagrenzen kommen aus den Kategorien, **nichts ist auf 0 bis 6 festgelegt**.
+    - **Tap-Ziel auch in der Breite:** Sieben Segmente müssen bei 360 px noch 44 px breit sein (E2E prüft Höhe und Breite). Deshalb reicht die Skill-Karte mit den Segmenten bis an ihren Rand (`--segmente-einzug` rückt nur die Texte ein).
+      Bei 320 px werden sie schmaler (bekannt, nicht behoben).
+    - **Zwei Felder nebeneinander über `Feldzeile`** (Raster, `min-inline-size: 0` an den Zellen); trägt eines einen Fehlertext, wird die Zeile **gestapelt** (`Boolean(…) || Boolean(…)`, nie `??` bei `''`). **Gleich breite Schaltflächen
+      über ein Raster** (`grid-auto-columns: minmax(0, 1fr)`), nicht über `flex: 1`: Flex verteilt nur den Rest, Schaltflächen mit anderem Rand sind sonst verschieden breit (im Browser gemessen).
+    - **`Schalter`** (`role="switch"`, `aria-checked`) für einen Zustand, der **sofort** gilt und nicht zum Speichern des Formulars gehört („Aktiv in der Auswahlliste“ = Sperren, eigener Endpunkt); die Erklärung nennt den Zustand als Text.
+      Während des Aufrufs `aria-disabled`/`aria-busy`, nie `disabled`.
+    - **Profile in zwei Schritten:** Liste → Ansicht (`/admin/profile/:id`, Netzdiagramm + Balken, „Skills bearbeiten“) → Formular (`…/bearbeiten`). Speichern führt zur Ansicht mit dem Hinweis „Gespeichert.“, „Abbrechen“ ohne Senden dorthin.
+      Lade-, Fehler-, „nicht gefunden“- und Adminprofil-Logik liegt einmal in `ProfilLader`. Das **Netzdiagramm ist nie die einzige Quelle** (Beschriftung je Ecke, `role="img"` mit Gesamtbeschreibung, Werteliste daneben) und entsteht aus den Kategorien des Servers.
+    - **Terminliste als Karten** mit den Aktionen „Bearbeiten“/„Entfernen“ in der Karte; das Entfernen samt `Bestaetigung` und Meldungen gehört der Liste (`AdminTermine`), die Verwaltungsseite behält ihre eigene Fassung.
   - **Zeit:** keine Uhr im Render; Vergangenheit und Serienprüfung beim Absenden. Feldfehler des Servers nur an das Feld, das er meint (`TERMIN_BELEGT` am Uhrzeitfeld); Anzeigetext ist der Server-`detail`, Logik verzweigt über `code`.
   - **Tests:** Seiten je Zustand (laden, leer, Fehler, Normalfall, jeder Fehlercode); `src/test/mocks/admin.ts` ist zustandsbehaftet (`adminWelt`, `protokoll`); E2E-Nachbildung `e2e/hilfen/admin.ts`; eine Layout-Schleife über alle Admin-Pfade
     bei 360 px (`admin-layout.spec.ts`); Gegenproben (Skript wertet „failed" aus) für Nur-Geändertes, `key={version}`, Polling, Sperrdialog, `NAME_PIN_FALSCH`, `mutateAsync`, Übersprungenen-Absatz, Neulesen.
@@ -210,7 +227,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   kein Scrollen auslösen (lieber Hinweis ersetzen als Zeile anhängen) – gilt ab Fensterhöhe 740 px (kleinere Telefone scrollen, Entscheidung 04.10.2026).
   Kopfzeile mit Zurück und/oder „Abmelden" (rechts, nur bei abgeschlossener Anmeldung, keine Rückfrage). `Leerzustand` nennt Grund und nächsten Schritt
   (`titel`, `text` Pflicht), ohne `role`.
-- **Zurück-Navigation:** übergeordnete Ansicht als `handle.zurueck` (`RoutenAngaben`, innerste Route gilt); sonst ein Schritt zurück, beim Direkteinstieg
+- **Zurück-Navigation:** übergeordnete Ansicht als `handle.zurueck` (`RoutenAngaben`: Pfad oder Funktion der Routenparameter, innerste Route gilt); sonst ein Schritt zurück, beim Direkteinstieg
   (`history.state.idx` ≤ 0) zur Startseite. `history.length` und `location.key` taugen nicht.
 - **`Auswahlliste` ist eine gestaltete Combobox** (WAI-ARIA „Select-only Combobox": `aria-activedescendant`, Pfeiltasten, Pos1/Ende, Enter/Leertaste, Escape, Tab,
   Anfangsbuchstabe; gesperrte Einträge mit `aria-disabled` und Grund als zweite Zeile), kein natives `<select>`.

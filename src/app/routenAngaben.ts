@@ -1,3 +1,5 @@
+import type { Params } from 'react-router'
+
 /**
  * Zusatzangaben einer Route, abgelegt in ihrem `handle`.
  *
@@ -22,6 +24,9 @@ export type RoutenAngaben = {
    * Zielangabe ist deshalb die Regel, der Schritt im Verlauf die Abkürzung für
    * Routen ohne eindeutige übergeordnete Ansicht. Bei verschachtelten Routen
    * gilt die Angabe der innersten.
+   *
+   * **Eine Funktion** nimmt die Parameter der Route entgegen, wenn das Ziel von ihnen abhängt: Aus dem Bearbeiten
+   * von `/admin/profile/7/bearbeiten` führt „Zurück“ zu `/admin/profile/7`, nicht zur Liste.
    */
-  zurueck?: string
+  zurueck?: string | ((parameter: Params) => string)
 }

@@ -19,15 +19,15 @@ export const TITEL_MAX = 80
 /** Mehr Termine legt der Server je Serie nicht an. */
 export const SERIE_MAX_TERMINE = 52
 
-/** Wochentage für die Auswahl: ISO-Zahl als Text (1 = Montag bis 7 = Sonntag). */
-export const WOCHENTAGE: readonly { wert: string; text: string }[] = [
-  { wert: '1', text: 'Montag' },
-  { wert: '2', text: 'Dienstag' },
-  { wert: '3', text: 'Mittwoch' },
-  { wert: '4', text: 'Donnerstag' },
-  { wert: '5', text: 'Freitag' },
-  { wert: '6', text: 'Samstag' },
-  { wert: '7', text: 'Sonntag' },
+/** Wochentage für die Auswahl: ISO-Zahl als Text (1 = Montag bis 7 = Sonntag), voller Name und Kurzform („Mo“). */
+export const WOCHENTAGE: readonly { wert: string; text: string; kurz: string }[] = [
+  { wert: '1', text: 'Montag', kurz: 'Mo' },
+  { wert: '2', text: 'Dienstag', kurz: 'Di' },
+  { wert: '3', text: 'Mittwoch', kurz: 'Mi' },
+  { wert: '4', text: 'Donnerstag', kurz: 'Do' },
+  { wert: '5', text: 'Freitag', kurz: 'Fr' },
+  { wert: '6', text: 'Samstag', kurz: 'Sa' },
+  { wert: '7', text: 'Sonntag', kurz: 'So' },
 ]
 
 /** Die Felder des Termin-Formulars, als Text bis zum Senden. */

@@ -8,7 +8,11 @@
   bottom: 0;
   z-index: var(--ebene-kopf);
 
-  display: flex;
+  // Ein Raster statt Flex: Jedes Kind eine Spalte, alle gleich breit (wie `Knopfgruppe`). Flex verteilte nur den
+  // freien Platz, verschieden lange Beschriftungen ergaben verschieden breite Knöpfe.
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: var(--abstand-s);
   align-items: center;
 
@@ -19,9 +23,4 @@
   padding-bottom: calc(var(--abstand-s) + var(--sicher-unten));
 
   background: var(--farbe-hintergrund);
-}
-
-// Eine Aktion nimmt die Breite, zwei teilen sie.
-.leiste > * {
-  flex: 1;
 }

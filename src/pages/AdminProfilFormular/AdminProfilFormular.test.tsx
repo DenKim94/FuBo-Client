@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
@@ -16,7 +16,7 @@ afterEach(() => {
   queryClient.clear()
 })
 
-/** Zeigt Pfad und Zustand der Zielseite (Liste). */
+/** Zeigt Pfad und Zustand der Zielseite (Liste oder Profilansicht). */
 function Liste() {
   const ort = useLocation()
   return <p data-testid="liste">{`${ort.pathname}|${JSON.stringify(ort.state)}`}</p>
@@ -35,12 +35,26 @@ function rendern(pfad: string, welt: AdminWelt) {
         <Routes>
           <Route path="/admin/profile" element={<Liste />} />
           <Route path="/admin/profile/neu" element={<AdminProfilFormular modus="neu" />} />
-          <Route path="/admin/profile/:spielerId" element={<AdminProfilFormular modus="bearbeiten" />} />
+          <Route path="/admin/profile/:spielerId" element={<Liste />} />
+          <Route path="/admin/profile/:spielerId/bearbeiten" element={<AdminProfilFormular modus="bearbeiten" />} />
         </Routes>
       </MemoryRouter>
     </QueryUmgebung>,
   )
   return welt
+}
+
+/** Wählt die Stufe `wert` der Kategorie `schluessel`. */
+async function waehlen(schluessel: string, wert: number) {
+  await userEvent.click(screen.getByTestId(`skill-${schluessel}-${String(wert)}`))
+}
+
+/** Die Nummer der gewählten Stufe einer Kategorie oder `null`. */
+function gewaehlt(schluessel: string): string | null {
+  const radio = within(screen.getByTestId(`skill-${schluessel}`))
+    .getAllByRole('radio')
+    .find((r) => (r as HTMLInputElement).checked)
+  return radio ? (radio as HTMLInputElement).value : null
 }
 
 /** Tippt in ein Feld (Zahlenfelder nehmen Text als `value`). */
@@ -61,8 +75,8 @@ describe('Anlegen', () => {
     rendern('/admin/profile/neu', bereitstellen())
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Profil anlegen' })).toBeInTheDocument()
-    expect(screen.getByTestId('skill-ANGRIFF')).toHaveValue(3)
-    expect(screen.getByTestId('skill-TORWART')).toHaveValue(2)
+    expect(gewaehlt('ANGRIFF')).toBe('3')
+    expect(gewaehlt('TORWART')).toBe('2')
     expect(screen.getByTestId('skill-vorbelegt-hinweis')).toHaveTextContent('Bitte prüfe jeden Wert.')
     expect(screen.getByTestId('admin-profil-name')).toHaveValue('')
   })
@@ -76,8 +90,11 @@ describe('Anlegen', () => {
     })
     rendern('/admin/profile/neu', bereitstellen(welt))
 
-    expect(await screen.findByTestId('skill-KONDITION')).toHaveValue(5)
-    expect(screen.getByTestId('skill-TECHNIK')).toHaveValue(3)
+    expect(await screen.findByTestId('skill-KONDITION')).toBeInTheDocument()
+    expect(gewaehlt('KONDITION')).toBe('5')
+    expect(gewaehlt('TECHNIK')).toBe('3')
+    expect(within(screen.getByTestId('skill-KONDITION')).getAllByRole('radio')).toHaveLength(11)
+    expect(within(screen.getByTestId('skill-TECHNIK')).getAllByRole('radio')).toHaveLength(4)
     expect(screen.queryByTestId('skill-ANGRIFF')).not.toBeInTheDocument()
   })
 
@@ -93,28 +110,19 @@ describe('Anlegen', () => {
     expect(knopf).not.toHaveAttribute('aria-disabled')
   })
 
-  test('ein Wert ausserhalb des Bereichs oder ein leeres Skillfeld sperrt', async () => {
+  test('die Skala 0 bis 6 kommt aus den Daten: Angriff hat sieben Stufen, Torwart vier', async () => {
     rendern('/admin/profile/neu', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
-    eingeben('admin-profil-name', 'Beispielspieler 09')
-    const knopf = screen.getByTestId('admin-profil-speichern')
 
-    eingeben('skill-TORWART', '4')
-    expect(knopf).toHaveAttribute('aria-disabled', 'true')
-    expect(knopf).toHaveAccessibleDescription('Bitte prüfe die Skillwerte.')
-
-    eingeben('skill-TORWART', '')
-    expect(knopf).toHaveAttribute('aria-disabled', 'true')
-
-    eingeben('skill-TORWART', '0')
-    expect(knopf).not.toHaveAttribute('aria-disabled')
+    expect(within(screen.getByTestId('skill-ANGRIFF')).getAllByRole('radio')).toHaveLength(7)
+    expect(within(screen.getByTestId('skill-TORWART')).getAllByRole('radio')).toHaveLength(4)
   })
 
   test('sendet den getrimmten Namen und ALLE Kategorien, danach geht es mit Hinweis zur Liste', async () => {
     const welt = rendern('/admin/profile/neu', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
     eingeben('admin-profil-name', '  Beispielspieler 09  ')
-    eingeben('skill-ANGRIFF', '6')
+    await waehlen('ANGRIFF', 6)
 
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
@@ -133,14 +141,14 @@ describe('Anlegen', () => {
     rendern('/admin/profile/neu', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
     eingeben('admin-profil-name', 'BEISPIELSPIELER 01')
-    eingeben('skill-ANGRIFF', '5')
+    await waehlen('ANGRIFF', 5)
 
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
     expect(await screen.findByTestId('admin-profil-name-fehler')).toHaveTextContent('Dieser Name ist bereits vergeben.')
     await waitFor(() => expect(screen.getByTestId('admin-profil-name')).toHaveFocus())
     expect(screen.getByTestId('admin-profil-name')).toHaveValue('BEISPIELSPIELER 01')
-    expect(screen.getByTestId('skill-ANGRIFF')).toHaveValue(5)
+    expect(gewaehlt('ANGRIFF')).toBe('5')
     expect(screen.queryByTestId('admin-profil-fehler')).not.toBeInTheDocument()
   })
 
@@ -225,9 +233,9 @@ describe('Bearbeiten', () => {
       const welt = bereitstellen()
       const { unmount } = render(
         <QueryUmgebung>
-          <MemoryRouter initialEntries={[`/admin/profile/${roh}`]}>
+          <MemoryRouter initialEntries={[`/admin/profile/${roh}/bearbeiten`]}>
             <Routes>
-              <Route path="/admin/profile/:spielerId" element={<AdminProfilFormular modus="bearbeiten" />} />
+              <Route path="/admin/profile/:spielerId/bearbeiten" element={<AdminProfilFormular modus="bearbeiten" />} />
             </Routes>
           </MemoryRouter>
         </QueryUmgebung>,
@@ -241,18 +249,18 @@ describe('Bearbeiten', () => {
   })
 
   test('ein unbekanntes Profil: „Profil nicht gefunden“ nach dem Laden, mit Link zur Liste', async () => {
-    rendern('/admin/profile/777', bereitstellen())
+    rendern('/admin/profile/777/bearbeiten', bereitstellen())
 
     expect(await screen.findByTestId('admin-profil-nicht-gefunden')).toHaveTextContent('Profil nicht gefunden')
     expect(screen.getByTestId('admin-profil-zur-liste')).toHaveAttribute('href', '/admin/profile')
   })
 
   test('zeigt Name und Skillwerte; Speichern ist gesperrt, solange nichts geändert ist', async () => {
-    rendern('/admin/profile/1', bereitstellen())
+    rendern('/admin/profile/1/bearbeiten', bereitstellen())
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Beispielspieler 01' })).toBeInTheDocument()
     expect(screen.getByTestId('admin-profil-name')).toHaveValue('Beispielspieler 01')
-    expect(screen.getByTestId('skill-ANGRIFF')).toHaveValue(3)
+    expect(gewaehlt('ANGRIFF')).toBe('3')
     expect(screen.queryByTestId('skill-vorbelegt-hinweis')).not.toBeInTheDocument()
     const knopf = screen.getByTestId('admin-profil-speichern')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
@@ -260,10 +268,10 @@ describe('Bearbeiten', () => {
   })
 
   test('sendet nur das Geänderte: eine Kategorie', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
-    eingeben('skill-ANGRIFF', '5')
+    await waehlen('ANGRIFF', 5)
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
     await waitFor(() => expect(welt.protokoll.bearbeitet).toHaveLength(1))
@@ -271,11 +279,11 @@ describe('Bearbeiten', () => {
   })
 
   test('sendet nur das Geänderte: Name und Kategorie, Name getrimmt', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
     eingeben('admin-profil-name', '  Beispielspieler 11 ')
-    eingeben('skill-TORWART', '0')
+    await waehlen('TORWART', 0)
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
     await waitFor(() => expect(welt.protokoll.bearbeitet).toHaveLength(1))
@@ -283,7 +291,7 @@ describe('Bearbeiten', () => {
   })
 
   test('eine reine Änderung der Gross- und Kleinschreibung wird gesendet', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
     eingeben('admin-profil-name', 'BEISPIELSPIELER 01')
@@ -293,75 +301,70 @@ describe('Bearbeiten', () => {
     expect(welt.protokoll.bearbeitet[0]).toEqual({ spielerId: 1, name: 'BEISPIELSPIELER 01' })
   })
 
-  test('nach dem Speichern: „Gespeichert.“, neuer Stand, Fokus bleibt auf der Schaltfläche', async () => {
-    rendern('/admin/profile/1', bereitstellen())
+  test('nach dem Speichern geht es mit „Gespeichert.“ zur Profilansicht', async () => {
+    rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
-    eingeben('skill-ANGRIFF', '5')
-    const knopf = screen.getByTestId('admin-profil-speichern')
-    knopf.focus()
+    await waehlen('ANGRIFF', 5)
 
-    await userEvent.click(knopf)
+    await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
-    expect(await screen.findByTestId('admin-profil-gespeichert')).toHaveTextContent('Gespeichert.')
-    expect(screen.getByTestId('admin-profil-gespeichert')).toHaveAttribute('role', 'status')
-    expect(screen.getByTestId('skill-ANGRIFF')).toHaveValue(5)
-    expect(screen.getByTestId('admin-profil-speichern')).toBe(knopf)
-    expect(knopf).toHaveFocus()
-    expect(knopf).toHaveAttribute('aria-disabled', 'true')
+    const ziel = await screen.findByTestId('liste')
+    expect(ziel).toHaveTextContent('/admin/profile/1|')
+    expect(ziel).toHaveTextContent('Gespeichert.')
   })
 
-  test('die nächste Eingabe nimmt „Gespeichert.“ weg', async () => {
-    rendern('/admin/profile/1', bereitstellen())
+  test('„Abbrechen“ führt ohne Senden zur Profilansicht', async () => {
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
-    eingeben('skill-ANGRIFF', '5')
-    await userEvent.click(screen.getByTestId('admin-profil-speichern'))
-    await screen.findByTestId('admin-profil-gespeichert')
+    await waehlen('ANGRIFF', 5)
 
-    eingeben('skill-ANGRIFF', '4')
+    await userEvent.click(screen.getByTestId('admin-profil-abbrechen'))
 
-    expect(screen.queryByTestId('admin-profil-gespeichert')).not.toBeInTheDocument()
+    expect(await screen.findByTestId('liste')).toHaveTextContent('/admin/profile/1|')
+    expect(welt.protokoll.bearbeitet).toHaveLength(0)
+  })
+
+  test('die Wahl einer Stufe ändert den Wert, genau eine Stufe ist gewählt', async () => {
+    rendern('/admin/profile/1/bearbeiten', bereitstellen())
+    await screen.findByTestId('skill-ANGRIFF')
+
+    await waehlen('ANGRIFF', 6)
+
+    expect(gewaehlt('ANGRIFF')).toBe('6')
+    expect(within(screen.getByTestId('skill-ANGRIFF')).getAllByRole('radio', { checked: true })).toHaveLength(1)
+    expect(screen.getByRole('group', { name: 'Angriff 6' })).toBeInTheDocument()
   })
 
   test('Lücke in der Karte: „Noch nicht bewertet“, leer; gesendet wird sie nur mit eingetragenem Wert', async () => {
-    const welt = rendern('/admin/profile/4', bereitstellen())
+    const welt = rendern('/admin/profile/4/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
-    expect(screen.getByTestId('skill-TORWART')).toHaveValue(null)
-    expect(screen.getByLabelText('Torwart')).toHaveAccessibleDescription('Noch nicht bewertet. 0 bis 3')
-    expect(screen.getByLabelText('Angriff')).toHaveAccessibleDescription('0 bis 6')
+    expect(gewaehlt('TORWART')).toBeNull()
+    expect(screen.getByRole('group', { name: 'Torwart –' })).toHaveAccessibleDescription('Noch nicht bewertet.')
+    expect(screen.getByTestId('skill-ANGRIFF')).not.toHaveAccessibleDescription('Noch nicht bewertet.')
     // Leere Felder allein sind keine Änderung.
     expect(screen.getByTestId('admin-profil-speichern')).toHaveAttribute('aria-disabled', 'true')
 
-    eingeben('skill-TORWART', '1')
+    await waehlen('TORWART', 1)
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
     await waitFor(() => expect(welt.protokoll.bearbeitet).toHaveLength(1))
     expect(welt.protokoll.bearbeitet[0]).toEqual({ spielerId: 4, skills: { TORWART: 1 } })
   })
 
-  test('ein ungültiger Wert sperrt das Speichern', async () => {
-    rendern('/admin/profile/1', bereitstellen())
+  test('ein leerer Name sperrt das Speichern', async () => {
+    rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
-    eingeben('admin-profil-name', 'Beispielspieler 11')
-    eingeben('skill-ANGRIFF', '9')
+    eingeben('admin-profil-name', '   ')
 
     const knopf = screen.getByTestId('admin-profil-speichern')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
     expect(knopf).toHaveAccessibleDescription('Bitte prüfe die Eingaben.')
   })
 
-  test('ein leerer Name sperrt das Speichern', async () => {
-    rendern('/admin/profile/1', bereitstellen())
-    await screen.findByTestId('skill-ANGRIFF')
-
-    eingeben('admin-profil-name', '   ')
-
-    expect(screen.getByTestId('admin-profil-speichern')).toHaveAttribute('aria-disabled', 'true')
-  })
-
   test('409 NAME_BELEGT: Text am Namensfeld, Fokus dort', async () => {
-    rendern('/admin/profile/1', bereitstellen())
+    rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
 
     eingeben('admin-profil-name', 'beispielspieler 02')
@@ -372,10 +375,10 @@ describe('Bearbeiten', () => {
   })
 
   test('404 beim Speichern: zurück zur Liste mit Hinweis', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
     welt.profile = welt.profile.filter((p) => p.spielerId !== 1)
-    eingeben('skill-ANGRIFF', '5')
+    await waehlen('ANGRIFF', 5)
 
     await userEvent.click(screen.getByTestId('admin-profil-speichern'))
 
@@ -383,20 +386,20 @@ describe('Bearbeiten', () => {
   })
 
   test('ändert sich das Profil unter dem Formular, zeigen die Felder den neuen Stand', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     await screen.findByTestId('skill-ANGRIFF')
     eingeben('admin-profil-name', 'Halb getippt')
 
     welt.fremdeProfilAenderung(1, { skills: { ANGRIFF: 6, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 2 } })
     await queryClient.invalidateQueries({ queryKey: schluessel.adminProfile })
 
-    await waitFor(() => expect(screen.getByTestId('skill-ANGRIFF')).toHaveValue(6))
+    await waitFor(() => expect(gewaehlt('ANGRIFF')).toBe('6'))
     // Der neue Stand ersetzt die Eingaben; es wird nie mit alten Eingaben auf neuem Stand gesendet.
     expect(screen.getByTestId('admin-profil-name')).toHaveValue('Beispielspieler 01')
   })
 
   test('das Adminprofil hat kein Formular, kein Sperren, kein Entfernen, aber einen Link zum Anmeldenamen', async () => {
-    rendern('/admin/profile/99', bereitstellen())
+    rendern('/admin/profile/99/bearbeiten', bereitstellen())
 
     expect(await screen.findByTestId('admin-profil-admin-hinweis')).toHaveTextContent(
       'Das Adminprofil wird über den Anmeldenamen umbenannt.',
@@ -411,25 +414,27 @@ describe('Bearbeiten', () => {
 
 describe('Status: Sperren und Entfernen', () => {
   test('sperrt ein Profil, das nicht online ist, ohne Dialog; die Schaltfläche bleibt dasselbe Element', async () => {
-    const welt = rendern('/admin/profile/1', bereitstellen())
+    const welt = rendern('/admin/profile/1/bearbeiten', bereitstellen())
     const knopf = await screen.findByTestId('admin-profil-sperren')
     knopf.focus()
-    expect(knopf).toHaveTextContent('Profil sperren')
+    expect(knopf).toHaveAccessibleName('Aktiv in der Auswahlliste')
+    expect(knopf).toHaveAttribute('role', 'switch')
+    expect(knopf).toHaveAttribute('aria-checked', 'true')
 
     await userEvent.click(knopf)
 
     await waitFor(() => expect(welt.protokoll.blockiert).toEqual([{ spielerId: 1, blockieren: true }]))
-    await waitFor(() => expect(screen.getByTestId('admin-profil-sperren')).toHaveTextContent('Profil entsperren'))
+    await waitFor(() => expect(screen.getByTestId('admin-profil-sperren')).toHaveAttribute('aria-checked', 'false'))
     expect(screen.getByTestId('admin-profil-sperren')).toBe(knopf)
     expect(knopf).toHaveFocus()
-    expect(screen.getByTestId('admin-profil-sperre-text')).toHaveTextContent(
+    expect(screen.getByTestId('admin-profil-sperren-text')).toHaveTextContent(
       'Gesperrt: erscheint nicht mehr in der Namensauswahl',
     )
     expect((screen.getByTestId('admin-profil-sperr-dialog') as HTMLDialogElement).open).toBe(false)
   })
 
   test('sperrt ein angemeldetes Profil erst nach der Bestätigung', async () => {
-    const welt = rendern('/admin/profile/3', bereitstellen())
+    const welt = rendern('/admin/profile/3/bearbeiten', bereitstellen())
     await userEvent.click(await screen.findByTestId('admin-profil-sperren'))
 
     const dialog = screen.getByTestId('admin-profil-sperr-dialog') as HTMLDialogElement
@@ -444,7 +449,7 @@ describe('Status: Sperren und Entfernen', () => {
   })
 
   test('Abbrechen im Sperr-Dialog sendet nichts', async () => {
-    const welt = rendern('/admin/profile/3', bereitstellen())
+    const welt = rendern('/admin/profile/3/bearbeiten', bereitstellen())
     await userEvent.click(await screen.findByTestId('admin-profil-sperren'))
 
     await userEvent.click(screen.getByTestId('admin-profil-sperr-dialog-abbrechen'))
@@ -454,15 +459,15 @@ describe('Status: Sperren und Entfernen', () => {
   })
 
   test('entsperrt ohne Dialog', async () => {
-    const welt = rendern('/admin/profile/2', bereitstellen())
+    const welt = rendern('/admin/profile/2/bearbeiten', bereitstellen())
     const knopf = await screen.findByTestId('admin-profil-sperren')
-    expect(knopf).toHaveTextContent('Profil entsperren')
+    expect(knopf).toHaveAttribute('aria-checked', 'false')
 
     await userEvent.click(knopf)
 
     await waitFor(() => expect(welt.protokoll.blockiert).toEqual([{ spielerId: 2, blockieren: false }]))
     expect((screen.getByTestId('admin-profil-sperr-dialog') as HTMLDialogElement).open).toBe(false)
-    await waitFor(() => expect(knopf).toHaveTextContent('Profil sperren'))
+    await waitFor(() => expect(knopf).toHaveAttribute('aria-checked', 'true'))
   })
 
   test('ein Fehler beim Sperren steht im Abschnitt', async () => {
@@ -470,7 +475,7 @@ describe('Status: Sperren und Entfernen', () => {
     mockServer.use(
       http.post('*/admin/user/blockieren', () => problem(500, 'INTERNER_FEHLER', 'Es ist ein interner Fehler aufgetreten.')),
     )
-    rendern('/admin/profile/1', welt)
+    rendern('/admin/profile/1/bearbeiten', welt)
 
     await userEvent.click(await screen.findByTestId('admin-profil-sperren'))
 
@@ -480,7 +485,7 @@ describe('Status: Sperren und Entfernen', () => {
   })
 
   test('Entfernen verlangt die Bestätigung und nennt die Folgen; danach geht es mit Hinweis zur Liste', async () => {
-    const welt = rendern('/admin/profile/5', bereitstellen())
+    const welt = rendern('/admin/profile/5/bearbeiten', bereitstellen())
     await userEvent.click(await screen.findByTestId('admin-profil-entfernen'))
 
     const dialog = screen.getByTestId('admin-profil-entfernen-dialog') as HTMLDialogElement
@@ -498,7 +503,7 @@ describe('Status: Sperren und Entfernen', () => {
 
   test('Regression mutateAsync: die Weiterleitung geschieht, obwohl das Neulesen die Seite aushängt', async () => {
     // Nach dem Entfernen fehlt das Profil in der Liste: Der Lader zeigt „nicht gefunden“, das Formular wird ausgehängt.
-    const welt = rendern('/admin/profile/5', bereitstellen())
+    const welt = rendern('/admin/profile/5/bearbeiten', bereitstellen())
     await userEvent.click(await screen.findByTestId('admin-profil-entfernen'))
 
     await userEvent.click(screen.getByTestId('admin-profil-entfernen-dialog-bestaetigen'))
@@ -510,7 +515,7 @@ describe('Status: Sperren und Entfernen', () => {
   test('409 PROFIL_IN_VERWENDUNG: Dialog schliesst, Hinweis und „Stattdessen sperren“', async () => {
     const welt = adminWelt()
     welt.inVerwendung.add(1)
-    rendern('/admin/profile/1', bereitstellen(welt))
+    rendern('/admin/profile/1/bearbeiten', bereitstellen(welt))
     await userEvent.click(await screen.findByTestId('admin-profil-entfernen'))
 
     await userEvent.click(screen.getByTestId('admin-profil-entfernen-dialog-bestaetigen'))
@@ -530,7 +535,7 @@ describe('Status: Sperren und Entfernen', () => {
     mockServer.use(
       http.post('*/admin/user/entfernen', () => problem(500, 'INTERNER_FEHLER', 'Es ist ein interner Fehler aufgetreten.')),
     )
-    rendern('/admin/profile/5', welt)
+    rendern('/admin/profile/5/bearbeiten', welt)
     await userEvent.click(await screen.findByTestId('admin-profil-entfernen'))
 
     await userEvent.click(screen.getByTestId('admin-profil-entfernen-dialog-bestaetigen'))
@@ -540,7 +545,7 @@ describe('Status: Sperren und Entfernen', () => {
   })
 
   test('Abbrechen des Entfernens ändert nichts', async () => {
-    const welt = rendern('/admin/profile/5', bereitstellen())
+    const welt = rendern('/admin/profile/5/bearbeiten', bereitstellen())
     await userEvent.click(await screen.findByTestId('admin-profil-entfernen'))
 
     await userEvent.click(screen.getByTestId('admin-profil-entfernen-dialog-abbrechen'))

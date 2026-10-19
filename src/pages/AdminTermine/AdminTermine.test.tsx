@@ -1,10 +1,11 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http } from 'msw'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import { heuteIso } from '@/api/termine/terminZeit'
+import { adminHandler, adminWelt } from '@/test/mocks/admin'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
 import { terminHandlers, terminModell, type TerminModell } from '@/test/mocks/termine'
@@ -38,19 +39,21 @@ function beispiel(): TerminModell[] {
 }
 
 function rendern(modelle: TerminModell[] = beispiel(), zustand?: unknown) {
-  const welt = terminHandlers(modelle)
-  mockServer.use(...welt.handlers)
+  const admin = adminWelt({ termine: modelle })
+  const welt = terminHandlers(admin.termine)
+  mockServer.use(...welt.handlers, ...adminHandler(admin))
   render(
     <QueryUmgebung>
       <MemoryRouter initialEntries={[{ pathname: '/admin/termine', state: zustand }]}>
         <Routes>
           <Route path="/admin/termine" element={<AdminTermine />} />
           <Route path="/admin/termine/neu" element={<Ziel />} />
+          <Route path="/admin/termine/:terminId" element={<Ziel />} />
         </Routes>
       </MemoryRouter>
     </QueryUmgebung>,
   )
-  return welt
+  return { ...welt, admin }
 }
 
 describe('AdminTermine', () => {
@@ -74,17 +77,21 @@ describe('AdminTermine', () => {
 
     const vergangene = await screen.findByTestId('admin-termine-vergangene-liste')
     const ids = within(vergangene)
-      .getAllByRole('link')
-      .map((a) => a.getAttribute('data-testid'))
+      .getAllByRole('article')
+      .map((karte) => karte.getAttribute('data-testid'))
     expect(ids).toEqual(['admin-termin-zeile-2', 'admin-termin-zeile-1'])
   })
 
-  test('jede Zeile führt zur Verwaltung, auch ein abgesagter Termin', async () => {
+  test('„Bearbeiten“ führt zur Verwaltung, bei einem abgesagten Termin heisst es „Öffnen“', async () => {
     rendern()
 
-    expect(await screen.findByTestId('admin-termin-zeile-1')).toHaveAttribute('href', '/admin/termine/1')
+    expect(await screen.findByTestId('admin-termin-bearbeiten-1')).toHaveTextContent('Öffnen')
     expect(screen.getByTestId('admin-termin-status-1')).toHaveTextContent('Abgesagt')
-    expect(screen.getByTestId('admin-termin-zeile-3')).toHaveAttribute('href', '/admin/termine/3')
+    expect(screen.getByTestId('admin-termin-bearbeiten-3')).toHaveTextContent('Bearbeiten')
+
+    await userEvent.click(screen.getByTestId('admin-termin-bearbeiten-3'))
+
+    expect(await screen.findByTestId('ziel')).toHaveTextContent('/admin/termine/3')
   })
 
   test('kennzeichnet einen Serientermin und zeigt Zusagen nur bei geplanten und abgeschlossenen', async () => {
@@ -194,5 +201,91 @@ describe('AdminTermine', () => {
     await userEvent.click(screen.getByTestId('admin-termin-anlegen'))
 
     expect(await screen.findByTestId('ziel')).toHaveTextContent('/admin/termine/neu')
+  })
+
+  test('„Entfernen“ öffnet die Bestätigung mit Datum und Folgen und sendet erst nach der Bestätigung', async () => {
+    const { admin } = rendern([terminModell({ terminId: 4, datum: '2099-01-13', zusagen: [] })])
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-4'))
+
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent('Dienstag, 13. Januar')
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent('es bleibt nur der Protokolleintrag')
+    expect(admin.protokoll.terminEntfernt).toEqual([])
+  })
+
+  test('Abbrechen schliesst die Bestätigung, ohne zu senden', async () => {
+    const { admin } = rendern([terminModell({ terminId: 4, datum: '2099-01-13', zusagen: [] })])
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-4'))
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-abbrechen'))
+
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).not.toBeVisible()
+    expect(admin.protokoll.terminEntfernt).toEqual([])
+    expect(screen.getByTestId('admin-termin-zeile-4')).toBeInTheDocument()
+  })
+
+  test('Erfolg: Termin ist weg, „Termin entfernt.“ steht oben, der Fokus liegt auf der Überschrift', async () => {
+    const { admin } = rendern([
+      terminModell({ terminId: 4, datum: '2099-01-13', zusagen: [] }),
+      terminModell({ terminId: 3, datum: '2099-01-06' }),
+    ])
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-4'))
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
+
+    expect(await screen.findByTestId('admin-termine-entfernt')).toHaveTextContent('Termin entfernt.')
+    expect(admin.protokoll.terminEntfernt).toEqual([{ terminId: 4 }])
+    await waitFor(() => {
+      expect(screen.queryByTestId('admin-termin-zeile-4')).not.toBeInTheDocument()
+    })
+    expect(screen.getByRole('heading', { level: 1, name: 'Termine' })).toHaveFocus()
+  })
+
+  test('Fehler des Servers bleibt im Dialog sichtbar, der Dialog bleibt offen', async () => {
+    rendern([terminModell({ terminId: 4, datum: '2099-01-13', zusagen: [] })])
+    mockServer.use(http.post('*/admin/termin/entfernen', () => problem(500, 'INTERNER_FEHLER', 'Interner Fehler.')))
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-4'))
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
+
+    expect(await screen.findByTestId('admin-termine-entfernen-dialog-fehler')).toBeInTheDocument()
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toBeVisible()
+    expect(screen.queryByTestId('admin-termine-entfernt')).not.toBeInTheDocument()
+  })
+
+  test('TERMIN_IN_VERWENDUNG schliesst den Dialog, nennt den Grund und verlinkt die Verwaltung', async () => {
+    rendern([terminModell({ terminId: 3, datum: '2099-01-06' })])
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-3'))
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
+
+    expect(await screen.findByTestId('admin-termine-in-verwendung')).toHaveTextContent(
+      'Am Termin hängen Rückmeldungen oder Teams; er lässt sich nicht entfernen.',
+    )
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).not.toBeVisible()
+    expect(screen.getByTestId('admin-termine-in-verwendung-link')).toHaveAttribute('href', '/admin/termine/3')
+    expect(screen.getByTestId('admin-termin-zeile-3')).toBeInTheDocument()
+  })
+
+  test('404: Hinweis „Der Termin existiert nicht mehr.“, Dialog zu', async () => {
+    const { admin } = rendern([terminModell({ terminId: 4, datum: '2099-01-13', zusagen: [] })])
+    await screen.findByTestId('admin-termin-entfernen-4')
+    admin.termine.splice(0, admin.termine.length)
+
+    await userEvent.click(screen.getByTestId('admin-termin-entfernen-4'))
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
+
+    expect(await screen.findByTestId('admin-termine-verschwunden')).toHaveTextContent(
+      'Der Termin existiert nicht mehr.',
+    )
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).not.toBeVisible()
+  })
+
+  test('ein abgeschlossener Termin bietet kein „Entfernen“ an', async () => {
+    rendern()
+
+    expect(await screen.findByTestId('admin-termin-zeile-2')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-termin-entfernen-2')).not.toBeInTheDocument()
+    expect(screen.getByTestId('admin-termin-entfernen-1')).toBeInTheDocument()
   })
 })

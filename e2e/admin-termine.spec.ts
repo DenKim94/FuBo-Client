@@ -49,9 +49,50 @@ test.describe('Terminliste', () => {
     await expect(page.getByTestId('admin-termin-zeile-4')).toContainText('Abgesagt')
     expect(await ueberhangHorizontal(page)).toBe(0)
 
-    await page.getByTestId('admin-termin-zeile-2').click()
+    await page.getByTestId('admin-termin-bearbeiten-2').click()
     await expect(page).toHaveURL(/\/admin\/termine\/2$/)
     await expect(page.getByTestId('admin-termin-verwaltung')).toBeVisible()
+  })
+
+  test('jede Karte nennt Art und Aktionen; „Bearbeiten“ und „Entfernen“ sind gleich breit und mindestens 44 px hoch', async ({ page }) => {
+    await start(page)
+
+    await expect(page.getByTestId('admin-termin-einzel-1')).toHaveText('Einzeltermin')
+    await expect(page.getByTestId('admin-termin-entfernen-3')).toHaveCount(0)
+    const bearbeiten = await page.getByTestId('admin-termin-bearbeiten-2').boundingBox()
+    const entfernen = await page.getByTestId('admin-termin-entfernen-2').boundingBox()
+    expect(bearbeiten).not.toBeNull()
+    expect(entfernen).not.toBeNull()
+    expect(Math.abs((bearbeiten?.width ?? 0) - (entfernen?.width ?? 1))).toBeLessThanOrEqual(1)
+    expect(bearbeiten?.height ?? 0).toBeGreaterThanOrEqual(44)
+    expect(entfernen?.height ?? 0).toBeGreaterThanOrEqual(44)
+    expect(await ueberhangHorizontal(page)).toBe(0)
+  })
+
+  test('entfernt einen Termin direkt aus der Liste: Bestaetigung, dann Hinweis, Karte weg, Fokus auf der Ueberschrift', async ({ page }) => {
+    const { verwaltung } = await start(page)
+
+    await page.getByTestId('admin-termin-entfernen-2').click()
+    await expect(page.getByTestId('admin-termine-entfernen-dialog')).toContainText('nicht rückgängig')
+    expect(verwaltung.koerper.entfernt).toHaveLength(0)
+    await page.getByTestId('admin-termine-entfernen-dialog-bestaetigen').click()
+
+    await expect(page.getByTestId('admin-termine-entfernt')).toContainText('Termin entfernt.')
+    await expect(page.getByTestId('admin-termin-zeile-2')).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1, name: 'Termine' })).toBeFocused()
+    expect(verwaltung.koerper.entfernt).toEqual([{ terminId: 2 }])
+  })
+
+  test('ein Termin mit Rueckmeldungen laesst sich in der Liste nicht entfernen und verweist auf die Verwaltung', async ({ page }) => {
+    await start(page)
+
+    await page.getByTestId('admin-termin-entfernen-1').click()
+    await page.getByTestId('admin-termine-entfernen-dialog-bestaetigen').click()
+
+    await expect(page.getByTestId('admin-termine-in-verwendung')).toContainText('lässt sich nicht entfernen')
+    await expect(page.getByTestId('admin-termin-zeile-1')).toBeVisible()
+    await page.getByTestId('admin-termine-in-verwendung-link').click()
+    await expect(page).toHaveURL(/\/admin\/termine\/1$/)
   })
 })
 
@@ -68,6 +109,46 @@ test.describe('Termin anlegen', () => {
     await expect(page).toHaveURL(/\/admin\/termine\/101$/)
     await expect(page.getByTestId('admin-termin-hinweis')).toContainText('Termin angelegt.')
     expect(verwaltung.koerper.angelegt).toEqual([{ datum: '2099-02-03', uhrzeit: '20:30' }])
+  })
+
+  test('„Abbrechen“ fuehrt ohne Senden zur Liste zurueck', async ({ page }) => {
+    const { verwaltung } = await start(page, '/admin/termine/neu')
+
+    await page.getByTestId('termin-datum').fill('2099-02-03')
+    await page.getByTestId('admin-termin-neu-abbrechen').click()
+
+    await expect(page).toHaveURL(/\/admin\/termine$/)
+    expect(verwaltung.koerper.angelegt).toHaveLength(0)
+  })
+
+  test('Datum und Uhrzeit stehen nebeneinander, die Art-Auswahl ist ein Umschalter mit „Einzeltermin“ vorn', async ({ page }) => {
+    await start(page, '/admin/termine/neu')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Neuer Termin' })).toBeVisible()
+    await expect(page.getByTestId('admin-art-einzel')).toBeChecked()
+    const datum = await page.getByTestId('termin-datum').boundingBox()
+    const uhrzeit = await page.getByTestId('termin-uhrzeit').boundingBox()
+    expect(Math.abs((datum?.y ?? 0) - (uhrzeit?.y ?? 99))).toBeLessThanOrEqual(2)
+    expect((uhrzeit?.x ?? 0)).toBeGreaterThan((datum?.x ?? 0) + (datum?.width ?? 0) - 1)
+    expect(await ueberhangHorizontal(page)).toBe(0)
+  })
+
+  test('Serie auf dem Telefon: sieben Wochentage mit mindestens 44 px Hoehe, Start und Ende sowie Uhrzeit und Ort nebeneinander', async ({ page }) => {
+    await start(page, '/admin/termine/neu')
+
+    await page.getByTestId('admin-art-serie').check()
+    await expect(page.getByTestId('serie-wochentag')).toBeVisible()
+    for (let tag = 1; tag <= 7; tag++) {
+      const kasten = await page.getByTestId(`serie-wochentag-${String(tag)}`).boundingBox()
+      expect(kasten?.height ?? 0, `Wochentag ${String(tag)}`).toBeGreaterThanOrEqual(44)
+    }
+    const start1 = await page.getByTestId('serie-startdatum').boundingBox()
+    const ende = await page.getByTestId('serie-enddatum').boundingBox()
+    expect(Math.abs((start1?.y ?? 0) - (ende?.y ?? 99))).toBeLessThanOrEqual(2)
+    const uhrzeit = await page.getByTestId('serie-uhrzeit').boundingBox()
+    const ort = await page.getByTestId('serie-ort').boundingBox()
+    expect(Math.abs((uhrzeit?.y ?? 0) - (ort?.y ?? 99))).toBeLessThanOrEqual(2)
+    expect(await ueberhangHorizontal(page)).toBe(0)
   })
 
   test('ein belegter Zeitpunkt steht am Uhrzeitfeld, die Eingaben bleiben', async ({ page }) => {
@@ -99,8 +180,7 @@ test.describe('Termin anlegen', () => {
 
     await page.getByTestId('admin-art-serie').check()
     await page.getByTestId('serie-titel').fill('Montagskicker Winter')
-    await page.getByTestId('serie-wochentag').click()
-    await page.getByTestId('serie-wochentag-option-2').click()
+    await page.getByTestId('serie-wochentag-2').check()
     await page.getByTestId('serie-uhrzeit').fill('19:00')
     await page.getByTestId('serie-startdatum').fill('2099-01-06')
     await page.getByTestId('serie-enddatum').fill('2099-02-03')
@@ -227,6 +307,11 @@ test.describe('Termin verwalten', () => {
     await expect(page.getByTestId('admin-termin-verwaltung')).toBeVisible()
 
     expect(await ueberhangHorizontal(page)).toBe(0)
+    // Aufgabe Terminverwaltung: Abschliessen, Absagen und Entfernen stehen untereinander gleich breit.
+    const breiten = await Promise.all(
+      ['admin-termin-abschliessen', 'admin-termin-absagen', 'admin-termin-entfernen'].map(async (id) => (await page.getByTestId(id).boundingBox())?.width ?? 0),
+    )
+    expect(Math.max(...breiten) - Math.min(...breiten)).toBeLessThanOrEqual(1)
     for (const id of ['termin-datum', 'termin-uhrzeit', 'termin-ort', 'admin-termin-speichern', 'admin-termin-abschliessen', 'admin-termin-absagen', 'admin-termin-entfernen']) {
       const kasten = await page.getByTestId(id).boundingBox()
       expect(kasten, id).not.toBeNull()

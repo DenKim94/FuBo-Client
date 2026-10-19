@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import type { SitzungZustand } from '@/hooks/useSitzung'
 import { adminHandler, adminWelt } from '@/test/mocks/admin'
@@ -9,6 +9,7 @@ import { mockServer } from '@/test/mocks/server'
 import { terminHandlers, terminModell } from '@/test/mocks/termine'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
 import { routen } from './routen'
+import routenQuelle from './routen.tsx?raw'
 
 const sitzungMock = vi.fn<() => SitzungZustand>()
 vi.mock('@/hooks/useSitzung', () => ({ useSitzung: () => sitzungMock() }))
@@ -44,6 +45,12 @@ function oeffnen(pfad: string) {
   return { welt, router }
 }
 
+// Die Admin-Seiten werden nachgeladen. Der erste Import übersetzt in Vitest den ganzen Admin-Bereich und dauert
+// länger als die Wartezeit von `findBy` (1 s); vorab geladen, misst jeder Test nur noch das Routing.
+beforeAll(async () => {
+  await import('./adminSeiten')
+}, 30_000)
+
 beforeEach(() => sitzungMock.mockReset())
 afterEach(() => {
   sitzungsendeBehandeln(() => {})
@@ -64,6 +71,50 @@ describe('Routen der Profilverwaltung', () => {
     oeffnen('/admin/profile')
 
     expect(await screen.findByTestId('admin-profile-anzahl')).toBeInTheDocument()
+  })
+
+  test('/admin/profile/1 zeigt die Profilansicht, nicht das Formular', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    oeffnen('/admin/profile/1')
+
+    expect(await screen.findByTestId('admin-profil-detail')).toBeInTheDocument()
+    expect(screen.queryByTestId('admin-profil-formular')).not.toBeInTheDocument()
+  })
+
+  test('/admin/profile/1/bearbeiten zeigt das Formular mit dem Profil', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    oeffnen('/admin/profile/1/bearbeiten')
+
+    expect(await screen.findByTestId('admin-profil-formular')).toBeInTheDocument()
+    expect(await screen.findByTestId('skill-ANGRIFF')).toBeInTheDocument()
+  })
+
+  test.each(['abc', '0', '-1', '1.5'])('ungültige Id „%s“ im Formular führt zu „nicht gefunden“ ohne Abruf', async (id) => {
+    sitzungMock.mockReturnValue(zustand())
+    const { welt } = oeffnen(`/admin/profile/${id}/bearbeiten`)
+
+    expect(await screen.findByTestId('nicht-gefunden')).toBeInTheDocument()
+    expect(welt.protokoll.profilAbrufe).toHaveLength(0)
+  })
+
+  test('„Zurück“ im Formular führt zur Profilansicht desselben Profils', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    const { router } = oeffnen('/admin/profile/1/bearbeiten')
+    await screen.findByTestId('admin-profil-formular')
+
+    fireEvent.click(await screen.findByTestId('layout-zurueck'))
+
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/admin/profile/1'))
+  })
+
+  test('„Zurück“ in der Profilansicht führt zur Liste', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    const { router } = oeffnen('/admin/profile/1')
+    await screen.findByTestId('admin-profil-detail')
+
+    fireEvent.click(await screen.findByTestId('layout-zurueck'))
+
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/admin/profile'))
   })
 
   test.each(['abc', '0', '-1', '1.5'])('ungültige Id „%s“ führt zu „nicht gefunden“ ohne Abruf', async (id) => {
@@ -131,5 +182,20 @@ describe('Routen der Terminverwaltung', () => {
 
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'))
     expect(screen.queryByTestId('admin-termin-neu-absenden')).not.toBeInTheDocument()
+  })
+})
+
+describe('Nachladen des Admin-Bereichs', () => {
+  test('der Routenbaum importiert keine Admin-Seite fest (sonst landete sie wieder im Hauptpaket)', () => {
+    const feste = routenQuelle.match(/^import .* from '@\/pages\/(Admin|Passwort)\w*\/.*$/gm) ?? []
+    expect(feste).toEqual([])
+  })
+
+  test('eine Admin-Route lädt ihre Seite nach und zeigt sie', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    const { router } = oeffnen('/admin/profile/neu')
+
+    expect(await screen.findByTestId('admin-profil-formular')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/admin/profile/neu')
   })
 })

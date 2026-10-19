@@ -53,6 +53,17 @@
   background: color-mix(in srgb, var(--farbe-fehler) 85%, var(--farbe-text));
 }
 
+// Leise Gefahr: weisser Grund, roter Rand und rote Schrift (7.30:1 auf Weiss, Rand ebenso). Die Aussage steht im Wort.
+.gefahrUmriss {
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-fehler);
+  border-color: var(--farbe-fehler);
+}
+
+.gefahrUmriss:active:not(:disabled) {
+  background: var(--farbe-fehler-flaeche);
+}
+
 // Hover nur auf Geraeten, die ihn haben: Auf Touch bliebe der Zustand sonst
 // nach dem Antippen haengen.
 @media (hover: hover) {
@@ -66,6 +77,10 @@
 
   .gefahr:hover:not(:disabled) {
     background: color-mix(in srgb, var(--farbe-fehler) 90%, var(--farbe-text));
+  }
+
+  .gefahrUmriss:hover:not(:disabled) {
+    background: var(--farbe-fehler-flaeche);
   }
 }
 

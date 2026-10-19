@@ -6,6 +6,7 @@ import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useErgebnisErfassen } from '@/hooks/useErgebnisErfassen'
 import style from './ErgebnisFormular.module.scss'
 
@@ -176,7 +177,7 @@ export default function ErgebnisFormular({ terminId, beiAbschluss }: ErgebnisFor
               </p>
               <p>Der erste Eintrag gilt und lässt sich nicht löschen.</p>
             </div>
-            <div className={style.aktionen}>
+            <Knopfgruppe untereinander className={style.aktionen}>
               <CustomButton art="primaer" breit laedt={laedt} onClick={() => void senden()} data-testid="ergebnis-bestaetigen">
                 Eintragen
               </CustomButton>
@@ -191,7 +192,7 @@ export default function ErgebnisFormular({ terminId, beiAbschluss }: ErgebnisFor
               >
                 Zurück
               </CustomButton>
-            </div>
+            </Knopfgruppe>
           </Dialog>
         </div>
       </Aktionsleiste>

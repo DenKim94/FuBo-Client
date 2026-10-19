@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import style from './Bestaetigung.module.scss'
 
 /** Eigenschaften der Bestätigung. */
@@ -101,7 +102,7 @@ export default function Bestaetigung({
 
       {fehler && <Fehlermeldung fehler={fehler} ersatz={fehlerErsatz} data-testid={`${testId}-fehler`} />}
 
-      <div className={style.aktionen}>
+      <Knopfgruppe untereinander className={style.aktionen}>
         <CustomButton
           ref={bestaetigenRef}
           art={art === 'gefahr' ? 'gefahr' : 'primaer'}
@@ -124,7 +125,7 @@ export default function Bestaetigung({
         >
           {abbrechenText}
         </CustomButton>
-      </div>
+      </Knopfgruppe>
     </Dialog>
   )
 }

@@ -5,8 +5,12 @@ import style from './CustomButton.module.scss'
 
 /** Eigenschaften der Schaltfläche. */
 type CustomButtonEigenschaften = ButtonHTMLAttributes<HTMLButtonElement> & {
-  /** Gewicht der Aktion. `gefahr` ist für unwiderrufliche Schritte (z. B. Hallenabsage, A23). */
-  art?: 'primaer' | 'sekundaer' | 'gefahr'
+  /**
+   * Gewicht der Aktion. `gefahr` ist für unwiderrufliche Schritte (z. B. Hallenabsage, A23);
+   * `gefahrUmriss` ist dieselbe Aussage leiser (weißer Grund, roter Rand und Text) für Listen, in denen
+   * mehrere gefüllte rote Flächen nebeneinander zu schwer wirkten (Termin-Karte „Entfernen“).
+   */
+  art?: 'primaer' | 'sekundaer' | 'gefahr' | 'gefahrUmriss'
   /** Nimmt die volle Breite ein – der Normalfall in der Aktionsleiste. */
   breit?: boolean
   /**

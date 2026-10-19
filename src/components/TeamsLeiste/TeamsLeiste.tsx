@@ -5,6 +5,7 @@ import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Hinweis from '@/components/Hinweis/Hinweis'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useTeamsGenerieren } from '@/hooks/useTeamsGenerieren'
 import style from './TeamsLeiste.module.scss'
 
@@ -176,7 +177,7 @@ export default function TeamsLeiste({
             <p id={beschreibungId} className={style.text}>
               Die aktuelle Einteilung von {erzeugtVon ?? 'einem anderen Spieler'} wird ersetzt.
             </p>
-            <div className={style.aktionen}>
+            <Knopfgruppe untereinander className={style.aktionen}>
               <CustomButton
                 art="primaer"
                 breit
@@ -191,7 +192,7 @@ export default function TeamsLeiste({
               <CustomButton art="sekundaer" breit onClick={() => setRueckfrage(false)} data-testid="teams-ersetzen-abbrechen">
                 Abbrechen
               </CustomButton>
-            </div>
+            </Knopfgruppe>
           </Dialog>
         </div>
       </Aktionsleiste>

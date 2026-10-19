@@ -1,0 +1,104 @@
+@use '@/styles/globalVars';
+
+// Sichtbare Lücke zwischen den Segmenten. **Die Lücke gehört zum Tap-Ziel:** Jedes Segment trägt die halbe Lücke
+// als Innenabstand an beiden Seiten, die Reihe gleicht das an ihren Enden mit einem negativen Rand aus. So zählt
+// die Lücke zur Breite des Tap-Ziels, und sieben Segmente (Skala 0 bis 6, Wochentage) bleiben bei 360 px auch mit
+// seitlichem Einzug in der Karte mindestens 44 px breit: 328 px Inhalt − 2 px Rahmen − 2 × 8 px Einzug = 310 px,
+// plus 2 × 1 px Ausgleich = 312 px, geteilt durch 7 = 44,6 px je Tap-Ziel (sichtbar 42,6 px).
+$halbe-luecke: 1px;
+
+// Einzug der ganzen Gruppe (Legende, Segmente, Hinweis, Fehlertext). Vorgabe 0 (bündig mit den Feldern darüber);
+// eine Karte ohne eigenen seitlichen Innenabstand setzt `--segmente-einzug`, damit nichts am Rand klebt.
+
+.gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+// Die Legende darf eine Zeile mit zwei Angaben sein (Name links, Wert rechts); `inline-size` nötig, weil eine
+// Legende sonst nur so breit wird wie ihr Inhalt.
+.legende {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--abstand-s);
+  inline-size: 100%;
+  padding: 0 var(--segmente-einzug, 0);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.reihe {
+  display: flex;
+  margin-inline: calc(var(--segmente-einzug, 0px) - #{$halbe-luecke});
+}
+
+// Das Segment ist die Beschriftung und damit das Tap-Ziel; das Eingabeelement liegt unsichtbar darüber und
+// bleibt fokussierbar und bedienbar (Pfeiltasten wechseln die Wahl).
+.segment {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-inline-size: 0;
+  padding-inline: $halbe-luecke;
+}
+
+.eingabe {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3rem;
+  // Der bedienbare Rand: Ohne ihn ist ein ungewähltes Segment vom Hintergrund nicht zu unterscheiden (WCAG 1.4.11).
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  color: var(--farbe-text);
+  font-weight: var(--gewicht-halbfett);
+  text-align: center;
+}
+
+.eingabe:checked + .text {
+  border-color: var(--farbe-primaer);
+  background: var(--farbe-primaer);
+  color: var(--farbe-primaer-kontrast);
+}
+
+// Der Fokusring gehört an das sichtbare Segment, nicht an das unsichtbare Eingabeelement.
+.eingabe:focus-visible + .text {
+  outline: var(--fokus-rand) solid var(--farbe-fokus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .eingabe:not(:checked):hover + .text {
+    background: color-mix(in srgb, var(--farbe-hintergrund) 94%, var(--farbe-text));
+  }
+}
+
+.hinweis {
+  padding-inline: var(--segmente-einzug, 0);
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+.fehler {
+  padding-inline: var(--segmente-einzug, 0);
+  color: var(--farbe-fehler);
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+}

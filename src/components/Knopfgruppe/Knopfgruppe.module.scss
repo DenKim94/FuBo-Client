@@ -1,0 +1,17 @@
+@use '@/styles/globalVars';
+
+.gruppe {
+  display: grid;
+  gap: var(--abstand-s);
+}
+
+// Jede Schaltfläche eine Spalte, alle Spalten gleich breit (`minmax(0, …)`: lange Beschriftungen brechen um).
+.nebeneinander {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+// Eine Spalte über die volle Breite: Alle Knöpfe sind gleich breit.
+.untereinander {
+  grid-template-columns: minmax(0, 1fr);
+}

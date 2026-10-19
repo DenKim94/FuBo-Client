@@ -9,11 +9,10 @@ import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Feld from '@/components/Feld/Feld'
-import Hinweis from '@/components/Hinweis/Hinweis'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
-import Leerzustand from '@/components/Leerzustand/Leerzustand'
+import ProfilLader from '@/components/ProfilLader/ProfilLader'
 import SkillFelder from '@/components/SkillFelder/SkillFelder'
-import Textlink from '@/components/Textlink/Textlink'
 import { useProfilAnlegen } from '@/hooks/admin/useProfilAnlegen'
 import { useProfilBearbeiten } from '@/hooks/admin/useProfilBearbeiten'
 import { useProfile } from '@/hooks/admin/useProfile'
@@ -32,29 +31,35 @@ const FEHLER_ERSATZ_SPEICHERN = 'Das Profil konnte nicht gespeichert werden. Bit
 
 /** Eigenschaften des Profilformulars. */
 type FormularEigenschaften = {
-  /** `neu` legt an (`/admin/profile/neu`), `bearbeiten` ändert (`/admin/profile/:spielerId`). */
+  /** `neu` legt an (`/admin/profile/neu`), `bearbeiten` ändert (`/admin/profile/:spielerId/bearbeiten`). */
   modus: 'neu' | 'bearbeiten'
 }
 
 /**
  * Profilformular (C7, 7.3): ein Baustein, zwei Routen.
  *
- * `bearbeiten` prüft `:spielerId` zuerst (ungültig heisst „nicht gefunden“ und **kein Abruf**).
- * **Das Formular entsteht aus den Kategorien des Servers** – ohne sie lässt sich keines bauen, und
- * es wird nichts geraten: Solange sie laden steht ein Spinner, bei einem Fehler ein Fehlerzustand.
+ * `bearbeiten` (`/admin/profile/:spielerId/bearbeiten`, Prototyp 09b) prüft `:spielerId` zuerst (ungültig heisst
+ * „nicht gefunden“ und **kein Abruf**). **Das Formular entsteht aus den Kategorien des Servers** – ohne sie lässt
+ * sich keines bauen, und es wird nichts geraten: Solange sie laden steht ein Spinner, bei einem Fehler ein
+ * Fehlerzustand (beides in `ProfilLader`).
  */
 export default function AdminProfilFormular({ modus }: FormularEigenschaften) {
   const parameter = useSpielerParameter()
-  if (modus === 'bearbeiten' && (!parameter.gueltig || parameter.spielerId === undefined)) return <NichtGefunden />
-  return modus === 'neu' ? <KategorienLader modus="neu" /> : <KategorienLader modus="bearbeiten" spielerId={parameter.spielerId} />
+  if (modus === 'neu') return <NeuLader />
+  const spielerId = parameter.spielerId
+  if (!parameter.gueltig || spielerId === undefined) return <NichtGefunden />
+  return (
+    <ProfilLader spielerId={spielerId} ladetext="Formular wird geladen">
+      {({ profil, kategorien }) => <BearbeitenFormular profil={profil} kategorien={kategorien} />}
+    </ProfilLader>
+  )
 }
 
-/** Lädt die Kategorien und das Profil, bevor ein Formular gebaut wird. */
-function KategorienLader({ modus, spielerId }: FormularEigenschaften & { spielerId?: number }) {
+/** Lädt die Kategorien, bevor das Anlegen-Formular gebaut wird. */
+function NeuLader() {
   const kategorien = useSkillKategorien()
-  const profile = useProfile()
   // Beim Anlegen braucht es die Profile nicht; die Abfrage bleibt dennoch beobachtet, damit die Liste warm ist.
-  const brauchtProfile = modus === 'bearbeiten'
+  useProfile()
 
   if (!kategorien.data) {
     return kategorien.isPending ? (
@@ -63,48 +68,7 @@ function KategorienLader({ modus, spielerId }: FormularEigenschaften & { spieler
       <Fehlerzustand fehler={kategorien.error} erneut={() => void kategorien.refetch()} data-testid="admin-profil-kategorien-fehler" />
     )
   }
-  if (modus === 'neu') return <AnlegenFormular kategorien={kategorien.data} />
-
-  if (brauchtProfile && !profile.data) {
-    return profile.isPending ? (
-      <Ladespinner groesse="gross" zentriert text="Profil wird geladen" />
-    ) : (
-      <Fehlerzustand fehler={profile.error} erneut={() => void profile.refetch()} data-testid="admin-profil-fehler-laden" />
-    )
-  }
-  const profil = profile.data?.find((p) => p.spielerId === spielerId)
-  if (!profil) {
-    return (
-      <Leerzustand
-        titel="Profil nicht gefunden"
-        text="Dieses Profil gibt es nicht mehr."
-        titelEbene={1}
-        aktion={
-          <Textlink to={ADMIN_PFADE.profile} data-testid="admin-profil-zur-liste">
-            Zur Liste
-          </Textlink>
-        }
-        data-testid="admin-profil-nicht-gefunden"
-      />
-    )
-  }
-  if (profil.rolle === 'ADMIN') return <AdminProfilHinweis profil={profil} />
-  return <BearbeitenFormular profil={profil} kategorien={kategorien.data} />
-}
-
-/** Das Adminprofil hat kein Formular: Es wird über den Anmeldenamen umbenannt. */
-function AdminProfilHinweis({ profil }: { profil: SpielerDetails }) {
-  return (
-    <section className={style.seite} data-testid="admin-profil-admin">
-      <div className={style.bereich}>
-        <h1 className={style.titel}>{profil.name}</h1>
-        <Hinweis data-testid="admin-profil-admin-hinweis">Das Adminprofil wird über den Anmeldenamen umbenannt.</Hinweis>
-        <Textlink to={ADMIN_PFADE.nameAendern} data-testid="admin-profil-admin-namenlink">
-          Anmeldenamen ändern
-        </Textlink>
-      </div>
-    </section>
-  )
+  return <AnlegenFormular kategorien={kategorien.data} />
 }
 
 /** Startwerte der Skillfelder als Text: der Wert der Karte, sonst leer (E7). */
@@ -227,7 +191,12 @@ function AnlegenFormular({ kategorien }: { kategorien: SkillKategorie[] }) {
 }
 
 /**
- * Bearbeiten: Das Formular zeigt den **Stand des Profils** und sendet **nur das Geänderte** (E6).
+ * Bearbeiten (Prototyp 09b): Name, Skills als Segmente, Schalter „Aktiv in der Auswahlliste“, Entfernen; in der
+ * Leiste „Abbrechen“ und „Speichern“. Das Formular zeigt den **Stand des Profils** und sendet **nur das Geänderte** (E6).
+ *
+ * **Nach dem Speichern** geht es mit dem Hinweis „Gespeichert.“ zurück zur Profilansicht (dort zeigt das Netzdiagramm
+ * den neuen Stand); „Abbrechen“ führt ohne Senden dorthin. Der Schalter des Status wirkt dagegen sofort und ist
+ * nicht Teil des Speicherns.
  *
  * **Neuer Stand ⇒ neue Eingaben, ohne Neuaufbau:** Ändert sich das Profil unter dem Formular (nach dem
  * eigenen Speichern oder durch eine fremde Änderung), übernehmen die Felder den neuen Stand. Das
@@ -270,6 +239,7 @@ function BearbeitenFormular({ profil, kategorien }: { profil: SpielerDetails; ka
     if (!darfSpeichern || speichern.isPending) return
     try {
       await speichern.mutateAsync({ spielerId: profil.spielerId, ...aenderung })
+      void navigate(ADMIN_PFADE.profilDetail(profil.spielerId), { state: { hinweis: 'Gespeichert.' } })
     } catch (fehler) {
       if (fehler instanceof ApiFehler && fehler.status === 404) {
         void navigate(ADMIN_PFADE.profile, { replace: true, state: { hinweis: 'Dieses Profil gibt es nicht mehr.' } })
@@ -279,9 +249,9 @@ function BearbeitenFormular({ profil, kategorien }: { profil: SpielerDetails; ka
     }
   }
 
-  /** Mit der nächsten Eingabe haben „Gespeichert.“ und ein Fehler ihre Aufgabe erfüllt. */
+  /** Mit der nächsten Eingabe hat ein Fehler seine Aufgabe erfüllt. */
   function eingabe() {
-    if (speichern.isError || speichern.isSuccess) speichern.reset()
+    if (speichern.isError) speichern.reset()
   }
 
   return (
@@ -316,7 +286,6 @@ function BearbeitenFormular({ profil, kategorien }: { profil: SpielerDetails; ka
             nichtBewertet={nichtBewertet}
             schreibgeschuetzt={speichern.isPending}
           />
-          {speichern.isSuccess && <Hinweis data-testid="admin-profil-gespeichert">Gespeichert.</Hinweis>}
           {/* Im Bereich, nicht daneben: Die haftende Aktionsleiste bleibt das letzte Element der Seite. */}
           <ProfilStatus profil={profil} />
         </div>
@@ -329,18 +298,27 @@ function BearbeitenFormular({ profil, kategorien }: { profil: SpielerDetails; ka
                 {grund}
               </p>
             )}
-            <CustomButton
-              type="submit"
-              art="primaer"
-              breit
-              className={style.aktion}
-              laedt={speichern.isPending}
-              aria-disabled={grund !== null ? true : undefined}
-              aria-describedby={grund !== null ? grundId : undefined}
-              data-testid="admin-profil-speichern"
-            >
-              Speichern
-            </CustomButton>
+            <Knopfgruppe>
+              <CustomButton
+                art="sekundaer"
+                className={style.aktion}
+                onClick={() => void navigate(ADMIN_PFADE.profilDetail(profil.spielerId))}
+                data-testid="admin-profil-abbrechen"
+              >
+                Abbrechen
+              </CustomButton>
+              <CustomButton
+                type="submit"
+                art="primaer"
+                className={style.aktion}
+                laedt={speichern.isPending}
+                aria-disabled={grund !== null ? true : undefined}
+                aria-describedby={grund !== null ? grundId : undefined}
+                data-testid="admin-profil-speichern"
+              >
+                Speichern
+              </CustomButton>
+            </Knopfgruppe>
           </div>
         </Aktionsleiste>
     </form>

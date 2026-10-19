@@ -1,24 +1,38 @@
 @use '@/styles/globalVars';
 
-// Die ganze Zeile ist der Link und das Tap-Ziel.
-.zeile {
+// Die Karte (Prototyp 10): Rahmen, Abstand, Datum mit Marke, Ort, Stand, Aktionen.
+.karte {
   display: flex;
   flex-direction: column;
   gap: var(--abstand-s);
-  min-block-size: var(--tapziel-min);
   padding: var(--abstand-m);
-  color: inherit;
-  text-decoration: none;
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-l);
+  background: var(--farbe-hintergrund);
 }
 
-.zeit {
+.kopf {
   display: flex;
-  flex-direction: column;
-  min-inline-size: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--abstand-s);
 }
 
 .datum {
+  min-inline-size: 0;
+  font-size: var(--schrift-basis);
   font-weight: var(--gewicht-halbfett);
+}
+
+// „Serie“ oder „Einzeltermin“ als Wort in einer Marke, nicht nur als Farbe.
+.marke {
+  flex: none;
+  padding-inline: var(--abstand-s);
+  border: 1px solid var(--farbe-rand);
+  border-radius: var(--radius-s);
+  background: var(--farbe-flaeche);
+  font-size: var(--schrift-klein);
+  white-space: nowrap;
 }
 
 .ort {
@@ -42,10 +56,7 @@
   font-weight: var(--gewicht-halbfett);
 }
 
-// Symbol und Text: der Hinweis „Serie“ steht als Wort in einer Marke, nicht nur als Farbe.
-.serie {
-  padding-inline: var(--abstand-s);
-  border: 1px solid var(--farbe-rand);
-  border-radius: var(--radius-s);
-  background: var(--farbe-flaeche);
+// Nur der Abstand zum Inhalt darüber; Anordnung und gleiche Breite regelt `Knopfgruppe`.
+.aktionen {
+  padding-block-start: var(--abstand-xs);
 }

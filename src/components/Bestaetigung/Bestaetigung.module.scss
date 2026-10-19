@@ -9,9 +9,7 @@
   line-height: var(--zeilenhoehe);
 }
 
+// Nur der Abstand zum Inhalt darüber; Anordnung und gleiche Breite regelt `Knopfgruppe`.
 .aktionen {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-s);
   padding-block-start: var(--abstand-xs);
 }
