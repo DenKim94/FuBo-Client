@@ -123,7 +123,7 @@ export default function TerminAendernFormular({
         uhrzeitRef={uhrzeitFeld}
       />
       <p className={style.nebentext} data-testid="admin-termin-aendern-folgen">
-        Eine Verschiebung von Datum oder Uhrzeit setzt die Fixierung der Teams zurück und löst die Erinnerung neu aus.
+        Eine Verschiebung von Datum oder Uhrzeit setzt die Einteilung der Teams zurück.
       </p>
       {aendern.isSuccess && <Hinweis data-testid="admin-termin-gespeichert">Gespeichert.</Hinweis>}
       {kasten && <Fehlermeldung fehler={aendern.error} ersatz={FEHLER_ERSATZ} data-testid="admin-termin-aendern-fehler" />}

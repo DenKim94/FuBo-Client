@@ -33,9 +33,18 @@ test.describe('Dashboard: naechster Termin', () => {
     await expect(page.getByTestId('rueckmeldung-absagen')).toBeFocused()
     expect(welt.rueckmeldungen).toEqual([{ terminId: 102, zusage: true, kopf: undefined }])
 
+    // Der Pfeil rechts in der Zusammenfassung zeigt das Aufklappen an und dreht sich mit dem Zustand.
+    const pfeil = page.getByTestId('teilnehmerliste-pfeil')
+    await expect(pfeil).toBeVisible()
+    const summary = await page.getByTestId('teilnehmerliste-summary').boundingBox()
+    const pfeilKasten = await pfeil.boundingBox()
+    expect((pfeilKasten?.x ?? 0) + (pfeilKasten?.width ?? 0)).toBeGreaterThan((summary?.x ?? 0) + (summary?.width ?? 0) - 40)
+    const drehungZu = await pfeil.evaluate((e) => getComputedStyle(e).transform)
+
     // Die eingeklappte Liste zeigt nach dem Aufklappen den eigenen Eintrag.
     await page.getByTestId('teilnehmerliste-summary').click()
     await expect(page.getByTestId('teilnehmerliste-eintrag-9')).toContainText(`${EIGENER_NAME} (du)`)
+    await expect.poll(() => pfeil.evaluate((e) => getComputedStyle(e).transform)).not.toBe(drehungZu)
   })
 
   test('sagt ab und danach doch wieder zu', async ({ page }) => {

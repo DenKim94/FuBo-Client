@@ -41,9 +41,13 @@ describe('AdminPin', () => {
     rendern()
 
     expect(screen.getByRole('heading', { name: 'Zentrale PIN ändern' })).toBeInTheDocument()
+    expect(screen.getByText('Die PIN wird zentral geändert. Dies wird alle laufenden Sitzungen beenden.')).toBeInTheDocument()
+    expect(screen.getByTestId('admin-pin-feld')).toHaveAccessibleDescription('Bitte gib vier Ziffern ein.')
     const knopf = screen.getByTestId('admin-pin-absenden')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
     expect(knopf).toHaveAccessibleDescription('Bitte gib vier Ziffern ein.')
+    // Sichtbar steht der Grund nur einmal (am Feld); der Satz am Knopf ist nur für den Screenreader.
+    expect(screen.getByTestId('admin-pin-grund')).toHaveClass('nurFuerScreenreader')
 
     pinEingeben('471')
     expect(screen.getByTestId('admin-pin-grund')).toBeInTheDocument()
@@ -76,6 +80,8 @@ describe('AdminPin', () => {
     const dialog = screen.getByTestId('admin-pin-dialog') as HTMLDialogElement
     expect(dialog.open).toBe(true)
     expect(dialog).toHaveTextContent('Alle Angemeldeten werden sofort abgemeldet')
+    expect(dialog).toHaveTextContent('Teile die neue PIN vorher oder direkt danach mit.')
+    expect(dialog).not.toHaveTextContent('deinen Weg')
     expect(dialog).toHaveTextContent('auch Spieler und Gäste, und du selbst')
     expect(aufrufe).toBe(0)
   })

@@ -23,8 +23,10 @@ export default function ProfilZeile({ profil, skillsUnvollstaendig }: ProfilZeil
   const istAdmin = profil.rolle === 'ADMIN'
   const inhalt = (
     <>
-      <span className={style.name}>{profil.name}</span>
-      <ProfilKennzeichen profil={profil} skillsUnvollstaendig={skillsUnvollstaendig} />
+      <div className={style.nameMitStatus} data-testid={`name-mit-status-${String(id)}`}>
+        <span className={style.name}>{profil.name}</span>
+        <ProfilKennzeichen profil={profil} skillsUnvollstaendig={skillsUnvollstaendig} />
+      </div>
       {!istAdmin && (
         <span className={style.bilanz} data-testid={`profil-bilanz-${String(id)}`}>
           {profil.bilanz.siege} S · {profil.bilanz.niederlagen} N · {profil.bilanz.unentschieden} U

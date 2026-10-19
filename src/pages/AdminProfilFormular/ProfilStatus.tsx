@@ -89,7 +89,7 @@ export default function ProfilStatus({ profil }: { profil: SpielerDetails }) {
           erklaerung={
             gesperrt
               ? 'Gesperrt: erscheint nicht mehr in der Namensauswahl, der Name bleibt belegt. Gilt sofort, ohne Speichern.'
-              : 'Aktiv: Das Profil steht in der Namensauswahl. Das Sperren gilt sofort, ohne Speichern.'
+              : 'Aktiv: Das Profil steht in der Namensauswahl. Die Sperre ist sofort wirksam.'
           }
           data-testid="admin-profil-sperren"
         />
@@ -99,11 +99,10 @@ export default function ProfilStatus({ profil }: { profil: SpielerDetails }) {
       </div>
 
       <div className={style.statusZeile}>
-        <p className={style.statusText}>Entfernen ist nur für ein Profil gedacht, das noch nie benutzt wurde.</p>
         {inVerwendung && (
           <>
             <Hinweis data-testid="admin-profil-in-verwendung">
-              Das Profil hat bereits Daten (Rückmeldungen, Teams, Ergebnisse) und lässt sich nicht entfernen.
+              Für das Profil sind bereits Daten hinterlegt. Das Profil lässt sich daher nicht entfernen.
             </Hinweis>
             {!gesperrt && (
               <CustomButton art="sekundaer" onClick={sperrenAnstossen} data-testid="admin-profil-stattdessen-sperren">
@@ -152,8 +151,7 @@ export default function ProfilStatus({ profil }: { profil: SpielerDetails }) {
         data-testid="admin-profil-entfernen-dialog"
       >
         <p>
-          Das ist nur für ein Profil gedacht, das noch nie benutzt wurde, etwa nach einem Tippfehler. Für alles
-          andere sperre es.
+          Das Entfernen ist nur für ein Profil gedacht, welches noch nie benutzt wurde.
         </p>
       </Bestaetigung>
     </section>

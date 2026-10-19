@@ -179,6 +179,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
     Komponente aus, kommen `mutate(…, { onSuccess })`-Rückrufe nicht an. Dort `mutateAsync` mit `try/catch`; Fokus über einen Effekt auf den Zielzustand.
   - **Schaltflächen nebeneinander oder untereinander sind gleich breit** (Vorgabe 18.10.2026): immer über `Knopfgruppe` (oder direkt in der `Aktionsleiste`, die selbst ein gleich breites Raster ist), nie über `flex: 1` oder eigene Verhältnisse. Eine Klasse an der `Knopfgruppe` trägt nur Abstände, kein `display`.
   - **Admin-Seiten nur über `src/app/adminSeiten.ts`** (ein nachgeladenes Paket, `adminSeite(...)` in `routen.tsx`); kein fester Import einer Admin-Seite in `routen.tsx` oder in Spielerseiten, sonst landet der Bereich wieder im Hauptpaket (Test in `routen.test.tsx`).
+  - **Farbe einer Schaltfläche nur über `art`** (`primaer`, `sekundaer`, `gefahr`, `gefahrUmriss`, `akzent`), nie über Inline-`style`: Ein Inline-Hintergrund überdeckt Hover, Laden und `aria-disabled`.
+  - **Umrandungen von Karten, Listen und Hinweisen:** `border: 1px solid var(--farbe-rand-bedienbar)` (19.10.2026). `--farbe-rand` nur für Trennlinien in Karten, Kennzeichen und gesperrte Schaltflächen (Test `src/styles/rahmen.test.ts`).
   - **Service Worker in der Entwicklung:** `npm run dev` ohne, `npm run dev:pwa` mit Worker.
   - **Seiten mit `Aktionsleiste`:** Die Leiste ist das **letzte Kind** der Seite (Wurzel `flex: 1`, Spalte); ein geschlossener `<dialog>` steht in ihrem
     Behälter. Sperre einer Aktion = `aria-disabled` (Fokus bleibt) mit Grund als Text und `aria-describedby`.

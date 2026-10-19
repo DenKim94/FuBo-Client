@@ -238,7 +238,7 @@ export default function AdminTermine() {
             {zuEntfernen
               ? `Der Termin am ${datumLang(zuEntfernen.datum)}, ${uhrzeitKurz(zuEntfernen.uhrzeit)} Uhr wird entfernt. `
               : ''}
-            Das lässt sich nicht rückgängig machen; es bleibt nur der Protokolleintrag.
+            Das lässt sich nicht rückgängig machen.
           </p>
         </Bestaetigung>
       </Aktionsleiste>

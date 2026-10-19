@@ -111,4 +111,17 @@ describe('CustomButton', () => {
     expect(screen.getByTestId('voll').className).not.toMatch(/gefahrUmriss/)
     expect(screen.getByTestId('umriss')).toHaveAttribute('type', 'button')
   })
+
+  test('„akzent“ ist eine eigene Art (blau), ohne Inline-Farbe', () => {
+    render(
+      <CustomButton art="akzent" data-testid="akzent">
+        Termin abschließen
+      </CustomButton>,
+    )
+
+    const knopf = screen.getByTestId('akzent')
+    expect(knopf.className).toMatch(/akzent/)
+    expect(knopf.className).not.toMatch(/primaer|sekundaer|gefahr/)
+    expect(knopf).not.toHaveAttribute('style')
+  })
 })

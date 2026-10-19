@@ -37,13 +37,6 @@ function rendern(pfad: string, welt: AdminWelt = adminWelt(), zustand?: unknown)
   return welt
 }
 
-/** Fünf Kategorien, alle von 0 bis 6: Dann gibt es eine gemeinsame Skala. */
-const gleicheSkala = [
-  { schluessel: 'A', bezeichnung: 'Angriff', gewicht: 1, reihenfolge: 1, minWert: 0, maxWert: 6 },
-  { schluessel: 'B', bezeichnung: 'Block', gewicht: 1, reihenfolge: 2, minWert: 0, maxWert: 6 },
-  { schluessel: 'C', bezeichnung: 'Ausdauer', gewicht: 1, reihenfolge: 3, minWert: 0, maxWert: 6 },
-]
-
 describe('AdminProfilDetail – Inhalt', () => {
   test('zeigt Name, Spielzahl, Netzdiagramm und je Kategorie Name, Balken und Zahl', async () => {
     rendern('/admin/profile/1')
@@ -68,21 +61,11 @@ describe('AdminProfilDetail – Inhalt', () => {
     expect(Number.parseFloat(fuellung('TORWART') ?? '')).toBeCloseTo(66.67, 1)
   })
 
-  test('die Skala steht im Kopf, wenn alle Kategorien denselben Bereich haben', async () => {
-    const welt = adminWelt({
-      skillKategorien: gleicheSkala,
-      profile: [profilModell({ spielerId: 1, name: 'Beispielspieler 01', skills: { A: 6, B: 3, C: 0 } })],
-    })
-    rendern('/admin/profile/1', welt)
-
-    expect(await screen.findByTestId('admin-profil-detail-eckdaten')).toHaveTextContent('Noch keine Spiele · Skalierung 0–6')
-  })
-
-  test('eine Kategorie mit eigenem Bereich steht mit ihrer Skala im Kopf', async () => {
+  test('der Kopf nennt nur die Spielzahl, keine Skala', async () => {
     rendern('/admin/profile/1')
 
-    // Vier Kategorien 0 bis 6, Torwart 0 bis 3.
-    expect(await screen.findByTestId('admin-profil-detail-eckdaten')).toHaveTextContent('Skalierung 0–6 (Torwart 0–3)')
+    // Profil 1 hat 6 gewertete Spiele (Bilanz 3 S, 2 N, 1 U).
+    expect(await screen.findByTestId('admin-profil-detail-eckdaten')).toHaveTextContent(/^6 Spiele$/)
   })
 
   test('die Zahl der Spiele hat eine Einzahl und einen Leerzustand', async () => {

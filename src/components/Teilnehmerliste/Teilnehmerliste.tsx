@@ -30,7 +30,10 @@ type TeilnehmerlisteEigenschaften = {
  * Über dem ersten wartenden Eintrag steht ein Satz zur Warteschlange, als Teil
  * dieses Listeneintrags und nicht als Zeile ohne Bedeutung in der Liste.
  *
- * Aufklappen über `<details>`: nativ bedienbar mit Tastatur und Screenreader.
+ * Aufklappen über `<details>`: nativ bedienbar mit Tastatur und Screenreader. **Ein Pfeil rechts in der
+ * Zusammenfassung** zeigt, dass sich die Liste auf- und zuklappen lässt (nach unten: zu, nach oben: offen); er
+ * erscheint erst, wenn es Zusagen gibt (Vorgabe 19.10.2026). Er ist schmückend (`aria-hidden`): Den Zustand
+ * meldet `<details>` dem Screenreader selbst.
  * Keine Skillwerte, keine Kürzel und keine Zusammenfassung „und 11 weitere“.
  */
 export default function Teilnehmerliste({
@@ -49,6 +52,7 @@ export default function Teilnehmerliste({
     <details className={style.liste} open={!eingeklappt} data-testid={testId}>
       <summary className={style.zusammenfassung} data-testid={`${testId}-summary`}>
         Teilnehmer ({eintraege.length})
+        {eintraege.length > 0 && <span className={style.pfeil} aria-hidden="true" data-testid={`${testId}-pfeil`} />}
       </summary>
 
       {eintraege.length === 0 ? (

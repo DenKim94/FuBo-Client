@@ -17,7 +17,7 @@
   align-items: center;
 
   min-height: var(--aktionsleiste-hoehe);
-  padding: var(--abstand-s) var(--abstand-m);
+  padding: var(--abstand-s) var(--abstand-s);
   // Der Home-Indicator liegt genau hier. Ohne diese Zeile steht die wichtigste
   // Schaltflaeche der Anwendung halb darunter (A25a).
   padding-bottom: calc(var(--abstand-s) + var(--sicher-unten));

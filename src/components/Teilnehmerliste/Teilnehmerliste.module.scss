@@ -1,18 +1,46 @@
 @use '@/styles/globalVars';
 
 .liste {
-  border: 1px solid var(--farbe-rand);
+  border: 1px solid var(--farbe-rand-bedienbar);
   border-radius: var(--radius-m);
 }
 
 .zusammenfassung {
   display: flex;
   align-items: center;
+  gap: var(--abstand-s);
   // Tap-Ziel: die ganze Zeile klappt auf, mindestens 44 px hoch (A2).
   min-block-size: var(--tapziel-min);
   padding-inline: var(--abstand-m);
   font-weight: var(--gewicht-halbfett);
   cursor: pointer;
+  // Kein eingebautes Dreieck: Den Hinweis gibt der eigene Pfeil rechts (Safari zeigt es sonst trotz `display: flex`).
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// Pfeil (Winkel aus zwei Rahmenkanten) am rechten Rand: zeigt nach unten, solange die Liste zu ist, nach oben,
+// wenn sie offen ist. Die Verschiebung um ein Viertel setzt den gedrehten Winkel optisch in die Mitte der Zeile.
+.pfeil {
+  flex: none;
+  margin-inline-start: auto;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.liste[open] .pfeil {
+  transform: translateY(25%) rotate(225deg);
 }
 
 .eintraege {

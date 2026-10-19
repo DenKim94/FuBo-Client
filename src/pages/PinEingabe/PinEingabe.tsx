@@ -105,7 +105,7 @@ export default function PinEingabe() {
             setPin(wert)
           }}
           beschriftung="Eingabe der zentralen PIN"
-          hinweis="Die PIN erhältst du von den Admins."
+          hinweis="Die PIN erhältst du vom Admin."
           fehlerhaft={fehlerhaft}
           beschriebenDurch={fehlerId}
           // Kein "one-time-code": iOS böte sonst Codes aus SMS an, und die

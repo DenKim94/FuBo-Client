@@ -16,7 +16,7 @@
   gap: var(--abstand-xs);
   min-block-size: var(--tapziel-min);
   padding: var(--abstand-s) var(--abstand-m);
-  border: 1px solid var(--farbe-rand);
+  border: 1px solid var(--farbe-rand-bedienbar);
   border-radius: var(--radius-m);
   background: var(--farbe-hintergrund);
   color: var(--farbe-text);
@@ -36,4 +36,11 @@
 .bilanz {
   color: var(--farbe-text-schwach);
   font-size: var(--schrift-klein);
+}
+
+.nameMitStatus {
+  display: flex;
+  flex-direction: row;
+  gap: var(--abstand-s);
+  align-items: center;
 }

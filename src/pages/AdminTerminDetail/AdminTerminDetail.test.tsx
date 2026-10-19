@@ -151,7 +151,7 @@ describe('AdminTerminDetail – Termin ändern', () => {
     rendern()
 
     expect(await screen.findByTestId('admin-termin-aendern-folgen')).toHaveTextContent(
-      'Eine Verschiebung von Datum oder Uhrzeit setzt die Fixierung der Teams zurück und löst die Erinnerung neu aus.',
+      'Eine Verschiebung von Datum oder Uhrzeit setzt die Einteilung der Teams zurück.',
     )
   })
 
@@ -356,7 +356,7 @@ describe('AdminTerminDetail – Weitere Aktionen', () => {
     const { welt } = rendern()
     await userEvent.click(await screen.findByTestId('admin-termin-entfernen'))
 
-    expect(screen.getByTestId('admin-entfernen-dialog')).toHaveTextContent('es bleibt nur der Protokolleintrag')
+    expect(screen.getByTestId('admin-entfernen-dialog')).toHaveTextContent('Das lässt sich nicht rückgängig machen.')
     await userEvent.click(screen.getByTestId('admin-entfernen-dialog-bestaetigen'))
 
     expect(await screen.findByTestId('ziel')).toHaveTextContent('/admin/termine')

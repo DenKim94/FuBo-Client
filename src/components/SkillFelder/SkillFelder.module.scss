@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: var(--abstand-m);
   padding: var(--abstand-m) 0;
-  border: 1px solid var(--farbe-rand);
+  border: 1px solid var(--farbe-rand-bedienbar);
   border-radius: var(--radius-l);
   background: var(--farbe-hintergrund);
 }
@@ -42,8 +42,3 @@
   overflow-wrap: anywhere;
 }
 
-// Der gewählte Wert als Zahl: auch ohne den Farbwechsel des Segments lesbar.
-.wert {
-  flex: none;
-  font-weight: 700;
-}

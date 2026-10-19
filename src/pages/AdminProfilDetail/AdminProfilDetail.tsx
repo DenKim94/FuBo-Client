@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import type { SpielerDetails } from '@/api/admin/adminProfile'
-import { skalaText, skillsVollstaendig, type SkillKategorie } from '@/api/admin/skills'
+import { skillsVollstaendig, type SkillKategorie } from '@/api/admin/skills'
 import { ADMIN_PFADE } from '@/app/schutz/zielpfad'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
@@ -36,15 +36,14 @@ type AnsichtEigenschaften = { profil: SpielerDetails; kategorien: SkillKategorie
  * Leiste „Skills bearbeiten“.
  *
  * **Die Werte stehen als Zahl und Balken neben dem Diagramm:** Das Diagramm ist nie die einzige Quelle. Alles kommt
- * aus den Kategorien des Servers (Zahl, Namen, Bereich). Die Skala im Kopf nennt den gemeinsamen Bereich und jede
- * Kategorie mit eigenem Bereich („Skalierung 0–6 (Torwart 0–3)“, `skalaText`). **Alle Balken sind gleich breit**; die
- * Füllung ist der Anteil am Bereich der eigenen Kategorie (Torwart 3 von 3 füllt den Balken wie Angriff 6 von 6).
+ * aus den Kategorien des Servers (Zahl, Namen, Bereich); der Kopf nennt nur die Spielzahl (die Skala dort ist am
+ * 19.10.2026 entfallen). **Alle Balken sind gleich breit**; die Füllung ist der Anteil am Bereich der eigenen
+ * Kategorie (Torwart 3 von 3 füllt den Balken wie Angriff 6 von 6).
  * **Skillwerte erscheinen nur hier und im Formular, nie in der Liste.**
  */
 function Ansicht({ profil, kategorien }: AnsichtEigenschaften) {
   const hinweis = useNavigationsHinweis()
   const navigate = useNavigate()
-  const skala = skalaText(kategorien)
 
   return (
     <section className={style.seite} data-testid="admin-profil-detail">
@@ -57,7 +56,6 @@ function Ansicht({ profil, kategorien }: AnsichtEigenschaften) {
           </h1>
           <p className={style.eckdaten} data-testid="admin-profil-detail-eckdaten">
             {spieleText(profil.bilanz)}
-            {skala !== null && ` · Skalierung ${skala}`}
           </p>
           <ProfilKennzeichen profil={profil} skillsUnvollstaendig={!skillsVollstaendig(profil.skills, kategorien)} />
         </header>

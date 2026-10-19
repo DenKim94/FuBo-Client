@@ -48,6 +48,15 @@ describe('ProfilListe', () => {
     expect(screen.queryByTestId('profil-online-1')).not.toBeInTheDocument()
   })
 
+  test('Name und Kennzeichen stehen in einer Zeile, die Bilanz darunter ausserhalb', () => {
+    rendern()
+
+    const kopf = screen.getByTestId('name-mit-status-2')
+    expect(kopf).toContainElement(screen.getByTestId('profil-gesperrt-2'))
+    expect(kopf).toHaveTextContent(adminWelt().profile.find((p) => p.spielerId === 2)?.name ?? '')
+    expect(kopf).not.toContainElement(screen.getByTestId('profil-bilanz-2'))
+  })
+
   test('kennzeichnet unvollständige Skillkarten, nicht die vollständigen und nicht das Adminprofil', () => {
     rendern()
 

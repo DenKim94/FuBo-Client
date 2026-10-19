@@ -51,7 +51,7 @@ describe('PinEingabe', () => {
     expect(feld).toHaveAttribute('inputmode', 'numeric')
     expect(feld).toHaveAttribute('type', 'text')
     expect(feld).toHaveFocus()
-    expect(feld).toHaveAccessibleDescription('Die PIN erhältst du von den Admins.')
+    expect(feld).toHaveAccessibleDescription('Die PIN erhältst du vom Admin.')
   })
 
   test('zeigt vier Kaestchen und fuellt sie mit der Eingabe', () => {

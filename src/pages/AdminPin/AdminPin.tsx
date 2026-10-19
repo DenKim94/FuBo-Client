@@ -29,8 +29,9 @@ const FEHLER_ERSATZ = 'Die PIN konnte nicht geändert werden. Bitte versuche es 
  * **Fehler:** Meldet der Server `400` mit `felder.neuePin`, schließt der Dialog und
  * der Text steht am Feld (dort ist etwas zu korrigieren). Jeder andere Fehler
  * steht **im Dialog**, der offen bleibt – ein zweiter Tipp wiederholt die Änderung.
- * Der Absenden-Knopf ist bis vier Ziffern `aria-disabled` mit Grund als Text (der
- * Fokus bleibt, der Grund wird vorgelesen).
+ * Der Absenden-Knopf ist bis vier Ziffern `aria-disabled` (der Fokus bleibt). Sichtbar steht der Grund als
+ * Hinweis am Feld („Bitte gib vier Ziffern ein.“); für den Screenreader beschreibt ein unsichtbarer Satz mit
+ * demselben Wortlaut den Knopf (`aria-describedby`), sonst hörte man nur „PIN ändern, nicht verfügbar“.
  */
 export default function AdminPin() {
   const [pin, setPin] = useState('')
@@ -81,7 +82,7 @@ export default function AdminPin() {
       <div className={style.bereich}>
         <h1 className={style.titel}>Zentrale PIN ändern</h1>
         <p className={style.text}>
-          Die PIN erhalten die Spieler über deinen Weg. Alle Angemeldeten werden mit der Änderung abgemeldet.
+          Die PIN wird zentral geändert. Dies wird alle laufenden Sitzungen beenden.
         </p>
 
         <PinFeld
@@ -94,7 +95,7 @@ export default function AdminPin() {
             setPin(wert)
           }}
           beschriftung="Neue PIN"
-          hinweis="Genau vier Ziffern."
+          hinweis="Bitte gib vier Ziffern ein."
           fehler={feldFehler}
           autoComplete="off"
           ausrichtung="start"
@@ -106,8 +107,9 @@ export default function AdminPin() {
       <Aktionsleiste>
         {/* Ein Kind: Die Leiste legt ihre Kinder nebeneinander, Grund und Aktion gehören untereinander. */}
         <div className={style.aktionen}>
+          {/* Nur für den Screenreader: Sichtbar steht der Satz schon als Hinweis am Feld. */}
           {!vollstaendig && (
-            <p id={grundId} className={style.nebentext} data-testid="admin-pin-grund">
+            <p id={grundId} className="nurFuerScreenreader" data-testid="admin-pin-grund">
               Bitte gib vier Ziffern ein.
             </p>
           )}
@@ -137,8 +139,8 @@ export default function AdminPin() {
             data-testid="admin-pin-dialog"
           >
             <p>
-              Alle Angemeldeten werden sofort abgemeldet, auch Spieler und Gäste, und du selbst. Sie brauchen die neue
-              PIN über deinen Weg. Teile sie vorher oder direkt danach mit.
+              Alle Angemeldeten werden sofort abgemeldet, auch Spieler und Gäste, und du selbst. Teile die neue PIN
+              vorher oder direkt danach mit.
             </p>
           </Bestaetigung>
         </div>

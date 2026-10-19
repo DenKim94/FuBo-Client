@@ -81,7 +81,7 @@ export default function AdminTerminZeile({ termin, beiEntfernen }: AdminTerminZe
       </span>
       <Knopfgruppe className={style.aktionen}>
         <CustomButton
-          art="sekundaer"
+          art="akzent"
           onClick={() => void navigate(ADMIN_PFADE.terminVerwaltung(termin.terminId))}
           aria-label={`${oeffnenText}: ${wann}`}
           data-testid={`admin-termin-bearbeiten-${id}`}
@@ -90,7 +90,7 @@ export default function AdminTerminZeile({ termin, beiEntfernen }: AdminTerminZe
         </CustomButton>
         {entfernbar && (
           <CustomButton
-            art="gefahrUmriss"
+            art="gefahr"
             onClick={() => {
               beiEntfernen(termin)
             }}

@@ -38,14 +38,14 @@ describe('SkillFelder', () => {
     expect(gruppen).toEqual(['skill-ZEHN', 'skill-KLEIN'])
   })
 
-  test('der gewählte Wert ist angehakt und steht als Zahl in der Legende, ohne Wert steht dort ein Strich', () => {
+  test('der gewählte Wert ist angehakt; die Legende nennt nur den Namen der Kategorie, ohne Zahl', () => {
     rendern({ werte: { ZEHN: '0', KLEIN: '' } })
 
     expect(screen.getByTestId('skill-ZEHN-0')).toBeChecked()
-    expect(screen.getByRole('group', { name: 'Zehnerwert 0' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Zehnerwert' })).toBeInTheDocument()
     const klein = screen.getByTestId('skill-KLEIN')
     expect(within(klein).queryAllByRole('radio', { checked: true })).toHaveLength(0)
-    expect(screen.getByRole('group', { name: 'Kleinwert –' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Kleinwert' })).toBeInTheDocument()
   })
 
   test('meldet die Wahl mit Schlüssel und Text', async () => {

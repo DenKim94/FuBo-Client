@@ -227,7 +227,6 @@ test.describe('Profilverwaltung', () => {
     const diagramm = await page.getByTestId('admin-profil-netzdiagramm').boundingBox()
     expect(diagramm?.width ?? 0).toBeGreaterThan(0)
     // Torwart hat einen kleineren Bereich (0 bis 3), sein Balken ist trotzdem so breit wie die anderen.
-    await expect(page.getByTestId('admin-profil-detail-eckdaten')).toContainText('Skalierung 0–6 (Torwart 0–3)')
     const balkenAngriff = await page.getByTestId('admin-profil-balken-ANGRIFF').boundingBox()
     const balkenTorwart = await page.getByTestId('admin-profil-balken-TORWART').boundingBox()
     expect(balkenAngriff?.width ?? 0).toBeGreaterThan(0)

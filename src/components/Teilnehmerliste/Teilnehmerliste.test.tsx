@@ -78,6 +78,18 @@ describe('Teilnehmerliste', () => {
     expect(screen.getByTestId('teilnehmerliste')).toHaveAttribute('open')
   })
 
+  test('zeigt den Pfeil zum Auf- und Zuklappen erst, wenn es Zusagen gibt', () => {
+    const { rerender } = rendern(liste(0))
+    expect(screen.queryByTestId('teilnehmerliste-pfeil')).not.toBeInTheDocument()
+
+    rerender(<Teilnehmerliste liste={liste(1)} eigenerName={EIGENER_NAME} eigenerGast={false} eingeklappt />)
+    const pfeil = screen.getByTestId('teilnehmerliste-pfeil')
+    // In der Zusammenfassung (Tap-Ziel), schmückend: Der Name der Zusammenfassung bleibt „Teilnehmer (1)“.
+    expect(screen.getByTestId('teilnehmerliste-summary')).toContainElement(pfeil)
+    expect(pfeil).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByTestId('teilnehmerliste-summary')).toHaveTextContent(/^Teilnehmer \(1\)$/)
+  })
+
   test('nennt ohne Eintraege den Grund je nach Stand des Termins', () => {
     const { rerender } = rendern(liste(0))
     expect(screen.getByText('Noch keine Zusagen')).toBeInTheDocument()

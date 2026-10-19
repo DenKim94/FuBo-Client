@@ -332,7 +332,7 @@ describe('Bearbeiten', () => {
 
     expect(gewaehlt('ANGRIFF')).toBe('6')
     expect(within(screen.getByTestId('skill-ANGRIFF')).getAllByRole('radio', { checked: true })).toHaveLength(1)
-    expect(screen.getByRole('group', { name: 'Angriff 6' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: '6', checked: true })).toBe(screen.getByTestId('skill-ANGRIFF-6'))
   })
 
   test('Lücke in der Karte: „Noch nicht bewertet“, leer; gesendet wird sie nur mit eingetragenem Wert', async () => {
@@ -340,7 +340,7 @@ describe('Bearbeiten', () => {
     await screen.findByTestId('skill-ANGRIFF')
 
     expect(gewaehlt('TORWART')).toBeNull()
-    expect(screen.getByRole('group', { name: 'Torwart –' })).toHaveAccessibleDescription('Noch nicht bewertet.')
+    expect(screen.getByRole('group', { name: 'Torwart' })).toHaveAccessibleDescription('Noch nicht bewertet.')
     expect(screen.getByTestId('skill-ANGRIFF')).not.toHaveAccessibleDescription('Noch nicht bewertet.')
     // Leere Felder allein sind keine Änderung.
     expect(screen.getByTestId('admin-profil-speichern')).toHaveAttribute('aria-disabled', 'true')
@@ -490,7 +490,7 @@ describe('Status: Sperren und Entfernen', () => {
 
     const dialog = screen.getByTestId('admin-profil-entfernen-dialog') as HTMLDialogElement
     expect(dialog.open).toBe(true)
-    expect(dialog).toHaveTextContent('nur für ein Profil gedacht, das noch nie benutzt wurde')
+    expect(dialog).toHaveTextContent('Das Entfernen ist nur für ein Profil gedacht, welches noch nie benutzt wurde.')
     expect(screen.getByTestId('admin-profil-entfernen-dialog-abbrechen')).toHaveFocus()
     expect(welt.protokoll.entfernt).toHaveLength(0)
 
@@ -521,7 +521,7 @@ describe('Status: Sperren und Entfernen', () => {
     await userEvent.click(screen.getByTestId('admin-profil-entfernen-dialog-bestaetigen'))
 
     expect(await screen.findByTestId('admin-profil-in-verwendung')).toHaveTextContent(
-      'Das Profil hat bereits Daten (Rückmeldungen, Teams, Ergebnisse) und lässt sich nicht entfernen.',
+      'Für das Profil sind bereits Daten hinterlegt. Das Profil lässt sich daher nicht entfernen.',
     )
     expect((screen.getByTestId('admin-profil-entfernen-dialog') as HTMLDialogElement).open).toBe(false)
 

@@ -50,8 +50,8 @@
      Information nicht – sie ordnet nur. Ein einziges Token zwaenge zur Wahl
      zwischen einem zu schwachen Rand an Schaltflaechen und einem zu harten
      Gitter in Listen. */
-  --farbe-rand: #d8ddd6; /* dekorativ: Trennlinien, Kartenkanten (1.38:1) */
-  --farbe-rand-bedienbar: #767b72; /* Schaltflaechen, Felder, Auswahllisten (4.33:1) */
+  --farbe-rand: #d8ddd6; /* dekorativ: Trennlinien in Karten, Kennzeichen, gesperrte Schaltflaechen (1.38:1) */
+  --farbe-rand-bedienbar: #767b72; /* Schaltflaechen, Felder, Auswahllisten; seit 19.10.2026 auch Umrandungen von Karten und Hinweisen (4.33:1) */
 
   /* --- Fokus ---
      Eigener Ton, nicht --farbe-primaer: Der Ring soll nicht mit Erfolg oder

@@ -53,6 +53,16 @@
   background: color-mix(in srgb, var(--farbe-fehler) 85%, var(--farbe-text));
 }
 
+// Akzent: Verwaltungsschritt, weder Hauptaktion noch Gefahr. Weisse Schrift auf `--farbe-link` (6.76:1).
+.akzent {
+  background: var(--farbe-link);
+  color: var(--farbe-primaer-kontrast);
+}
+
+.akzent:active:not(:disabled) {
+  background: color-mix(in srgb, var(--farbe-link) 85%, var(--farbe-text));
+}
+
 // Leise Gefahr: weisser Grund, roter Rand und rote Schrift (7.30:1 auf Weiss, Rand ebenso). Die Aussage steht im Wort.
 .gefahrUmriss {
   background: var(--farbe-hintergrund);
@@ -77,6 +87,10 @@
 
   .gefahr:hover:not(:disabled) {
     background: color-mix(in srgb, var(--farbe-fehler) 90%, var(--farbe-text));
+  }
+
+  .akzent:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--farbe-link) 90%, var(--farbe-text));
   }
 
   .gefahrUmriss:hover:not(:disabled) {

@@ -110,7 +110,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
       <Knopfgruppe untereinander>
         {geplant && (
           <CustomButton
-            art="sekundaer"
+            art="akzent"
             onClick={() => {
               oeffnen('abschliessen')
             }}
@@ -158,7 +158,9 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         offen={dialog === 'abschliessen'}
         titel="Termin abschließen?"
         bestaetigenText="Termin abschließen"
-        art="gefahr"
+        // Blau wie der Knopf, der den Dialog öffnet; endgültig bleibt der Schritt trotzdem (Fokus auf „Abbrechen“).
+        art="akzent"
+        fokusAufAbbrechen
         laedt={abschliessen.isPending}
         fehler={dialog === 'abschliessen' ? abschliessen.error : null}
         fehlerErsatz={FEHLER_ERSATZ_ABSCHLIESSEN}
@@ -169,7 +171,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         data-testid="admin-abschliessen-dialog"
       >
         <p>
-          Der Termin gilt danach als abgeschlossen. Rückmeldungen sind nicht mehr möglich; Ergebnisse lassen sich
+          Der Termin gilt danach als abgeschlossen. Änderungen sind nicht mehr möglich; Ergebnisse lassen sich
           erfassen, sofern eine Teameinteilung vorliegt. Das lässt sich nicht rückgängig machen.
         </p>
       </Bestaetigung>
@@ -208,7 +210,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         }}
         data-testid="admin-entfernen-dialog"
       >
-        <p>Das lässt sich nicht rückgängig machen; es bleibt nur der Protokolleintrag.</p>
+        <p>Das lässt sich nicht rückgängig machen.</p>
       </Bestaetigung>
     </section>
   )

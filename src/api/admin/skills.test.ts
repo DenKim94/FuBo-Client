@@ -4,7 +4,6 @@ import {
   profilAenderung,
   skillsAenderung,
   skillsVollstaendig,
-  skalaText,
   skillZahl,
   type SkillKategorie,
 } from './skills'
@@ -140,53 +139,5 @@ describe('profilAenderung', () => {
     expect(
       profilAenderung(vorher, { ...unveraendert, skills: { ...unveraendert.skills, ALT: '5' } }, alle),
     ).toBeNull()
-  })
-})
-
-describe('skalaText', () => {
-  const kat = (min: number, max: number): SkillKategorie => ({
-    schluessel: `K${String(min)}${String(max)}`,
-    bezeichnung: 'x',
-    gewicht: 1,
-    reihenfolge: 1,
-    minWert: min,
-    maxWert: max,
-  })
-
-  test('ohne Kategorien gibt es keine Skala', () => {
-    expect(skalaText([])).toBeNull()
-  })
-
-  test('gleiche Bereiche ergeben „von–bis“ mit Gedankenstrich', () => {
-    expect(skalaText([kat(0, 6), kat(0, 6)])).toBe('0–6')
-  })
-
-  test('der Bereich kommt aus den Daten', () => {
-    expect(skalaText([kat(1, 10)])).toBe('1–10')
-  })
-
-  const benannt = (bezeichnung: string, min: number, max: number): SkillKategorie => ({
-    ...kat(min, max),
-    schluessel: bezeichnung.toUpperCase(),
-    bezeichnung,
-  })
-
-  test('eine Kategorie mit eigenem Bereich steht mit Namen in Klammern hinter der Skala', () => {
-    const satz = [benannt('Angriff', 0, 6), benannt('Abwehr', 0, 6), benannt('Torwart', 0, 3)]
-    expect(skalaText(satz)).toBe('0–6 (Torwart 0–3)')
-  })
-
-  test('die Skala ist der häufigste Bereich, auch wenn die abweichende Kategorie vorn steht', () => {
-    const satz = [benannt('Torwart', 0, 3), benannt('Angriff', 0, 6), benannt('Abwehr', 0, 6)]
-    expect(skalaText(satz)).toBe('0–6 (Torwart 0–3)')
-  })
-
-  test('mehrere Abweichungen stehen in Anzeigereihenfolge, durch Komma getrennt', () => {
-    const satz = [benannt('A', 0, 6), benannt('B', 1, 5), benannt('C', 0, 6), benannt('D', 0, 3)]
-    expect(skalaText(satz)).toBe('0–6 (B 1–5, D 0–3)')
-  })
-
-  test('bei Gleichstand gilt der Bereich der ersten Kategorie', () => {
-    expect(skalaText([benannt('Erste', 0, 6), benannt('Zweite', 0, 3)])).toBe('0–6 (Zweite 0–3)')
   })
 })

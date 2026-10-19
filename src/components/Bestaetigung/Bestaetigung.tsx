@@ -14,10 +14,17 @@ type BestaetigungEigenschaften = {
   /** Beschriftung der Bestätigung: das **Verb** der Aktion („Termin absagen“), nicht „OK“. */
   bestaetigenText: string
   /**
-   * `gefahr` für nicht umkehrbare Schritte: rote Bestätigung, **„Abbrechen“ hat den
-   * Fokus**. `primaer` für Schritte mit Folgen, die sich aber erklären lassen.
+   * Farbe der Bestätigung. `gefahr` für nicht umkehrbare Schritte: rote Bestätigung, **„Abbrechen“ hat den
+   * Fokus**. `primaer` für Schritte mit Folgen, die sich aber erklären lassen. `akzent` (blau) für einen
+   * Verwaltungsschritt, der nicht als Gefahr wirken soll („Termin abschließen“).
    */
-  art?: 'gefahr' | 'primaer'
+  art?: 'gefahr' | 'primaer' | 'akzent'
+  /**
+   * Der Fokus beginnt auf „Abbrechen“. Vorgabe: nur bei `gefahr`. Ein endgültiger Schritt in anderer Farbe
+   * („Termin abschließen“ in `akzent`) setzt es ausdrücklich: Die Farbe ändert nichts daran, dass ein
+   * versehentliches Enter ihn nicht auslösen darf.
+   */
+  fokusAufAbbrechen?: boolean
   /** Ein Aufruf läuft: Bestätigung zeigt den Spinner, „Abbrechen“, Escape und Zurück-Geste sind gesperrt. */
   laedt?: boolean
   /** Fehler des Aufrufs: erscheint **im** Dialog, der Dialog bleibt offen. */
@@ -65,6 +72,7 @@ export default function Bestaetigung({
   titel,
   bestaetigenText,
   art = 'primaer',
+  fokusAufAbbrechen = art === 'gefahr',
   laedt = false,
   fehler = null,
   fehlerErsatz,
@@ -83,9 +91,9 @@ export default function Bestaetigung({
   // bedienbare Element – bei Gefahr wäre das die Bestätigung.
   useEffect(() => {
     if (!offen) return
-    const ziel = art === 'gefahr' ? abbrechenRef.current : bestaetigenRef.current
+    const ziel = fokusAufAbbrechen ? abbrechenRef.current : bestaetigenRef.current
     ziel?.focus()
-  }, [offen, art])
+  }, [offen, fokusAufAbbrechen])
 
   return (
     <Dialog
@@ -105,7 +113,7 @@ export default function Bestaetigung({
       <Knopfgruppe untereinander className={style.aktionen}>
         <CustomButton
           ref={bestaetigenRef}
-          art={art === 'gefahr' ? 'gefahr' : 'primaer'}
+          art={art}
           breit
           laedt={laedt}
           onClick={beiBestaetigen}

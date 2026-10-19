@@ -33,8 +33,9 @@ function stufen(kategorie: SkillKategorie): SegmentOption[] {
 /**
  * Skillwerte eines Profils als Stufen zum Antippen (C7, 5.3; Prototyp 09b; nur im Profilformular, A12).
  *
- * **Segmente statt Zahlenfeld:** je Kategorie eine Reihe von Stufen von der unteren bis zur oberen Grenze, der
- * gewählte Wert steht zusätzlich als Zahl neben dem Namen (Prototyp: „treffsicher, Wert immer als Zahl lesbar“).
+ * **Segmente statt Zahlenfeld:** je Kategorie eine Reihe von Stufen von der unteren bis zur oberen Grenze; die
+ * Legende nennt nur den Namen der Kategorie (die Zahl daneben ist am 19.10.2026 entfallen). Der gewählte Wert ist
+ * die Beschriftung des gefüllten Segments und für Screenreader die gewählte Option der Gruppe.
  * Ein ungültiger Wert lässt sich so gar nicht erst eingeben; geprüft wird weiterhin beim Senden.
  *
  * **Das Formular entsteht aus den Kategorien**, die der Server liefert: Bezeichnung, Bereich und Reihenfolge
@@ -63,7 +64,7 @@ export default function SkillFelder({
       </div>
       {vorbelegtHinweis && (
         <p className={style.hinweis} data-testid="skill-vorbelegt-hinweis">
-          Die Werte sind vorbelegt (Mitte der Skala). Bitte prüfe jeden Wert.
+          Die Skills sind mit Standardwerten vorbelegt. Bitte prüfe jeden Wert.
         </p>
       )}
       <div className={style.kategorien}>
@@ -73,13 +74,7 @@ export default function SkillFelder({
           return (
             <Segmente
               key={kategorie.schluessel}
-              legende={
-                <>
-                  <span className={style.name}>{kategorie.bezeichnung}</span>{' '}
-                  {/* Das Leerzeichen trennt Name und Wert im zugänglichen Namen der Gruppe („Zehnerwert 5“). */}
-                  <span className={style.wert}>{gueltig ? text.trim() : '–'}</span>
-                </>
-              }
+              legende={<span className={style.name}>{kategorie.bezeichnung}</span>}
               optionen={stufen(kategorie)}
               wert={gueltig ? String(Number(text.trim())) : ''}
               beiAenderung={(wert) => {

@@ -7,10 +7,12 @@ import style from './CustomButton.module.scss'
 type CustomButtonEigenschaften = ButtonHTMLAttributes<HTMLButtonElement> & {
   /**
    * Gewicht der Aktion. `gefahr` ist für unwiderrufliche Schritte (z. B. Hallenabsage, A23);
-   * `gefahrUmriss` ist dieselbe Aussage leiser (weißer Grund, roter Rand und Text) für Listen, in denen
-   * mehrere gefüllte rote Flächen nebeneinander zu schwer wirkten (Termin-Karte „Entfernen“).
+   * `gefahrUmriss` ist dieselbe Aussage leiser (weißer Grund, roter Rand und Text), etwa „Profil entfernen“
+   * unter dem Formular.
+   * `akzent` (blau, `--farbe-link`) ist für Verwaltungsschritte, die weder Hauptaktion noch Gefahr sind
+   * („Bearbeiten“ in der Terminkarte, „Termin abschließen“; Vorgabe des Entwicklers vom 19.10.2026).
    */
-  art?: 'primaer' | 'sekundaer' | 'gefahr' | 'gefahrUmriss'
+  art?: 'primaer' | 'sekundaer' | 'gefahr' | 'gefahrUmriss' | 'akzent'
   /** Nimmt die volle Breite ein – der Normalfall in der Aktionsleiste. */
   breit?: boolean
   /**

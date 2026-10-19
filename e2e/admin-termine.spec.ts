@@ -263,7 +263,12 @@ test.describe('Termin verwalten', () => {
   test('schliesst einen Termin ab: Karte „abgeschlossen“, keine Aktionen mehr', async ({ page }) => {
     const { verwaltung } = await start(page, '/admin/termine/2')
 
+    // Knopf und Bestätigung im Dialog sind blau (`akzent`, --farbe-link #1a5ba8); der Fokus beginnt auf „Abbrechen“.
+    const blau = 'rgb(26, 91, 168)'
+    await expect(page.getByTestId('admin-termin-abschliessen')).toHaveCSS('background-color', blau)
     await page.getByTestId('admin-termin-abschliessen').click()
+    await expect(page.getByTestId('admin-abschliessen-dialog-bestaetigen')).toHaveCSS('background-color', blau)
+    await expect(page.getByTestId('admin-abschliessen-dialog-abbrechen')).toBeFocused()
     await page.getByTestId('admin-abschliessen-dialog-bestaetigen').click()
 
     await expect(page.getByTestId('termin-abgeschlossen')).toBeVisible()

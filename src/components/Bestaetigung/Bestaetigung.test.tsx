@@ -65,6 +65,20 @@ describe('Bestaetigung', () => {
     expect(screen.getByTestId('bestaetigung-bestaetigen')).toHaveFocus()
   })
 
+  test('„akzent“ färbt die Bestätigung blau; ein endgültiger Schritt hält den Fokus trotzdem auf „Abbrechen“', () => {
+    rendern({ art: 'akzent', fokusAufAbbrechen: true })
+
+    expect(screen.getByTestId('bestaetigung-bestaetigen').className).toMatch(/akzent/)
+    expect(screen.getByTestId('bestaetigung-bestaetigen').className).not.toMatch(/gefahr/)
+    expect(screen.getByTestId('bestaetigung-abbrechen')).toHaveFocus()
+  })
+
+  test('„akzent“ ohne Angabe zum Fokus beginnt auf der Bestätigung', () => {
+    rendern({ art: 'akzent' })
+
+    expect(screen.getByTestId('bestaetigung-bestaetigen')).toHaveFocus()
+  })
+
   test('setzt den Fokus beim nachtraeglichen Oeffnen, nicht nur beim ersten Rendern', () => {
     function Huelle() {
       const [offen, setOffen] = useState(false)

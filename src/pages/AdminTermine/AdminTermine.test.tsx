@@ -209,7 +209,7 @@ describe('AdminTermine', () => {
     await userEvent.click(await screen.findByTestId('admin-termin-entfernen-4'))
 
     expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent('Dienstag, 13. Januar')
-    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent('es bleibt nur der Protokolleintrag')
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent('Das lässt sich nicht rückgängig machen.')
     expect(admin.protokoll.terminEntfernt).toEqual([])
   })
 
