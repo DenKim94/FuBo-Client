@@ -17,7 +17,7 @@ afterEach(() => {
 type Eigenschaften = Parameters<typeof TeamsLeiste>[0]
 
 /** Rendert die Leiste gegen eine nachgebildete Welt; Vorgabe: bedienbar, keine Einteilung. */
-function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeof terminModell>[0] = { terminId: 102 }) {
+function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeof terminModell>[0] = { terminId: 102, eigene: true }) {
   const welt = terminHandlers([terminModell(modellTeil)])
   mockServer.use(...welt.handlers)
   const beiErfolg = vi.fn()
@@ -27,6 +27,7 @@ function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeo
       terminId={102}
       vorhanden={false}
       veraltet={false}
+      berechtigt
       mindestzahlErreicht
       minTeilnehmer={6}
       begonnen={false}
@@ -48,6 +49,7 @@ describe('TeamsLeiste', () => {
           terminId={102}
           vorhanden={false}
           veraltet={false}
+          berechtigt
           mindestzahlErreicht
           minTeilnehmer={6}
           begonnen={false}
@@ -105,6 +107,24 @@ describe('TeamsLeiste', () => {
     expect(screen.getByTestId('teams-ersetzen-dialog')).not.toHaveAttribute('open')
   })
 
+  test('wer nicht mitspielt (abgesagt, nicht gemeldet, Warteschlange), kann nicht generieren und erfährt den Grund', async () => {
+    const { welt } = rendern({ berechtigt: false })
+
+    const knopf = screen.getByTestId('teams-generieren')
+    expect(knopf).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.')
+    expect(knopf).toHaveAccessibleDescription('Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.')
+
+    await userEvent.click(knopf)
+    expect(welt.protokoll.generierungen).toHaveLength(0)
+  })
+
+  test('der fehlende Teilnehmerstatus geht den anderen Gründen vor', () => {
+    rendern({ berechtigt: false, mindestzahlErreicht: false, gesperrtDurchKontingent: true })
+
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Nur Teilnehmer des Termins')
+  })
+
   test('sperrt ohne Mindestzahl mit Grund aus Server-Werten und tut beim Tipp nichts', async () => {
     const { welt } = rendern({ mindestzahlErreicht: false, minTeilnehmer: 6 })
     const knopf = screen.getByTestId('teams-generieren')
@@ -124,7 +144,7 @@ describe('TeamsLeiste', () => {
 
     expect(screen.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('teams-grund')).toHaveTextContent(
-      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.',
+      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.',
     )
     await userEvent.click(screen.getByTestId('teams-generieren'))
     expect(welt.protokoll.generierungen).toHaveLength(0)
@@ -143,7 +163,7 @@ describe('TeamsLeiste', () => {
   })
 
   test('behandelt KONTINGENT_ERSCHOEPFT als gesperrten Zustand und nicht als Fehlermeldung', async () => {
-    const { beiKontingentErschoepft } = rendern({}, { terminId: 102, kontingent: 0 })
+    const { beiKontingentErschoepft } = rendern({}, { terminId: 102, eigene: true, kontingent: 0 })
     await userEvent.click(screen.getByTestId('teams-generieren'))
 
     await waitFor(() => expect(beiKontingentErschoepft).toHaveBeenCalledTimes(1))
@@ -205,6 +225,7 @@ describe('TeamsLeiste', () => {
           terminId={102}
           vorhanden={false}
           veraltet={false}
+          berechtigt
           mindestzahlErreicht
           minTeilnehmer={6}
           begonnen={false}

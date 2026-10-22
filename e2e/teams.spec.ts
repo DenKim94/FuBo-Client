@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { sitzungNachbilden } from './hilfen/sitzung.js'
+import { adminNachbilden } from './hilfen/admin.js'
 import { teamsNachbilden } from './hilfen/teams.js'
 import { EIGENER_NAME, inMinuten, terminModell, termineNachbilden, type Zusage } from './hilfen/termine.js'
 
@@ -52,7 +53,7 @@ test.describe('Tab Teams', () => {
   })
 
   test('markiert die Einteilung nach einer fremden Absage als veraltet und zeigt sie weiter', async ({ page }) => {
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8) })])
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true })])
     await teamsNachbilden(page, welt)
     await page.clock.install()
     await page.goto('/teams')
@@ -75,7 +76,7 @@ test.describe('Tab Teams', () => {
   })
 
   test('fragt vor dem Ersetzen einer aktuellen Einteilung nach', async ({ page }) => {
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8) })])
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true })])
     await teamsNachbilden(page, welt)
     await page.goto('/teams')
     await page.getByTestId('teams-generieren').click()
@@ -93,8 +94,8 @@ test.describe('Tab Teams', () => {
     await expect.poll(() => welt.generierungen.length).toBe(2)
   })
 
-  test('sperrt nach erschoepftem Kontingent mit Grund, bis sich die Teilnehmerliste aendert', async ({ page }) => {
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8), kontingent: 1 })])
+  test('sperrt nach erschoepftem Kontingent mit Grund, bis jemand neu zusagt', async ({ page }) => {
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true, kontingent: 1 })])
     await teamsNachbilden(page, welt)
     await page.clock.install()
     await page.goto('/teams')
@@ -105,7 +106,7 @@ test.describe('Tab Teams', () => {
     await page.getByTestId('teams-generieren').click()
     await page.getByTestId('teams-ersetzen-bestaetigen').click()
 
-    await expect(page.getByTestId('teams-grund')).toContainText('Das Kontingent für diese Teilnehmerliste ist aufgebraucht.')
+    await expect(page.getByTestId('teams-grund')).toHaveText('Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.')
     await expect(page.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
     // Keine Fehlermeldung: Das ist ein Zustand, kein Fehler.
     await expect(page.getByTestId('teams-fehler')).toHaveCount(0)
@@ -116,7 +117,7 @@ test.describe('Tab Teams', () => {
     await page.getByTestId('teams-generieren').click({ force: true })
     expect(welt.generierungen.length).toBe(gesendet)
 
-    // Die Liste aendert sich: neue Version, neues Kontingent.
+    // Jemand sagt neu zu: neue Version und (am Server) neuer Kontingentstand. Eine Absage oeffnete es nicht (22.10.2026).
     welt.modelle[0].zusagen.push({ name: 'Beispielspieler 40', gast: false })
     welt.modelle[0].teilnehmerVersion += 1
     await page.clock.runFor(21_000)
@@ -125,7 +126,7 @@ test.describe('Tab Teams', () => {
   })
 
   test('sperrt ohne Mindestzahl mit Grund', async ({ page }) => {
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(4), min: 6 })])
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(4, true), eigene: true, min: 6 })])
     await teamsNachbilden(page, welt)
     await page.goto('/teams')
 
@@ -139,7 +140,7 @@ test.describe('Tab Teams', () => {
   test('nimmt bei Beginn die Aktion weg und zeigt die feststehende Einteilung', async ({ page }) => {
     await sitzungNachbilden(page, { leerlaufSek: 900 })
     const beginn = inMinuten(3)
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8), ...beginn })])
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true, ...beginn })])
     await teamsNachbilden(page, welt)
     await page.clock.install()
     await page.goto('/teams')
@@ -151,6 +152,51 @@ test.describe('Tab Teams', () => {
     await expect(page.getByTestId('teams-fixiert')).toContainText('Die Einteilung steht fest.')
     await expect(page.getByTestId('teams-generieren')).toHaveCount(0)
     await expect(page.getByTestId('teams-anzeige')).toBeVisible()
+  })
+})
+
+test.describe('Nur Teilnehmer generieren', () => {
+  const GRUND = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+
+  test.beforeEach(async ({ page }) => {
+    await sitzungNachbilden(page, { leerlaufSek: 900 })
+  })
+
+  test('ohne eigene Zusage ist die Aktion gesperrt und sendet nichts', async ({ page }) => {
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8) })])
+    await teamsNachbilden(page, welt)
+    await page.goto('/teams')
+
+    await expect(page.getByTestId('teams-grund')).toHaveText(GRUND)
+    await expect(page.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
+    await page.getByTestId('teams-generieren').click({ force: true })
+    expect(welt.generierungen).toHaveLength(0)
+  })
+
+  test('auf der Warteschlange ist die Aktion ebenfalls gesperrt', async ({ page }) => {
+    // Hoechstzahl 8, die eigene Zusage ist die neunte.
+    const liste = [...zusagen(8), { name: EIGENER_NAME, gast: false }]
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: liste, eigene: true, max: 8 })])
+    await teamsNachbilden(page, welt)
+    await page.goto('/teams')
+
+    await expect(page.getByTestId('teams-grund')).toHaveText(GRUND)
+    await page.getByTestId('teams-generieren').click({ force: true })
+    expect(welt.generierungen).toHaveLength(0)
+  })
+})
+
+test.describe('Admin am Termin', () => {
+  test('der Admin darf ohne Zusage generieren (wie am Server)', async ({ page }) => {
+    await adminNachbilden(page)
+    const welt = await termineNachbilden(page, [{ ...terminModell({ terminId: 102, zusagen: zusagen(8) }), adminSitzung: true }])
+    await teamsNachbilden(page, welt)
+    await page.goto('/teams/102')
+
+    await expect(page.getByTestId('teams-generieren')).not.toHaveAttribute('aria-disabled', 'true')
+    await page.getByTestId('teams-generieren').click()
+    await expect(page.getByTestId('teams-anzeige')).toBeVisible()
+    expect(welt.generierungen).toHaveLength(1)
   })
 })
 
@@ -183,7 +229,7 @@ test.describe('Layout bei 360 x 780', () => {
 
   test('haelt Aktion und Grund im Sichtfeld, scrollt nicht waagerecht und erfuellt die Tap-Ziele', async ({ page }) => {
     await sitzungNachbilden(page, { leerlaufSek: 900 })
-    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(22), min: 6 })])
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(22, true), eigene: true, min: 6 })])
     await teamsNachbilden(page, welt)
     await page.goto('/teams')
     await page.getByTestId('teams-generieren').click()

@@ -51,6 +51,21 @@ describe('teamsGenerieren', () => {
     expect((fehler as ApiFehler).message).toBe('Text des Servers.')
   })
 
+  test('uebersetzt 403 KEINE_ZUSAGE in einen fachlichen ApiFehler (keine Sitzungsfrage)', async () => {
+    mockServer.use(
+      http.post('*/teams/generieren', () =>
+        problem(403, 'KEINE_ZUSAGE', 'Teams generieren darf nur, wer für diesen Termin zugesagt hat.'),
+      ),
+    )
+
+    const fehler = await teamsGenerieren(102).catch((f: unknown) => f)
+
+    expect(fehler).toBeInstanceOf(ApiFehler)
+    expect((fehler as ApiFehler).status).toBe(403)
+    expect((fehler as ApiFehler).code).toBe('KEINE_ZUSAGE')
+    expect((fehler as ApiFehler).message).toBe('Teams generieren darf nur, wer für diesen Termin zugesagt hat.')
+  })
+
   test('uebersetzt 404 in INHALT_NICHT_GEFUNDEN', async () => {
     mockServer.use(http.post('*/teams/generieren', () => problem(404, 'INHALT_NICHT_GEFUNDEN', 'Nicht gefunden.')))
     const fehler = await teamsGenerieren(999).catch((f: unknown) => f)

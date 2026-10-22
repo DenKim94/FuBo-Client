@@ -5,6 +5,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import { schluessel } from '@/api/common/schluessel'
+import { beispielAdminSitzung } from '@/test/mocks/handlers'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
 import { EIGENER_NAME, teamsAus, terminHandlers, terminModell, type TerminModell } from '@/test/mocks/termine'
@@ -32,9 +33,18 @@ function rendern(pfad: string, ...modelle: TerminModell[]) {
   return welt
 }
 
-/** Ein Termin mit bereits erzeugter Einteilung (Version gleich, also aktuell). */
-function mitEinteilung(teil: Partial<TerminModell> & { terminId: number }): TerminModell {
+/**
+ * Ein Termin, bei dem die eigene Sitzung mitspielt: zugesagt und vorn in der Liste, nicht auf der Warteschlange.
+ * Nur dann darf sie generieren (Vorgabe vom 22.10.2026).
+ */
+function teilnehmend(teil: Partial<TerminModell> & { terminId: number }): TerminModell {
   const modell = terminModell(teil)
+  return { ...modell, eigene: true, zusagen: [{ name: EIGENER_NAME, gast: false }, ...modell.zusagen] }
+}
+
+/** Ein Termin mit bereits erzeugter Einteilung (Version gleich, also aktuell); die eigene Sitzung spielt mit. */
+function mitEinteilung(teil: Partial<TerminModell> & { terminId: number }): TerminModell {
+  const modell = teilnehmend(teil)
   return { ...modell, teams: teamsAus(modell, 'Beispielspieler 01'), teamsVersion: modell.teilnehmerVersion }
 }
 
@@ -88,7 +98,7 @@ describe('TeamsSeite: Termin bestimmen', () => {
 
 describe('TeamsSeite: Zustaende der Einteilung', () => {
   test('behandelt teams = null als „Noch keine Einteilung“ und nicht als leere Liste', async () => {
-    rendern('/teams/102', terminModell({ terminId: 102 }))
+    rendern('/teams/102', teilnehmend({ terminId: 102 }))
     const leer = await screen.findByTestId('teams-nicht-generiert')
     expect(leer).toHaveTextContent('Noch keine Einteilung')
     expect(leer).toHaveTextContent('Sobald jemand die Teams generiert hat, erscheinen sie hier.')
@@ -101,9 +111,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
       '/teams/102',
       mitEinteilung({
         terminId: 102,
-        eigene: true,
         zusagen: [
-          { name: EIGENER_NAME, gast: false },
           { name: 'Beispielspieler 11', gast: false },
           { name: 'Beispielspieler 12', gast: false },
         ],
@@ -150,7 +158,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
   })
 
   test('sperrt ohne Mindestzahl die Aktion mit Grund; der Server entscheidet ueber die Zahl', async () => {
-    const welt = rendern('/teams/102', terminModell({ terminId: 102, min: 20 }))
+    const welt = rendern('/teams/102', teilnehmend({ terminId: 102, min: 20 }))
     const knopf = await screen.findByTestId('teams-generieren')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('teams-grund')).toHaveTextContent('Mindestens 20 Zusagen sind erforderlich.')
@@ -161,7 +169,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
 
   test('liest die Mindestzahl vom Server und rechnet sie nicht nach', async () => {
     // 8 Zusagen bei Mindestzahl 6 waeren „erreicht“; der Server sagt nein, die Seite folgt ihm.
-    const modell = terminModell({ terminId: 102, min: 6 })
+    const modell = teilnehmend({ terminId: 102, min: 6 })
     mockServer.use(
       http.get('*/termine/:terminId/lesen', async ({ params }) => {
         const { detailsVon } = await import('@/test/mocks/termine')
@@ -181,7 +189,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
 
 describe('TeamsSeite: Generieren', () => {
   test('generiert, zeigt die Einteilung und setzt den Fokus auf deren Ueberschrift', async () => {
-    const welt = rendern('/teams/102', terminModell({ terminId: 102 }))
+    const welt = rendern('/teams/102', teilnehmend({ terminId: 102 }))
     await userEvent.click(await screen.findByTestId('teams-generieren'))
 
     const kopf = await screen.findByTestId('teams-anzeige-kopf')
@@ -204,7 +212,7 @@ describe('TeamsSeite: Generieren', () => {
   })
 
   test('sperrt nach KONTINGENT_ERSCHOEPFT bis sich die Teilnehmerliste aendert, ohne Fehlermeldung', async () => {
-    const welt = rendern('/teams/102', terminModell({ terminId: 102, kontingent: 0 }))
+    const welt = rendern('/teams/102', teilnehmend({ terminId: 102, kontingent: 0 }))
     await userEvent.click(await screen.findByTestId('teams-generieren'))
 
     expect(await screen.findByTestId('teams-grund')).toHaveTextContent('Das Kontingent für diese Teilnehmerliste ist aufgebraucht.')
@@ -224,7 +232,7 @@ describe('TeamsSeite: Generieren', () => {
   })
 
   test('zeigt einen anderen Fehler als Meldung und behaelt die Aktion', async () => {
-    const welt = rendern('/teams/102', terminModell({ terminId: 102 }))
+    const welt = rendern('/teams/102', teilnehmend({ terminId: 102 }))
     mockServer.use(
       http.post('*/teams/generieren', () =>
         problem(409, 'SKILLWERTE_UNVOLLSTAENDIG', 'Für einzelne Spieler fehlen Skillwerte (Kategorie Tempo).'),
@@ -241,5 +249,71 @@ describe('TeamsSeite: Generieren', () => {
     rendern('/teams/102', mitEinteilung({ terminId: 102 }))
     const leiste = await screen.findByTestId('aktionsleiste')
     expect(screen.getByTestId('teams-seite').lastElementChild).toBe(leiste)
+  })
+})
+
+describe('TeamsSeite: nur Teilnehmer generieren', () => {
+  const GRUND = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+
+  test.each([
+    ['ohne Rückmeldung', null],
+    ['nach einer Absage', false],
+  ] as const)('%s: Aktion gesperrt mit Grund, ein Tipp sendet nichts', async (_, eigene) => {
+    const welt = rendern('/teams/102', terminModell({ terminId: 102, eigene }))
+    const knopf = await screen.findByTestId('teams-generieren')
+
+    expect(knopf).toHaveAttribute('aria-disabled', 'true')
+    expect(knopf).toHaveAccessibleDescription(GRUND)
+    await userEvent.click(knopf)
+    expect(welt.protokoll.generierungen).toHaveLength(0)
+  })
+
+  test('auf der Warteschlange: zugesagt, aber gesperrt wie ohne Zusage', async () => {
+    // Höchstzahl 8, die eigene Zusage ist die neunte: Platz 1 der Warteschlange.
+    const modell = terminModell({ terminId: 102, max: 8, eigene: true })
+    modell.zusagen = [...modell.zusagen, { name: EIGENER_NAME, gast: false }]
+    const welt = rendern('/teams/102', modell)
+    const knopf = await screen.findByTestId('teams-generieren')
+
+    expect(knopf).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent(GRUND)
+    await userEvent.click(knopf)
+    expect(welt.protokoll.generierungen).toHaveLength(0)
+  })
+
+  test('der Admin darf ohne Zusage generieren (wie am Server)', async () => {
+    mockServer.use(http.get('*/auth/session/lesen', () => HttpResponse.json(beispielAdminSitzung)))
+    const welt = rendern('/teams/102', { ...terminModell({ terminId: 102 }), adminSitzung: true })
+    const knopf = await screen.findByTestId('teams-generieren')
+
+    await waitFor(() => expect(knopf).not.toHaveAttribute('aria-disabled'))
+    await userEvent.click(knopf)
+    await waitFor(() => expect(welt.protokoll.generierungen).toHaveLength(1))
+    expect(await screen.findByTestId('teams-anzeige')).toBeInTheDocument()
+  })
+
+  test('meldet der Server 403 KEINE_ZUSAGE (Zusage inzwischen zurückgenommen), sperrt die neu gelesene Seite', async () => {
+    const modell = teilnehmend({ terminId: 102 })
+    const welt = rendern('/teams/102', modell)
+    const knopf = await screen.findByTestId('teams-generieren')
+    // Zwischen Anzeige und Tipp sagt die eigene Sitzung (in einem anderen Tab) ab.
+    welt.modelle[0].eigene = false
+    welt.modelle[0].zusagen = welt.modelle[0].zusagen.filter((z) => z.name !== EIGENER_NAME)
+
+    await userEvent.click(knopf)
+
+    expect(await screen.findByTestId('teams-fehler')).toHaveTextContent('Teams generieren darf nur, wer für diesen Termin zugesagt hat.')
+    await waitFor(() => expect(screen.getByTestId('teams-grund')).toHaveTextContent(GRUND))
+  })
+
+  test('eine veraltete Einteilung bietet Nicht-Teilnehmern keine Neugenerierung an', async () => {
+    const basis = terminModell({ terminId: 102 })
+    const modell = { ...basis, teams: teamsAus(basis, 'Beispielspieler 11'), teamsVersion: basis.teilnehmerVersion }
+    modell.teilnehmerVersion += 1
+    rendern('/teams/102', modell)
+
+    const hinweis = await screen.findByTestId('teams-anzeige-veraltet')
+    expect(hinweis).not.toHaveTextContent('Du kannst die Teams neu generieren.')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent(GRUND)
   })
 })

@@ -36,7 +36,7 @@ async function warteAufDaten(result: ReturnType<typeof hookRendern>['result']) {
 
 describe('useTeamsGenerieren', () => {
   test('liest nach dem Lauf den Einzeltermin neu und zeigt die Einteilung', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102 })])
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
     mockServer.use(...welt.handlers)
     const { result } = hookRendern()
     await warteAufDaten(result)
@@ -51,7 +51,7 @@ describe('useTeamsGenerieren', () => {
   })
 
   test('sendet den Lauf ohne Hintergrundkopf', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102 })])
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
     mockServer.use(...welt.handlers)
     const { result } = hookRendern()
     await warteAufDaten(result)
@@ -62,7 +62,7 @@ describe('useTeamsGenerieren', () => {
   })
 
   test('markiert die Einteilung nach einer fremden Zusage als veraltet', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102 })])
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
     mockServer.use(...welt.handlers)
     const { result } = hookRendern()
     await warteAufDaten(result)
@@ -81,7 +81,7 @@ describe('useTeamsGenerieren', () => {
   test.each(['TERMIN_GESCHLOSSEN', 'TEAMS_FIXIERT', 'TEILNEHMER_GEAENDERT', 'KONTINGENT_ERSCHOEPFT'] as const)(
     'liest bei 409 %s neu',
     async (code) => {
-      const welt = terminHandlers([terminModell({ terminId: 102 })])
+      const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
       mockServer.use(http.post('*/teams/generieren', () => problem(409, code, 'Text.')), ...welt.handlers)
       const { result } = hookRendern()
       await warteAufDaten(result)
@@ -97,8 +97,24 @@ describe('useTeamsGenerieren', () => {
     },
   )
 
-  test('liest bei 404 neu', async () => {
+  test('liest bei 403 KEINE_ZUSAGE neu (die eigene Zusage ist inzwischen zurückgenommen)', async () => {
+    // Das Modell ohne eigene Zusage: Der nachgebildete Server weist wie der echte mit 403 ab.
     const welt = terminHandlers([terminModell({ terminId: 102 })])
+    mockServer.use(...welt.handlers)
+    const { result } = hookRendern()
+    await warteAufDaten(result)
+    const vorher = welt.protokoll.detailabrufe.length
+
+    await act(async () => {
+      await result.current.generieren.mutateAsync().catch(() => {})
+    })
+
+    await waitFor(() => expect(result.current.generieren.error).toMatchObject({ status: 403, code: 'KEINE_ZUSAGE' }))
+    expect(welt.protokoll.detailabrufe.length).toBeGreaterThan(vorher)
+  })
+
+  test('liest bei 404 neu', async () => {
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
     mockServer.use(
       http.post('*/teams/generieren', () => problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')),
       ...welt.handlers,
@@ -115,7 +131,7 @@ describe('useTeamsGenerieren', () => {
   })
 
   test('wiederholt bei 500 nicht und liest nicht neu: Ein Lauf verbraucht Kontingent', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102 })])
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true })])
     let versuche = 0
     mockServer.use(
       http.post('*/teams/generieren', () => {
@@ -137,8 +153,8 @@ describe('useTeamsGenerieren', () => {
     await waitFor(() => expect(result.current.generieren.isError).toBe(true))
   })
 
-  test('antwortet nach dem Kontingent mit 409 und gibt es bei neuer Teilnehmerversion frei', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102, kontingent: 1 })])
+  test('antwortet nach dem Kontingent mit 409; eine Absage öffnet es nicht, eine neue Zusage schon', async () => {
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true, kontingent: 1, kontingentVersion: 1 })])
     mockServer.use(...welt.handlers)
     const { result } = hookRendern()
     await warteAufDaten(result)
@@ -149,14 +165,22 @@ describe('useTeamsGenerieren', () => {
     })
     await waitFor(() => expect(result.current.generieren.error).toMatchObject({ code: 'KONTINGENT_ERSCHOEPFT' }))
 
-    // Die Teilnehmerliste ändert sich: neues Kontingent.
+    // Jemand sagt ab: neue Teilnehmerversion, aber derselbe Kontingentstand (Server seit 22.10.2026).
     welt.modelle[0].teilnehmerVersion += 1
+    await act(async () => {
+      await result.current.generieren.mutateAsync().catch(() => {})
+    })
+    await waitFor(() => expect(result.current.generieren.error).toMatchObject({ code: 'KONTINGENT_ERSCHOEPFT' }))
+
+    // Jemand sagt neu zu: Teilnehmerversion und Kontingentstand steigen, das Kontingent steht wieder offen.
+    welt.modelle[0].teilnehmerVersion += 1
+    welt.modelle[0].kontingentVersion = 2
     await act(() => result.current.generieren.mutateAsync())
-    expect(welt.protokoll.generierungen).toHaveLength(3)
+    expect(welt.protokoll.generierungen).toHaveLength(4)
   })
 
   test('verlangt die Mindestzahl vom Server: zu wenig Zusagen ergeben 409 ZU_WENIG_TEILNEHMER', async () => {
-    const welt = terminHandlers([terminModell({ terminId: 102, min: 20 })])
+    const welt = terminHandlers([terminModell({ terminId: 102, eigene: true, min: 20 })])
     mockServer.use(...welt.handlers)
     const { result } = hookRendern()
     await warteAufDaten(result)

@@ -50,10 +50,17 @@ export type TerminModell = {
    */
   teamsVersion?: number
   ergebnis: TerminDetails['ergebnis']
-  /** Erlaubte Läufe der Teamgenerierung je Nutzer und `teilnehmerVersion` (Vorgabe 2, wie `anzTeamGenerator`). */
+  /** Erlaubte Läufe der Teamgenerierung je Nutzer und Kontingentstand (Vorgabe 2, wie `anzTeamGenerator`). */
   kontingent: number
-  /** Bereits verbrauchte Läufe je `teilnehmerVersion`. */
+  /**
+   * Kontingentstand des Servers (`kontingent_version`, seit 22.10.2026; nach außen unsichtbar): steigt nur bei neuen
+   * Zusagen, Skillwert- und Gast-Stufen-Änderungen, **nicht bei einer Absage**. Ungesetzt gilt `teilnehmerVersion`.
+   */
+  kontingentVersion?: number
+  /** Bereits verbrauchte Läufe je Kontingentstand. */
   laeufe: Record<number, number>
+  /** Die nachgebildete Sitzung ist der Admin: Er darf ohne Zusage generieren (`403 KEINE_ZUSAGE` sonst). */
+  adminSitzung?: boolean
 }
 
 /**
@@ -277,6 +284,10 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
       protokoll.generierungen.push({ terminId, kopf: request.headers.get('X-FuBo-Kein-Refresh') })
       const modell = modelle.find((m) => m.terminId === terminId)
       if (!modell) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+      // Wie am Server (seit 22.10.2026): vor dem Status, Admin oder eigene Zusage; die Warteschlange zählt mit.
+      if (modell.eigene !== true && !modell.adminSitzung) {
+        return problem(403, 'KEINE_ZUSAGE', 'Teams generieren darf nur, wer für diesen Termin zugesagt hat.')
+      }
       if (modell.status !== 'GEPLANT') return problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist geschlossen.')
       if (beginnVon(modell).getTime() <= Date.now()) {
         return problem(409, 'TEAMS_FIXIERT', 'Die Einteilung steht fest, der Termin hat begonnen.')
@@ -288,11 +299,12 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
           `Es braucht mindestens ${String(modell.min)} Zusagen, aktuell ${String(modell.zusagen.length)}.`,
         )
       }
-      const verbraucht = modell.laeufe[modell.teilnehmerVersion] ?? 0
+      const stand = modell.kontingentVersion ?? modell.teilnehmerVersion
+      const verbraucht = modell.laeufe[stand] ?? 0
       if (verbraucht >= modell.kontingent) {
         return problem(409, 'KONTINGENT_ERSCHOEPFT', 'Das Kontingent für diese Teilnehmerliste ist aufgebraucht.')
       }
-      modell.laeufe[modell.teilnehmerVersion] = verbraucht + 1
+      modell.laeufe[stand] = verbraucht + 1
       modell.teams = teamsAus(modell)
       modell.teamsVersion = modell.teilnehmerVersion
       return HttpResponse.json(modell.teams, { status: 201 })

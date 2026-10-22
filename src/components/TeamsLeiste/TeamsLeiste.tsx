@@ -19,13 +19,19 @@ type TeamsLeisteEigenschaften = {
   veraltet: boolean
   /** Wer die vorhandene Einteilung erzeugt hat (für die Rückfrage). */
   erzeugtVon?: string
+  /**
+   * Der Aufrufer darf generieren: der Admin, sonst wer mitspielt (zugesagt, nicht auf der Warteschlange; `spieltMit`).
+   * Sonst ist die Aktion gesperrt (Vorgabe des Entwicklers vom 22.10.2026). Der Server lässt die Warteschlange zu, der
+   * Client bewusst nicht.
+   */
+  berechtigt: boolean
   /** Server-Wert, nicht nachgerechnet (A10). */
   mindestzahlErreicht: boolean
   /** Server-Wert für den Grund-Text. */
   minTeilnehmer: number
   /** Der Termin hat begonnen: keine Aktion mehr, die Einteilung steht fest (E8). */
   begonnen: boolean
-  /** Der Server hat für diese `teilnehmerVersion` `KONTINGENT_ERSCHOEPFT` gemeldet (E15). */
+  /** Der Server hat für diese `teilnehmerVersion` `KONTINGENT_ERSCHOEPFT` gemeldet (E15; siehe unten zur Absage). */
   gesperrtDurchKontingent: boolean
   /** Der Lauf meldete `KONTINGENT_ERSCHOEPFT`: Die Seite merkt sich die `teilnehmerVersion`. */
   beiKontingentErschoepft: () => void
@@ -43,7 +49,8 @@ const FEHLER_ERSATZ = 'Die Teams konnten nicht generiert werden. Bitte versuche 
  *
  * | Zustand | Darstellung |
  * |---|---|
- * | `GEPLANT`, Mindestzahl erreicht, Kontingent offen | Aktion bedienbar |
+ * | `GEPLANT`, berechtigt, Mindestzahl erreicht, Kontingent offen | Aktion bedienbar |
+ * | nicht zugesagt, abgesagt oder auf der Warteschlange (nicht Admin) | `aria-disabled`, Grund „Nur Teilnehmer …“ |
  * | Mindestzahl nicht erreicht (Server-Wert) | `aria-disabled`, Grund mit Soll und Ist |
  * | Kontingent erschöpft (`409`) | `aria-disabled`, Grund und Weg zur Freigabe |
  * | begonnen | keine Aktion, Hinweis „Die Einteilung steht fest.“ |
@@ -52,8 +59,10 @@ const FEHLER_ERSATZ = 'Die Teams konnten nicht generiert werden. Bitte versuche 
  * wird vorgelesen (`aria-describedby`). Der Klick tut dann nichts.
  *
  * **Kontingent:** Der Server liefert nur den Fehler, nie die Zahl. Nach
- * `KONTINGENT_ERSCHOEPFT` ist die Aktion gesperrt, bis sich die
- * Teilnehmerliste ändert (die Seite hält den Merker). `KONTINGENT_ERSCHOEPFT`
+ * `KONTINGENT_ERSCHOEPFT` ist die Aktion gesperrt, bis sich die `teilnehmerVersion` ändert (die Seite hält den
+ * Merker). Seit 22.10.2026 öffnet der Server das Kontingent nur bei neuen Zusagen (nicht bei Absagen); seinen
+ * Kontingentstand liefert er nicht. Nach einer Absage gibt die Seite die Aktion deshalb frei, der nächste Tipp
+ * meldet erneut `KONTINGENT_ERSCHOEPFT` (ohne Kontingent zu verbrauchen) und sperrt wieder. `KONTINGENT_ERSCHOEPFT`
  * ist **keine** Fehlermeldung, sondern der gesperrte Zustand mit Grund.
  *
  * **Rückfrage nur beim Ersetzen einer aktuellen Einteilung** (E16): Ein Lauf
@@ -69,6 +78,7 @@ export default function TeamsLeiste({
   vorhanden,
   veraltet,
   erzeugtVon,
+  berechtigt,
   mindestzahlErreicht,
   minTeilnehmer,
   begonnen,
@@ -92,13 +102,15 @@ export default function TeamsLeiste({
   }
 
   const laedt = generieren.isPending
-  // Reihenfolge der Gründe: Die fehlende Mindestzahl ist behebbar durch Zusagen, das Kontingent durch Zeit und Änderung.
+  // Reihenfolge der Gründe: Wer nicht mitspielt, darf grundsätzlich nicht; die fehlende Mindestzahl ist behebbar
+  // durch Zusagen, das Kontingent durch eine neue Zusage.
   let grund: string | null = null
-  if (!mindestzahlErreicht) {
+  if (!berechtigt) {
+    grund = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+  } else if (!mindestzahlErreicht) {
     grund = `Mindestens ${String(minTeilnehmer)} Zusagen sind erforderlich.`
   } else if (gesperrtDurchKontingent) {
-    grund =
-      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.'
+    grund = 'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.'
   }
   const gesperrt = grund !== null
 

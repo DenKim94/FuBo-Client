@@ -883,7 +883,7 @@ export interface paths {
          *
          *     **Die einzige Adminaktion an einer Teilnahme.** Eine Rückmeldung ist eine Aussage über die eigene Verfügbarkeit und wird nicht stellvertretend gesetzt – sonst entstünden Zusagen, die niemand gegeben hat, und die Warteschlange verteilte darauf Plätze. A17 gibt dem Admin ausdrücklich die Stufe, und nur sie: Weder Zusage noch Name ändern sich, und `gemeldet_am` bleibt unberührt – die Position in der Warteschlange verschiebt sich nicht.
          *
-         *     **Der Vorgang erhöht die `teilnehmerVersion` des Termins** (A15). Der Teilnehmerkreis bleibt, seine Zusammensetzung nach Stärke nicht.
+         *     **Der Vorgang erhöht die `teilnehmerVersion` des Termins** (A15) und öffnet das Generierungskontingent neu. Der Teilnehmerkreis bleibt, seine Zusammensetzung nach Stärke nicht.
          *
          *     **Auch die Stufe eines abgesagten Gastes lässt sich setzen** – sagt er wieder zu, ohne sich neu anzumelden, gilt sie dann bereits. Meldet er sich dagegen neu an und stuft sich anders ein, überschreibt seine nächste Rückmeldung die Korrektur.
          */
@@ -907,7 +907,9 @@ export interface paths {
          * Teams für einen Termin generieren
          * @description Erzeugt die Teameinteilung eines Termins (A15, A20a, A20b).
          *
-         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`.** Jeder Angemeldete darf generieren, auch ein `GAST` – das ist A15. Begrenzt wird nicht über die Rolle, sondern über das Kontingent: `anzTeamGenerator` Läufe **je Nutzer, je Termin und je `teilnehmerVersion`**. Sagt jemand zu oder ab, steigt der Zähler und das Kontingent steht wieder offen; zurückgesetzt wird es nie.
+         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`, aber nicht jeder Angemeldete darf ihn nutzen** (Änderung vom 22.10.2026, **brechend** für Clients). Generieren dürfen der `ADMIN` und jeder Teilnehmer **mit Zusage an genau diesem Termin** – `USER` und `GAST`; wer in der Warteschlange steht, hat zugesagt und zählt mit. Wer nie zugesagt oder wieder abgesagt hat, erhält `403 KEINE_ZUSAGE`. Die Regel hängt an den Daten des Termins und steht deshalb im Dienst, nicht im Pfad. **Ein Client blendet die Schaltfläche für alle anderen aus** – `eigeneRueckmeldung` in der Termin-Einzelansicht liefert dafür die Auskunft; der Admin sieht sie immer.
+         *
+         *     Begrenzt wird danach über das Kontingent: `anzTeamGenerator` Läufe **je Nutzer, je Termin und je Kontingentstand**. Den Kontingentstand erhöhen nur **neue Zusagen** (auch die Zusage nach einer Absage), **Änderungen eines Skillwerts** eines zugesagten Spielers durch den Admin und **Änderungen der Gast-Stufe**; dann steht das Kontingent wieder offen, zurückgesetzt wird es nie. **Eine Absage – auch das Sperren eines Profils – öffnet es nicht**, ebenso keine wiederholte Zusage. Eine Absage lässt eine bestehende Einteilung dennoch als `veraltet` gelten.
          *
          *     **Ein neuer Lauf löst den bisherigen ab.** Es gibt je Termin höchstens eine aktuelle Einteilung; ältere bleiben als Historie in der Datenbank und sind über die API nicht erreichbar.
          *
@@ -1259,7 +1261,7 @@ export interface components {
          * @description Maschinenlesbarer Fehlercode. Die Liste wächst mit den Meilensteinen; ein unbekannter Wert ist vom Frontend wie ein allgemeiner Fehler zu behandeln.
          * @enum {string}
          */
-        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT" | "NAME_PIN_FALSCH" | "NAME_AENDERUNG_UNGUELTIG" | "NAME_AENDERUNG_GEDROSSELT";
+        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "KEINE_ZUSAGE" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT" | "NAME_PIN_FALSCH" | "NAME_AENDERUNG_UNGUELTIG" | "NAME_AENDERUNG_GEDROSSELT";
         /**
          * @description Stufe des zweistufigen Logins. Wird serverseitig erzwungen.
          * @enum {string}
@@ -1855,7 +1857,7 @@ export interface components {
             status: components["schemas"]["TerminStatus"];
             /**
              * Format: int32
-             * @description Zähler aller Teilnehmeränderungen dieses Termins (A15). Er steigt bei jeder Zu- und Absage, bei jeder Änderung einer Gast-Stufe und **bei jeder Änderung eines Skillwerts eines zugesagten Spielers** – letzteres nur für künftige Termine. **In S4 wird er nur geführt, nicht ausgewertet**; ab S5 setzt er das Generierungskontingent zurück und kennzeichnet eine Teameinteilung als veraltet.
+             * @description Zähler aller Teilnehmeränderungen dieses Termins (A15). Er steigt bei jeder Zu- und Absage, bei jeder Änderung einer Gast-Stufe, **bei jeder Änderung eines Skillwerts eines zugesagten Spielers** – letzteres nur für künftige Termine – und beim Sperren eines Profils. Er kennzeichnet eine Teameinteilung als `veraltet`. **Das Generierungskontingent hängt seit dem 22.10.2026 nicht mehr an diesem Zähler**, sondern an einem zweiten, der nach außen nicht erscheint und nur bei neuen Zusagen, Skillwert- und Gast-Stufen-Änderungen steigt; eine Absage öffnet das Kontingent nicht.
              */
             teilnehmerVersion: number;
             /**
@@ -4216,6 +4218,24 @@ export interface operations {
             };
             400: components["responses"]["EingabeUngueltig"];
             401: components["responses"]["SitzungUngueltig"];
+            /** @description `KEINE_ZUSAGE` – die Sitzung gehört weder dem Admin noch einem Teilnehmer, der für diesen Termin zugesagt hat: nie zugesagt, wieder abgesagt oder nur an einem anderen Termin zugesagt. Wiederholen hilft nicht; es ändert sich erst, wenn der Aufrufer zusagt. Die Prüfung steht **vor** der Prüfung des Terminstatus – ein Außenstehender erfährt nichts über den Zustand eines Termins, an dem er nicht teilnimmt. Ein unbekannter Termin bleibt `404`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "detail": "Teams generieren darf nur, wer für diesen Termin zugesagt hat.",
+                     *       "code": "KEINE_ZUSAGE"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
             /** @description `INHALT_NICHT_GEFUNDEN` – es gibt keinen Termin mit dieser Id. */
             404: {
                 headers: {
@@ -4232,8 +4252,8 @@ export interface operations {
              *     - `TEAMS_FIXIERT` – der Termin hat begonnen; die Einteilung steht fest (A18). Der Server setzt das Kennzeichen selbst, spätestens fünf Minuten nach Anpfiff.
              *     - `ZU_WENIG_TEILNEHMER` – die Zusagen erreichen `minTeilnehmer` nicht; `detail` nennt Ist und Soll.
              *     - `SKILLWERTE_UNVOLLSTAENDIG` – einem Eingeteilten fehlt der Wert zu einer aktiven Kategorie; `detail` nennt die Namen. Ein Altbestand, der über `/admin/user/bearbeiten` zu beheben ist.
-             *     - `KONTINGENT_ERSCHOEPFT` – für diesen Teilnehmerstand ist die zulässige Anzahl Läufe verbraucht. **Kein `Retry-After`**: Es ist keine Drosselung über die Zeit, sondern ein Zustand, der sich mit dem Teilnehmerkreis ändert.
-             *     - `TEILNEHMER_GEAENDERT` – während des Laufs hat jemand zu- oder abgesagt. Der Aufruf lässt sich unverändert wiederholen; es geht nichts verloren.
+             *     - `KONTINGENT_ERSCHOEPFT` – für diesen Kontingentstand ist die zulässige Anzahl Läufe verbraucht. **Kein `Retry-After`**: Es ist keine Drosselung über die Zeit, sondern ein Zustand, der sich ändert, sobald jemand neu zusagt oder sich ein Skillwert oder eine Gast-Stufe ändert. Eine Absage ändert ihn nicht.
+             *     - `TEILNEHMER_GEAENDERT` – während des Laufs hat jemand zu- oder abgesagt. Der Aufruf lässt sich unverändert wiederholen; es geht nichts verloren (der Lauf wird vollständig zurückgenommen, auch das verbuchte Kontingent).
              */
             409: {
                 headers: {

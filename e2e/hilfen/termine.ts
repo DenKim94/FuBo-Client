@@ -40,8 +40,12 @@ export type TerminModell = {
   teams: Einteilung | null
   /** `teilnehmerVersion`, zu der die Einteilung entstand; `veraltet` folgt dem Vergleich (wie am Server). */
   teamsVersion: number | null
-  /** Erlaubte Laeufe der Teamgenerierung je Nutzer und `teilnehmerVersion`. */
+  /** Erlaubte Laeufe der Teamgenerierung je Nutzer und Kontingentstand. */
   kontingent: number
+  /** Kontingentstand des Servers (seit 22.10.2026, nach aussen unsichtbar); ungesetzt gilt `teilnehmerVersion`. */
+  kontingentVersion?: number
+  /** Die nachgebildete Sitzung ist der Admin: Er darf ohne Zusage generieren. */
+  adminSitzung?: boolean
   /** Erfasstes Ergebnis oder `null`: „noch nicht eingetragen“ (`hilfen/ergebnisse.ts`). */
   ergebnis: ErgebnisModell | null
   /** Verbrauchte Laeufe je `teilnehmerVersion`. */

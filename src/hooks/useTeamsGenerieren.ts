@@ -11,9 +11,10 @@ import { teamsGenerieren, type Teameinteilung } from '@/api/teams/teams'
  * dort hängen `veraltet` und die Liste der Zusagen mit dran. Stattdessen werden
  * Einzeltermin und Liste neu gelesen.
  *
- * **Auch bei `409` und `404` wird neu gelesen:** Die Antwort sagt, dass die
+ * **Auch bei `409`, `404` und `403 KEINE_ZUSAGE` wird neu gelesen:** Die Antwort sagt, dass die
  * Anzeige veraltet war – der Termin hat begonnen, die Liste hat sich geändert
- * (`TEILNEHMER_GEAENDERT`), jemand war schneller. Bei Netzfehlern und `≥ 500`
+ * (`TEILNEHMER_GEAENDERT`), jemand war schneller, die eigene Zusage ist inzwischen zurückgenommen
+ * (dann sperrt die neu gelesene `eigeneRueckmeldung` die Aktion). Bei Netzfehlern und `≥ 500`
  * bleibt der Stand; ein zweiter Tipp wiederholt. **Mutationen werden nie
  * automatisch wiederholt:** Ein Lauf verbraucht Kontingent.
  *
@@ -38,7 +39,12 @@ export function useTeamsGenerieren(terminId: number): UseMutationResult<Teameint
     mutationFn: () => teamsGenerieren(terminId),
     onSuccess: neuLesen,
     onError: (fehler) => {
-      if (fehler instanceof ApiFehler && (fehler.status === 409 || fehler.status === 404)) return neuLesen()
+      if (
+        fehler instanceof ApiFehler &&
+        (fehler.status === 409 || fehler.status === 404 || fehler.code === 'KEINE_ZUSAGE')
+      ) {
+        return neuLesen()
+      }
     },
   })
 }

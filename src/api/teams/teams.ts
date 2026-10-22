@@ -18,12 +18,14 @@ export type TeamEintrag = components['schemas']['TeamEintrag']
  * den Cache zu schreiben.
  *
  * Ein Lauf löst die bisherige Einteilung ab und verbraucht Kontingent (je
- * Nutzer, Termin und `teilnehmerVersion`). Fehler:
+ * Nutzer, Termin und Kontingentstand; den Stand erhöhen nur neue Zusagen, Skillwert- und Gast-Stufen-Änderungen,
+ * **keine Absage**, seit 22.10.2026). Generieren dürfen nur der Admin und wer für den Termin zugesagt hat. Fehler:
+ * - `403 KEINE_ZUSAGE`: weder Admin noch zugesagt (nie, wieder abgesagt); geprüft **vor** dem Status
  * - `409 TERMIN_GESCHLOSSEN`: der Termin ist nicht mehr `GEPLANT`
  * - `409 TEAMS_FIXIERT`: der Termin hat begonnen, die Einteilung steht fest
  * - `409 ZU_WENIG_TEILNEHMER`: die Mindestzahl ist nicht erreicht (`detail` nennt Ist und Soll)
  * - `409 SKILLWERTE_UNVOLLSTAENDIG`: für USER und GAST nicht behebbar
- * - `409 KONTINGENT_ERSCHOEPFT`: bis zur nächsten Änderung der Teilnehmerliste gesperrt
+ * - `409 KONTINGENT_ERSCHOEPFT`: gesperrt, bis jemand neu zusagt (oder sich ein Skillwert, eine Gast-Stufe ändert)
  * - `409 TEILNEHMER_GEAENDERT`: die Liste änderte sich während des Laufs, wiederholbar
  * - `404 INHALT_NICHT_GEFUNDEN`
  *

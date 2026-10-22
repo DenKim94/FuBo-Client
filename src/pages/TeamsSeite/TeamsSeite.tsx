@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import { ApiFehler } from '@/api/common/fehler'
 import { schluessel } from '@/api/common/schluessel'
+import { spieltMit } from '@/api/termine/teilnahme'
 import { naechsterTermin } from '@/api/termine/terminZeit'
 import type { TerminDetails } from '@/api/termine/termine'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
@@ -84,7 +85,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
   const abfrage = useTermin(terminId)
   const termin = abfrage.data
   const begonnen = useBegonnen(termin)
-  const { sitzung, istGast } = useSitzung()
+  const { sitzung, istGast, istAdmin } = useSitzung()
   const queryClient = useQueryClient()
   const ueberschriftRef = useRef<HTMLHeadingElement>(null)
   const [kontingentBei, setKontingentBei] = useState<number | null>(null)
@@ -103,6 +104,9 @@ function TeamsTermin({ terminId }: { terminId: number }) {
     const liste = termin.teilnehmerliste
     const teams = termin.teams ?? null
     const nachladefehler = abfrage.failureReason
+    // Generieren dürfen der Admin (wie am Server) und wer mitspielt: zugesagt und – strenger als der Server, Vorgabe
+    // des Entwicklers vom 22.10.2026 – nicht auf der Warteschlange. Auch „Du kannst die Teams neu generieren“ gilt nur dann.
+    const berechtigt = istAdmin || spieltMit(termin, sitzung?.anzeigeName, istGast)
 
     inhalt = (
       <>
@@ -115,7 +119,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
             eigenerName={sitzung?.anzeigeName}
             eigenerGast={istGast}
             ueberschriftRef={ueberschriftRef}
-            neuGenerierbar={geplant && !begonnen}
+            neuGenerierbar={geplant && !begonnen && berechtigt}
           />
         )}
         {!teams && termin.status !== 'ABGESAGT' && (
@@ -139,6 +143,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
           vorhanden={teams !== null}
           veraltet={teams?.veraltet ?? false}
           erzeugtVon={teams?.erzeugtVon}
+          berechtigt={berechtigt}
           mindestzahlErreicht={liste.mindestzahlErreicht}
           minTeilnehmer={liste.minTeilnehmer}
           begonnen={begonnen}
