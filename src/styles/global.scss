@@ -6,6 +6,12 @@
 @use 'globalVars';
 @use 'reset';
 
+// Die haftende Aktionsleiste meldet ihre Hoehe (`Aktionsleiste`); ohne sie ist der Wert 0. So scrollt der Browser ein
+// fokussiertes Feld ueber die Leiste statt darunter (WCAG 2.4.11).
+html {
+  scroll-padding-bottom: calc(var(--aktionsleiste-ist, 0px) + var(--abstand-s));
+}
+
 body {
   // 100dvh statt 100vh: die dynamische Einheit beruecksichtigt ein- und
   // ausblendende Browserleisten, die Vorgabe aus DESIGN.md.

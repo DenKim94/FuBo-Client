@@ -6,6 +6,9 @@ import { terminModell, type TerminModell } from './termine'
 
 type SpielerDetails = components['schemas']['SpielerDetails']
 type SkillKategorie = components['schemas']['SkillKategorieInfo']
+type Konfiguration = components['schemas']['Konfiguration']
+type GastPlatzInfo = components['schemas']['GastPlatzInfo']
+type GastStufe = components['schemas']['GastStufe']
 
 /**
  * Nachbildung des Admin-Servers für die Unit-Tests (C7, 3.4).
@@ -43,6 +46,22 @@ export type AdminProtokoll = {
   terminAbgesagt: unknown[]
   /** Eingegangene Körper von `/admin/termin/entfernen`. */
   terminEntfernt: unknown[]
+  /** `X-FuBo-Kein-Refresh` je Abruf von `/admin/config/lesen` (Wert des Kopfes oder `null`). */
+  konfigurationAbrufe: (string | null)[]
+  /** Eingegangene Körper von `/admin/config/aendern`. */
+  konfigurationGeaendert: unknown[]
+  /** `X-FuBo-Kein-Refresh` je Abruf von `/admin/gast/lesen`. */
+  gaesteAbrufe: (string | null)[]
+  /** Eingegangene Körper von `/admin/gast/freigeben`. */
+  gaesteFreigegeben: unknown[]
+  /** Eingegangene Körper von `/admin/teilnahme/gast-stufe`. */
+  gastStufen: unknown[]
+  /** Eingegangene Körper von `/admin/halle/absagen`. */
+  halleAbgesagt: unknown[]
+  /** Eingegangene Körper von `/admin/ergebnis/korrigieren`. */
+  ergebnisKorrigiert: unknown[]
+  /** Eingegangene Körper von `/admin/teams/generieren`. */
+  teamsManuell: unknown[]
 }
 
 /** Die nachgebildete Welt des Admins. */
@@ -66,6 +85,18 @@ export type AdminWelt = {
   naechsteTerminId: number
   /** Nächste zu vergebende Serien-Id. */
   naechsteSerieId: number
+  /**
+   * Die Konfiguration (C8). `version` steigt bei jedem Schreiben; `halleAbsageVorlageEffektiv` entsteht beim Lesen
+   * aus `halleAbsageVorlage` (der Server nimmt bei `null` seine Ersatzvorlage).
+   */
+  konfiguration: Omit<Konfiguration, 'halleAbsageVorlageEffektiv'>
+  /** Die Gastplätze nach Nummer (C8): belegt mit lebender Sitzung, verwaist, frei, unwirksam. */
+  gastplaetze: GastPlatzInfo[]
+  /**
+   * `true`: Der Versand der Hallenabsage scheitert (`503 VERSAND_FEHLGESCHLAGEN`); der Aufruf hinterlässt nichts und
+   * lässt sich wiederholen. Ein Test stellt es nach dem ersten Versuch wieder auf `false`.
+   */
+  mailFehler: boolean
   protokoll: AdminProtokoll
   /**
    * Ändert ein Profil **hinter dem Rücken der Oberfläche** (etwa zwei geöffnete Browser).
@@ -82,6 +113,79 @@ export type AdminWelt = {
    * @param aenderung Felder, die sich ändern.
    */
   fremdeAenderung: (terminId: number, aenderung: Partial<Pick<TerminModell, 'datum' | 'uhrzeit' | 'ort' | 'status'>>) => void
+  /**
+   * Ändert die Konfiguration **hinter dem Rücken der Oberfläche** (ein zweiter Browser) und erhöht ihre `version`;
+   * die E5-Tests lösen damit `409 DATEN_VERALTET` aus.
+   *
+   * @param aenderung Felder, die sich ändern.
+   */
+  fremdeKonfigurationAenderung: (aenderung?: Partial<Omit<Konfiguration, 'halleAbsageVorlageEffektiv' | 'version'>>) => void
+  /**
+   * Korrigiert das Ergebnis eines Termins **hinter dem Rücken der Oberfläche** (ein zweiter Admin) und erhöht seine
+   * `version`; die E5-Tests lösen damit `409 DATEN_VERALTET` aus.
+   *
+   * @param terminId Id des Termins; er muss ein Ergebnis tragen.
+   * @param aenderung Felder, die sich ändern (Vorgabe: nur die `version` steigt).
+   */
+  fremdeErgebnisAenderung: (terminId: number, aenderung?: Partial<Pick<NonNullable<TerminModell['ergebnis']>, 'sieger' | 'deutlich'>>) => void
+}
+
+/** Die Ersatzvorlage des Servers für die Hallenabsage (Beispieltext). */
+export const STANDARD_ABSAGEVORLAGE = 'Guten Tag, wir müssen den Termin leider absagen.'
+
+/** Die Vorgaben des Servers (Vertrag), mit ausgeschaltetem Hallenmodus und ohne Adresse. */
+export function beispielKonfiguration(teil: Partial<AdminWelt['konfiguration']> = {}): AdminWelt['konfiguration'] {
+  return {
+    minTeilnehmer: 6,
+    maxTeilnehmer: 22,
+    anzGuests: 4,
+    algorithmType: 'EXHAUSTIV',
+    auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+    anzTeamGenerator: 1,
+    sessionLeerlaufMinuten: 15,
+    sessionMaximalStunden: 1,
+    halleEmail: null,
+    halleAbsageVorlage: null,
+    halleVorlaufStunden: 48,
+    hallenModusAktiv: false,
+    pushAktiv: true,
+    pushErinnerungStunden: 24,
+    geaendertAm: '2099-01-01T10:00:00Z',
+    version: 1,
+    ...teil,
+  }
+}
+
+/** Ein Gastplatz; Vorgabe: frei und wirksam. */
+export function gastPlatz(teil: Partial<GastPlatzInfo> & { nummer: number }): GastPlatzInfo {
+  return { anzeigeName: `Gast ${String(teil.nummer)}`, wirksam: true, belegt: false, ...teil }
+}
+
+/**
+ * Vier Plätze: 1 belegt mit lebender Sitzung, 2 belegt ohne Sitzung (verwaist), 3 und 4 frei.
+ * Der Gast auf Platz 1 heißt `Beispielgast` wie in der Teilnehmerliste der Beispieltermine.
+ */
+export function beispielGastplaetze(): GastPlatzInfo[] {
+  return [
+    gastPlatz({
+      nummer: 1,
+      belegt: true,
+      belegtSeit: '2099-01-13T18:00:00Z',
+      gastName: 'Beispielgast',
+      gastStufe: 'STARK',
+      sitzungGueltig: true,
+    }),
+    gastPlatz({
+      nummer: 2,
+      belegt: true,
+      belegtSeit: '2099-01-12T18:00:00Z',
+      gastName: 'Beispielgast Zwei',
+      gastStufe: 'SCHWACH',
+      sitzungGueltig: false,
+    }),
+    gastPlatz({ nummer: 3 }),
+    gastPlatz({ nummer: 4 }),
+  ]
 }
 
 /** Kategorien wie am Server: vier Feldkategorien (0 bis 6) und Torwart (0 bis 3). */
@@ -112,7 +216,9 @@ export function profilModell(teil: Partial<SpielerDetails> & { spielerId: number
  * @param teil Abweichungen von der Vorgabe.
  */
 export function adminWelt(
-  teil: Partial<Pick<AdminWelt, 'profile' | 'skillKategorien' | 'inVerwendung' | 'termine' | 'terminInVerwendung'>> = {},
+  teil: Partial<
+    Pick<AdminWelt, 'profile' | 'skillKategorien' | 'inVerwendung' | 'termine' | 'terminInVerwendung' | 'konfiguration' | 'gastplaetze'>
+  > = {},
 ): AdminWelt {
   const profile = teil.profile ?? [
     profilModell({ spielerId: 1, name: 'Beispielspieler 01', bilanz: { siege: 3, niederlagen: 2, unentschieden: 1 } }),
@@ -138,6 +244,9 @@ export function adminWelt(
     terminInVerwendung: teil.terminInVerwendung ?? new Set<number>(),
     naechsteTerminId: Math.max(100, ...termine.map((t) => t.terminId)) + 1,
     naechsteSerieId: 1,
+    konfiguration: teil.konfiguration ?? beispielKonfiguration(),
+    gastplaetze: teil.gastplaetze ?? beispielGastplaetze(),
+    mailFehler: false,
     protokoll: {
       profilAbrufe: [],
       skillAbrufe: [],
@@ -150,6 +259,14 @@ export function adminWelt(
       terminGeaendert: [],
       terminAbgesagt: [],
       terminEntfernt: [],
+      konfigurationAbrufe: [],
+      konfigurationGeaendert: [],
+      gaesteAbrufe: [],
+      gaesteFreigegeben: [],
+      gastStufen: [],
+      halleAbgesagt: [],
+      ergebnisKorrigiert: [],
+      teamsManuell: [],
     },
     fremdeProfilAenderung(spielerId, aenderung) {
       const profil = welt.profile.find((p) => p.spielerId === spielerId)
@@ -161,6 +278,17 @@ export function adminWelt(
       Object.assign(modell, aenderung)
       modell.version += 1
       zeitlichEinsortieren(welt.termine)
+    },
+    fremdeKonfigurationAenderung(aenderung = { minTeilnehmer: welt.konfiguration.minTeilnehmer }) {
+      Object.assign(welt.konfiguration, aenderung)
+      welt.konfiguration.version += 1
+    },
+    fremdeErgebnisAenderung(terminId, aenderung = {}) {
+      const ergebnis = welt.termine.find((t) => t.terminId === terminId)?.ergebnis
+      if (!ergebnis) return
+      Object.assign(ergebnis, aenderung)
+      ergebnis.korrigiertAm = new Date().toISOString()
+      ergebnis.version += 1
     },
   }
   return welt
@@ -230,6 +358,25 @@ function skillFehler(welt: AdminWelt, skills: Record<string, number>, vollstaend
 function nameBelegt(welt: AdminWelt, name: string, ausser?: number): boolean {
   return welt.profile.some((p) => p.spielerId !== ausser && p.name.toLowerCase() === name.toLowerCase())
 }
+
+/** Alle Pflichtfelder des Voll-Updates der Konfiguration (die vierzehn änderbaren und die `version`). */
+const KONFIGURATION_PFLICHTFELDER = [
+  'version',
+  'minTeilnehmer',
+  'maxTeilnehmer',
+  'anzGuests',
+  'algorithmType',
+  'auswechselModus',
+  'anzTeamGenerator',
+  'sessionLeerlaufMinuten',
+  'sessionMaximalStunden',
+  'halleEmail',
+  'halleAbsageVorlage',
+  'halleVorlaufStunden',
+  'hallenModusAktiv',
+  'pushAktiv',
+  'pushErinnerungStunden',
+] as const
 
 /**
  * Handler der Profile (Stufe 2) und der Termin-Schreibaufrufe (Stufe 3): elf Operationen.
@@ -459,6 +606,195 @@ export function adminHandler(welt: AdminWelt) {
       }
       welt.termine.splice(index, 1)
       return new HttpResponse(null, { status: 204 })
+    }),
+
+    // --- Konfiguration, Gastplätze, Gast-Stufe (C8, Stufe 4) -----------------------------------
+    http.get('*/admin/config/lesen', ({ request }) => {
+      welt.protokoll.konfigurationAbrufe.push(request.headers.get('X-FuBo-Kein-Refresh'))
+      return HttpResponse.json({
+        ...welt.konfiguration,
+        halleAbsageVorlageEffektiv: welt.konfiguration.halleAbsageVorlage ?? STANDARD_ABSAGEVORLAGE,
+      })
+    }),
+
+    // Voll-Update wie am Server: fehlendes Pflichtfeld ⇒ 400 mit Schlüssel in `felder`; `version` weicht ab ⇒ 409;
+    // `halleAbsageVorlageEffektiv` im Körper wird ignoriert.
+    http.post('*/admin/config/aendern', async ({ request }) => {
+      const rumpf = (await request.json()) as Record<string, unknown>
+      welt.protokoll.konfigurationGeaendert.push(rumpf)
+      const fehlend = KONFIGURATION_PFLICHTFELDER.filter((feld) => rumpf[feld] === undefined)
+      if (fehlend.length > 0) {
+        return problem(
+          400,
+          'EINGABE_UNGUELTIG',
+          'Die Eingabe ist ungültig.',
+          Object.fromEntries(fehlend.map((feld) => [feld, 'Pflichtfeld.'])),
+        )
+      }
+      if (rumpf.version !== welt.konfiguration.version) {
+        return problem(409, 'DATEN_VERALTET', 'Die Konfiguration wurde zwischenzeitlich geändert.')
+      }
+      const neu = rumpf as unknown as Omit<Konfiguration, 'halleAbsageVorlageEffektiv' | 'geaendertAm'>
+      if (neu.maxTeilnehmer < neu.minTeilnehmer) {
+        return problem(400, 'EINGABE_UNGUELTIG', 'Die Eingabe ist ungültig.', {
+          maxTeilnehmer: `Die Höchstzahl (${String(neu.maxTeilnehmer)}) darf nicht unter der Mindestzahl (${String(neu.minTeilnehmer)}) liegen.`,
+        })
+      }
+      for (const feld of KONFIGURATION_PFLICHTFELDER) {
+        if (feld !== 'version') (welt.konfiguration as Record<string, unknown>)[feld] = rumpf[feld]
+      }
+      welt.konfiguration.geaendertAm = new Date().toISOString()
+      welt.konfiguration.version += 1
+      return new HttpResponse(null, { status: 204 })
+    }),
+
+    http.get('*/admin/gast/lesen', ({ request }) => {
+      welt.protokoll.gaesteAbrufe.push(request.headers.get('X-FuBo-Kein-Refresh'))
+      return HttpResponse.json(welt.gastplaetze)
+    }),
+
+    // Genau eines der beiden Felder; unbekannte Nummer ⇒ 400; ein freier Platz wird übersprungen. Wie am Server
+    // endet mit dem Platz die Sitzung des Gastes (hier nur als Zustand: der Platz ist frei).
+    http.post('*/admin/gast/freigeben', async ({ request }) => {
+      const rumpf = (await request.json()) as { slotIds?: number[] | null; alle?: boolean | null }
+      welt.protokoll.gaesteFreigegeben.push(rumpf)
+      const hatIds = rumpf.slotIds !== undefined && rumpf.slotIds !== null
+      const hatAlle = rumpf.alle === true
+      if (hatIds === hatAlle) return problem(400, 'EINGABE_UNGUELTIG', 'Genau eines von slotIds und alle ist anzugeben.')
+      const nummern = hatAlle ? welt.gastplaetze.filter((p) => p.belegt).map((p) => p.nummer) : (rumpf.slotIds ?? [])
+      if (nummern.length === 0) return problem(400, 'EINGABE_UNGUELTIG', 'slotIds darf nicht leer sein.')
+      const unbekannt = nummern.filter((n) => !welt.gastplaetze.some((p) => p.nummer === n))
+      if (unbekannt.length > 0) return problem(400, 'EINGABE_UNGUELTIG', `Unbekannte Platznummer: ${unbekannt.join(', ')}.`)
+      welt.gastplaetze = welt.gastplaetze.map((platz) =>
+        nummern.includes(platz.nummer)
+          ? gastPlatz({ nummer: platz.nummer, anzeigeName: platz.anzeigeName, wirksam: platz.wirksam })
+          : platz,
+      )
+      return new HttpResponse(null, { status: 204 })
+    }),
+
+    // Die einzige Adminaktion an einer Teilnahme: Stufe; der Name wird zeichengenau verglichen.
+    http.post('*/admin/teilnahme/gast-stufe', async ({ request }) => {
+      const rumpf = (await request.json()) as { terminId?: number; gastName?: string; stufe?: GastStufe }
+      welt.protokoll.gastStufen.push(rumpf)
+      const modell = welt.termine.find((t) => t.terminId === rumpf.terminId)
+      const zusage = modell?.zusagen.find((z) => z.gast && z.name === rumpf.gastName)
+      if (!modell || !zusage) {
+        return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Teilnahme dieses Gastes vor.')
+      }
+      zusage.stufe = rumpf.stufe
+      // Ändert den Teilnehmerkreis: Eine vorhandene Einteilung gilt danach als veraltet, das Kontingent öffnet neu.
+      modell.teilnehmerVersion += 1
+      if (modell.kontingentVersion !== undefined) modell.kontingentVersion = modell.teilnehmerVersion
+      return new HttpResponse(null, { status: 204 })
+    }),
+
+    // --- Hallenabsage (C8, Stufe 5) ------------------------------------------------------------
+    // Reihenfolge der Prüfung wie am Server: Modus (auch für unbekannte Termine, nicht 404), Termin, Status, Frist,
+    // Adresse, bereits abgesagt. Bei `mailFehler` bleibt nichts zurück (503).
+    http.post('*/admin/halle/absagen', async ({ request }) => {
+      const rumpf = (await request.json()) as { terminId?: number }
+      welt.protokoll.halleAbgesagt.push(rumpf)
+      if (!welt.konfiguration.hallenModusAktiv) return problem(409, 'HALLE_MODUS_INAKTIV', 'Der Hallenmodus ist abgeschaltet.')
+      const modell = welt.termine.find((t) => t.terminId === rumpf.terminId)
+      if (!modell) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+      if (modell.status === 'ABGESCHLOSSEN') return problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist ABGESCHLOSSEN.')
+      const bis = modell.halleAbsageMoeglichBis ?? `${modell.datum}T${modell.uhrzeit.slice(0, 5)}:00`
+      if (Date.now() >= Date.parse(bis)) {
+        return problem(
+          409,
+          'HALLE_FRIST_ABGELAUFEN',
+          `Die Absage ist nur bis ${bis} möglich (Vorlauf ${String(welt.konfiguration.halleVorlaufStunden)} Stunden).`,
+        )
+      }
+      if (!welt.konfiguration.halleEmail) {
+        return problem(409, 'HALLE_NICHT_KONFIGURIERT', 'Es ist keine E-Mail-Adresse des Hallenbetreibers hinterlegt.')
+      }
+      if (modell.halleAbgesagtAm) {
+        return problem(409, 'HALLE_BEREITS_ABGESAGT', `Die Absage ging bereits am ${modell.halleAbgesagtAm} hinaus.`)
+      }
+      if (welt.mailFehler) return problem(503, 'VERSAND_FEHLGESCHLAGEN', 'Die E-Mail konnte nicht gesendet werden.')
+      modell.halleAbgesagtAm = new Date().toISOString()
+      modell.status = 'ABGESAGT'
+      modell.version += 1
+      return new HttpResponse(null, { status: 204 })
+    }),
+
+    // --- Ergebniskorrektur (C8, Stufe 5; zog aus dem zustandslosen Stub nach hier) --------------
+    // Voll-Update: `version` weicht ab ⇒ 409; `deutlich` bei `U` ⇒ 400; ohne Ergebnis ⇒ 404.
+    http.post('*/admin/ergebnis/korrigieren', async ({ request }) => {
+      const rumpf = (await request.json()) as { terminId: number; sieger: 'A' | 'B' | 'U'; deutlich: boolean; version: number }
+      welt.protokoll.ergebnisKorrigiert.push(rumpf)
+      const modell = welt.termine.find((t) => t.terminId === rumpf.terminId)
+      if (!modell?.ergebnis) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt kein Ergebnis vor.')
+      if (rumpf.sieger === 'U' && rumpf.deutlich) {
+        return problem(400, 'EINGABE_UNGUELTIG', 'Ein Unentschieden kann nicht deutlich sein.', {
+          deutlich: 'Bei einem Unentschieden nicht möglich.',
+        })
+      }
+      if (rumpf.version !== modell.ergebnis.version) {
+        return problem(409, 'DATEN_VERALTET', 'Das Ergebnis wurde zwischenzeitlich korrigiert.')
+      }
+      modell.ergebnis = {
+        ...modell.ergebnis,
+        sieger: rumpf.sieger,
+        deutlich: rumpf.deutlich,
+        korrigiertAm: new Date().toISOString(),
+        version: modell.ergebnis.version + 1,
+      }
+      return new HttpResponse(null, { status: 204 })
+    }),
+
+    // --- Manuelle Teamgenerierung (C8, Stufe 5) --------------------------------------------------
+    // Prüfung wie am Server: unbekannte/gesperrte Id ⇒ 400, Adminprofil ⇒ 409 PROFIL_GESCHUETZT, Zahl gegen die
+    // Konfiguration, unvollständige Skillkarte ⇒ 409. Gerechnet wird nur zum Schein: erste Hälfte Team A, Rest Team B.
+    // Mit mehr als 24 Teilnehmern weicht `EXHAUSTIV` auf `HEURISTIK` aus; `ZULETZT_ANGEMELDET` fällt auf den Schwächsten.
+    http.post('*/admin/teams/generieren', async ({ request }) => {
+      const rumpf = (await request.json()) as { spielerIds?: number[]; gaeste?: { name?: string | null; stufe: GastStufe }[] }
+      welt.protokoll.teamsManuell.push(rumpf)
+      const ids = rumpf.spielerIds ?? []
+      const gaeste = rumpf.gaeste ?? []
+      const gewaehlt: SpielerDetails[] = []
+      for (const id of ids) {
+        const profil = welt.profile.find((p) => p.spielerId === id)
+        if (!profil || !profil.aktiv) return problem(400, 'EINGABE_UNGUELTIG', `Das Profil ${String(id)} ist unbekannt oder gesperrt.`)
+        if (profil.rolle === 'ADMIN') return problem(409, 'PROFIL_GESCHUETZT', 'Das Adminprofil kann nicht eingeteilt werden.')
+        gewaehlt.push(profil)
+      }
+      const anzahl = gewaehlt.length + gaeste.length
+      if (anzahl === 0) return problem(400, 'EINGABE_UNGUELTIG', 'Es wurde niemand ausgewählt.')
+      const { minTeilnehmer, maxTeilnehmer } = welt.konfiguration
+      if (anzahl < minTeilnehmer) {
+        return problem(409, 'ZU_WENIG_TEILNEHMER', `Es braucht mindestens ${String(minTeilnehmer)} Teilnehmer, ausgewählt sind ${String(anzahl)}.`)
+      }
+      if (anzahl > maxTeilnehmer) {
+        return problem(409, 'ZU_VIELE_TEILNEHMER', `Es sind höchstens ${String(maxTeilnehmer)} Teilnehmer erlaubt, ausgewählt sind ${String(anzahl)}.`)
+      }
+      const unvollstaendig = gewaehlt.filter((p) => welt.skillKategorien.some((k) => p.skills[k.schluessel] === undefined))
+      if (unvollstaendig.length > 0) {
+        return problem(
+          409,
+          'SKILLWERTE_UNVOLLSTAENDIG',
+          `Die Skillwerte von ${unvollstaendig.map((p) => p.name).join(', ')} sind unvollständig.`,
+        )
+      }
+      const namen = [
+        ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false })),
+        ...gaeste.map((g, i) => ({ anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`, gast: true })),
+      ]
+      const haelfte = Math.ceil(namen.length / 2)
+      const ungerade = namen.length % 2 === 1
+      const teamA = namen.slice(0, haelfte).map((n) => ({ ...n, auswechselspieler: false }))
+      const teamB = namen.slice(haelfte).map((n) => ({ ...n, auswechselspieler: false }))
+      if (ungerade) teamA[teamA.length - 1].auswechselspieler = true
+      return HttpResponse.json({
+        algorithmType: anzahl > 24 ? 'HEURISTIK' : welt.konfiguration.algorithmType,
+        auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+        auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
+        differenzTeamstaerke: 1.25,
+        teamA,
+        teamB,
+      })
     }),
   ]
 }

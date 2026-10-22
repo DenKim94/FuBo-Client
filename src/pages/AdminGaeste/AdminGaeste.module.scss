@@ -1,0 +1,90 @@
+@use '@/styles/globalVars';
+
+.seite {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block: var(--abstand-m);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+.zusammenfassung {
+  font-size: var(--schrift-basis);
+}
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Eine Karte je belegtem Platz; die Schaltflaeche steht am Ende und fuellt die Breite.
+.karte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+
+  button {
+    margin-block-start: var(--abstand-xs);
+  }
+}
+
+.kopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--abstand-xs) var(--abstand-s);
+}
+
+.platz {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.name {
+  font-weight: var(--gewicht-halbfett);
+  overflow-wrap: anywhere;
+}
+
+.angabe {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+// Zustand als Text mit Symbol, nie allein ueber die Farbe.
+.zustand {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-xs);
+}
+
+.symbol {
+  display: inline-flex;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+.aktionen {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: row;
+  gap: var(--abstand-s);
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+  line-height: var(--zeilenhoehe);
+}

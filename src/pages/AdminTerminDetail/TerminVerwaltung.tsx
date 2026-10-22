@@ -6,6 +6,9 @@ import Hinweis from '@/components/Hinweis/Hinweis'
 import Textlink from '@/components/Textlink/Textlink'
 import { useTerminAendern } from '@/hooks/admin/useTerminAendern'
 import { useTermin } from '@/hooks/useTermin'
+import GastStufeListe from './GastStufeListe'
+import TerminErgebnis from './TerminErgebnis'
+import TerminHalle from './TerminHalle'
 import TerminAendernFormular from './TerminAendernFormular'
 import WeitereAktionen from './WeitereAktionen'
 import style from './AdminTerminDetail.module.scss'
@@ -24,7 +27,7 @@ type TerminVerwaltungEigenschaften = {
  * zweiter Schlüssel) und zeigt die Abschnitte nur, wenn Daten da sind; Laden, `404` und Fehler zeigt `TerminAnsicht`.
  *
  * **Reihenfolge der Abschnitte** (jeder ein eigener Baustein, damit C8 sie einhängen kann):
- * „Termin ändern“ (`GEPLANT`) – C8: „Gäste“, „Hallenabsage“, „Ergebnis“ – „Weitere Aktionen“.
+ * „Termin ändern“ (`GEPLANT`) – C8: „Gäste“ (`GEPLANT`), „Hallenabsage“, „Ergebnis“ (`ABGESCHLOSSEN`) – „Weitere Aktionen“.
  *
  * **E5:** Dieser Baustein besitzt Abfrage **und** Mutation des Änderungsformulars. `key={termin.version}` baut das
  * Formular nach jedem Stand neu auf; die Meldung zu `DATEN_VERALTET` überlebt den Neuaufbau, weil sie in der Mutation
@@ -52,6 +55,12 @@ export default function TerminVerwaltung({ terminId, ueberschriftRef }: TerminVe
   }, [])
   const beiFokussiert = useCallback(() => {
     setFokusSpeichern(false)
+  }, [])
+
+  /** Merkzeichen plus ein Render: Kam der neue Stand schon vor dem Aufruf an, liefe sonst kein Effekt mehr. */
+  const zurUeberschrift = useCallback(() => {
+    fokusUeberschrift.current = true
+    neuZeichnen((n) => n + 1)
   }, [])
 
   const termin = abfrage.data
@@ -91,14 +100,13 @@ export default function TerminVerwaltung({ terminId, ueberschriftRef }: TerminVe
         </section>
       )}
 
-      <WeitereAktionen
-        termin={termin}
-        fokusAufUeberschrift={() => {
-          // Merkzeichen plus ein Render: Kam der neue Stand schon vor dem Aufruf an, liefe sonst kein Effekt mehr.
-          fokusUeberschrift.current = true
-          neuZeichnen((n) => n + 1)
-        }}
-      />
+      {termin.status === 'GEPLANT' && <GastStufeListe termin={termin} />}
+
+      <TerminHalle termin={termin} fokusAufUeberschrift={zurUeberschrift} />
+
+      <TerminErgebnis termin={termin} />
+
+      <WeitereAktionen termin={termin} fokusAufUeberschrift={zurUeberschrift} />
     </div>
   )
 }

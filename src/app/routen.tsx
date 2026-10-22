@@ -196,10 +196,8 @@ export const routen = createBrowserRouter([
                     handle: { zurueck: ADMIN_PFADE.nameAendern } satisfies RoutenAngaben,
                   },
 
-                  // --- Bis zur jeweiligen Stufe Platzhalter --------------------
-                  // Profile (Stufe 2) und Termine (Stufe 3) folgen in C7, die übrigen
-                  // drei Verwaltungen in C8. `neu` steht vor dem dynamischen Segment;
-                  // React Router wertet statische vor dynamischen Pfaden.
+                  // --- Verwaltungen -------------------------------------------
+                  // `neu` steht vor dem dynamischen Segment; React Router wertet statische vor dynamischen Pfaden.
                   // --- Spielerprofile (C7, Stufe 2) ---------------------------
                   { path: 'profile', lazy: adminSeite((s) => <s.AdminProfile />), handle: ZUM_ADMIN_DASHBOARD },
                   { path: 'profile/neu', lazy: adminSeite((s) => <s.AdminProfilFormular modus="neu" />), handle: ZUM_ADMIN_PROFILE },
@@ -213,13 +211,9 @@ export const routen = createBrowserRouter([
                   // „neu“ steht vor „:terminId“, damit der Pfad nicht als Id gelesen wird.
                   { path: 'termine/neu', lazy: adminSeite((s) => <s.AdminTerminNeu />), handle: ZUM_ADMIN_TERMINE },
                   { path: 'termine/:terminId', lazy: adminSeite((s) => <s.AdminTerminDetail />), handle: ZUM_ADMIN_TERMINE },
-                  { path: 'gaeste', element: <Platzhalter titel="Gastplätze" paket="C8" />, handle: ZUM_ADMIN_DASHBOARD },
-                  {
-                    path: 'konfiguration',
-                    element: <Platzhalter titel="Konfiguration" paket="C8" />,
-                    handle: ZUM_ADMIN_DASHBOARD,
-                  },
-                  { path: 'teams', element: <Platzhalter titel="Teams ohne Termin" paket="C8" />, handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'gaeste', lazy: adminSeite((s) => <s.AdminGaeste />), handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'konfiguration', lazy: adminSeite((s) => <s.AdminKonfiguration />), handle: ZUM_ADMIN_DASHBOARD },
+                  { path: 'teams', lazy: adminSeite((s) => <s.AdminTeams />), handle: ZUM_ADMIN_DASHBOARD },
                 ],
               },
             ],

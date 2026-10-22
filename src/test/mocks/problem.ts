@@ -14,17 +14,20 @@ import type { components } from '@/api/common/types/schema'
  * @param status HTTP-Statuscode der Antwort.
  * @param code Maschinenlesbarer Fehlercode, nach dem die Programmlogik verzweigt.
  * @param detail Deutschsprachiger Anzeigetext.
+ * @param felder Meldungen je Feld bei `400 EINGABE_UNGUELTIG`.
  */
 export function problem(
   status: number,
   code: components['schemas']['Fehlercode'],
   detail: string,
+  felder?: Record<string, string>,
 ): Response {
   const rumpf: components['schemas']['ProblemDetail'] = {
     type: 'about:blank',
     status,
     code,
     detail,
+    ...(felder ? { felder } : {}),
   }
   // Jede Fehlerantwort des Servers trägt `application/problem+json`, nie
   // `application/json` – der Mock bildet das nach, damit ein Test die

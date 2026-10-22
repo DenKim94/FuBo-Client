@@ -1,0 +1,43 @@
+@use '@/styles/globalVars';
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  inline-size: 100%;
+}
+
+.beschriftung {
+  font-weight: var(--gewicht-halbfett);
+}
+
+.eingabe {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 8rem;
+  padding: var(--abstand-s) var(--abstand-m);
+  // Bedienbarer Rand: Er ist die einzige Grenze des Feldes (WCAG 1.4.11).
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+  // Mindestens 16 px: Darunter vergroessert iOS die Seite beim Fokussieren.
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+  // Nur in der Hoehe ziehbar: Eine Verbreiterung schoebe das Feld ueber den Rand der Seite.
+  resize: vertical;
+}
+
+.ungueltig {
+  border: 2px solid var(--farbe-fehler);
+}
+
+.hinweis {
+  color: var(--farbe-text-schwach);
+  font-size: var(--schrift-klein);
+}
+
+.fehler {
+  color: var(--farbe-fehler);
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+}

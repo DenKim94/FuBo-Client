@@ -31,4 +31,8 @@ export const schluessel = {
   /** Admin-Abfragen. Wurzel `admin`: hebt sie von den Abfragen der Spieler ab. */
   adminProfile: ['admin', 'profile'] as const,
   adminSkills: ['admin', 'skills'] as const,
+  /** Konfiguration des Admins (C8). Jeder Besuch liest frisch (`gcTime: 0`). */
+  adminKonfiguration: ['admin', 'konfiguration'] as const,
+  /** Gastplätze und ihr Zustand (C8). */
+  adminGaeste: ['admin', 'gaeste'] as const,
 } as const

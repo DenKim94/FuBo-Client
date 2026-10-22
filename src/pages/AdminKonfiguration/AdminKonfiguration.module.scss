@@ -1,0 +1,80 @@
+@use '@/styles/globalVars';
+
+.seite {
+  // Nimmt die Resthoehe des Inhalts ein, damit die Aktionsleiste unten sitzt.
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.bereich {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-l);
+  padding-block: var(--abstand-m);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+// Eine Gruppe: Legende als Zwischenueberschrift, darunter die Felder. Ohne Rahmen: Der bedienbare Rand gehoert den Feldern.
+.gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legende {
+  inline-size: 100%;
+  padding: 0 0 var(--abstand-xs);
+  margin-block-end: var(--abstand-xs);
+  border-block-end: 1px solid var(--farbe-rand);
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Der Text, den der Server tatsaechlich versenden wuerde: nur lesbar, mit den Absaetzen der Vorlage.
+.effektiv {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  padding: var(--abstand-s) var(--abstand-m);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+}
+
+.effektivTitel {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+.effektivText {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  line-height: var(--zeilenhoehe);
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+// Fehler, Grund und Schaltflaeche gehoeren in eine Spalte der Aktionsleiste.
+.aktionen {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--abstand-xs);
+}
+
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}

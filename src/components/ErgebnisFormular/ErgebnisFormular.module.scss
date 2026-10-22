@@ -10,46 +10,6 @@
   padding-block-end: var(--abstand-m);
 }
 
-.gruppe {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-xs);
-  min-inline-size: 0;
-  padding: 0;
-  border: 0;
-}
-
-.legende {
-  padding: 0;
-  margin-block-end: var(--abstand-xs);
-  font-weight: var(--gewicht-halbfett);
-}
-
-// Die ganze Zeile ist die Beschriftung und das Tap-Ziel (A2).
-.option {
-  display: flex;
-  align-items: center;
-  gap: var(--abstand-s);
-  min-block-size: var(--tapziel-min);
-  padding-inline: var(--abstand-s);
-  border: 1px solid var(--farbe-rand-bedienbar);
-  border-radius: var(--radius-m);
-  cursor: pointer;
-
-  input {
-    flex: none;
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-    accent-color: var(--farbe-primaer);
-  }
-}
-
-.deutlich {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-xs);
-}
-
 .nebentext {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach); // 6.40:1 auf Weiss

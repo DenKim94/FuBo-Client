@@ -1,0 +1,156 @@
+@use '@/styles/globalVars';
+
+// Fuellt die Resthoehe zwischen Inhalt und Leiste: Die Leiste haftet unten, auch bei kurzem Inhalt.
+.seite {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-end: var(--abstand-m);
+}
+
+.titel {
+  font-size: var(--schrift-gross);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.2;
+}
+
+.fehler {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.gruppe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legende {
+  padding: 0;
+  margin-block-end: var(--abstand-xs);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// „Alle auswaehlen“ und „Keine“ sind Aktionen, sehen aber wie Textlinks aus (C8 10.3); das Tap-Ziel bleibt gross.
+.textaktionen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--abstand-m);
+}
+
+.textaktion {
+  min-block-size: var(--tapziel-min);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--farbe-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Die ganze Zeile ist die Beschriftung und das Tap-Ziel (A2).
+.zeile {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-s);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+
+  input {
+    flex: none;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    accent-color: var(--farbe-primaer);
+  }
+
+  &[data-deaktiviert] {
+    cursor: not-allowed;
+    border-color: var(--farbe-rand);
+  }
+}
+
+.name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+// Der Grund steht als Text, nie nur ueber die Farbe.
+.grund {
+  flex: none;
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}
+
+.gast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
+  line-height: var(--zeilenhoehe);
+}
+
+.ergebnis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-m);
+  padding-block-start: var(--abstand-m);
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.ergebnisTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.ergebnisTitel:focus-visible {
+  outline-offset: 0.25rem;
+}
+
+.angaben {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+// Ein Kind der Aktionsleiste: Zaehler, Grund und Aktion gehoeren untereinander.
+.leiste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.zaehler {
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Die Aktion in Daumenhoehe (64 px); mit dem Elementnamen davor gewinnt die Regel gegen den CustomButton.
+button.aktion {
+  min-block-size: var(--tapziel-primaer);
+}

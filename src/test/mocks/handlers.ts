@@ -131,7 +131,6 @@ export const handlers = [
   // Eintrags und Zaehlung der Bilanz gibt es nur in `terminHandlers()`.
   http.post('*/ergebnis/erfassen', () => HttpResponse.json(beispielErgebnis, { status: 201 })),
   http.get('*/bilanz/lesen', () => HttpResponse.json(beispielBilanz)),
-  http.post('*/admin/ergebnis/korrigieren', () => new HttpResponse(null, { status: 204 })),
 
   http.post('*/teams/generieren', async ({ request }) => {
     const { terminId } = (await request.json()) as { terminId: number }

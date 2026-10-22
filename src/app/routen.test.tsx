@@ -185,6 +185,39 @@ describe('Routen der Terminverwaltung', () => {
   })
 })
 
+describe('Routen der Konfiguration, der Gastplätze und der manuellen Teams', () => {
+  test('/admin/konfiguration zeigt das Formular', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    oeffnen('/admin/konfiguration')
+
+    expect(await screen.findByTestId('admin-konfiguration')).toBeInTheDocument()
+  })
+
+  test('/admin/gaeste zeigt die Gastplätze', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    oeffnen('/admin/gaeste')
+
+    expect(await screen.findByTestId('admin-gaeste')).toBeInTheDocument()
+  })
+
+  test('/admin/teams zeigt die manuelle Generierung', async () => {
+    sitzungMock.mockReturnValue(zustand())
+    oeffnen('/admin/teams')
+
+    expect(await screen.findByTestId('admin-teams')).toBeInTheDocument()
+  })
+
+  test.each(['/admin/konfiguration', '/admin/gaeste', '/admin/teams'])('eine Nicht-Admin-Sitzung wird von %s auf die Startseite geleitet', async (pfad) => {
+    sitzungMock.mockReturnValue(zustand({ istAdmin: false }))
+    const { router } = oeffnen(pfad)
+
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    expect(screen.queryByTestId('admin-konfiguration')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('admin-gaeste')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('admin-teams')).not.toBeInTheDocument()
+  })
+})
+
 describe('Nachladen des Admin-Bereichs', () => {
   test('der Routenbaum importiert keine Admin-Seite fest (sonst landete sie wieder im Hauptpaket)', () => {
     const feste = routenQuelle.match(/^import .* from '@\/pages\/(Admin|Passwort)\w*\/.*$/gm) ?? []

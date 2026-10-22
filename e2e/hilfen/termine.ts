@@ -54,6 +54,10 @@ export type TerminModell = {
   version: number
   /** Serie, zu der der Termin gehoert, oder `null` (C7). */
   serieId: number | null
+  /** Zeitpunkt der Hallenabsage oder `null`/ungesetzt: noch nicht abgesagt (C8, Stufe 5). */
+  halleAbgesagtAm?: string | null
+  /** Letzter Zeitpunkt der Hallenabsage; ungesetzt gilt der Beginn des Termins (C8, Stufe 5). */
+  halleAbsageMoeglichBis?: string
 }
 
 /** Das erfasste Ergebnis eines Termins, wie `Ergebnis` es liefert. */
@@ -167,8 +171,8 @@ function details(m: TerminModell) {
       ? { ...m.teams, veraltet: m.teamsVersion !== null && m.teamsVersion !== m.teilnehmerVersion }
       : null,
     ergebnis: m.ergebnis,
-    halleAbgesagtAm: null,
-    halleAbsageMoeglichBis: `${m.datum}T${m.uhrzeit.slice(0, 5)}:00`,
+    halleAbgesagtAm: m.halleAbgesagtAm ?? null,
+    halleAbsageMoeglichBis: m.halleAbsageMoeglichBis ?? `${m.datum}T${m.uhrzeit.slice(0, 5)}:00`,
     kontingentGenerierung: kontingentVon(m),
   }
 }

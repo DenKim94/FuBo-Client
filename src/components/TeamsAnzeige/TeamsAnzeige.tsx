@@ -1,8 +1,8 @@
 import type { Ref } from 'react'
 import { zeitpunktKurz } from '@/api/termine/terminZeit'
-import type { TeamEintrag, Teameinteilung } from '@/api/teams/teams'
+import type { Teameinteilung } from '@/api/teams/teams'
 import Hinweis from '@/components/Hinweis/Hinweis'
-import Icon from '@/components/Icon/Icon'
+import TeamListen from '@/components/TeamListen/TeamListen'
 import style from './TeamsAnzeige.module.scss'
 
 /** Eigenschaften der Teamanzeige. */
@@ -34,6 +34,9 @@ type TeamsAnzeigeEigenschaften = {
  * Hinweis sagt, dass sich die Teilnehmerliste seitdem geändert hat. Jemand hat
  * die Aufstellung vielleicht schon vorgelesen.
  *
+ * Die beiden Teamspalten stehen seit C8 in `TeamListen` (dort auch die Regeln zu „(Gast)“, „(du)“ und Auswechselspieler);
+ * hier bleiben Kopf, Hinweis „veraltet“ und das Fokusziel.
+ *
  * Überschriften: Die Einteilung ist `h2` (unter dem `h1` der Terminkarte) und
  * nimmt den Fokus nach einer Generierung, die Teams sind `h3`.
  */
@@ -58,54 +61,13 @@ export default function TeamsAnzeige({
         </Hinweis>
       )}
 
-      <Team name="Team A" kennung="a" eintraege={teams.teamA} eigenerName={eigenerName} eigenerGast={eigenerGast} testId={testId} />
-      <Team name="Team B" kennung="b" eintraege={teams.teamB} eigenerName={eigenerName} eigenerGast={eigenerGast} testId={testId} />
+      <TeamListen
+        teamA={teams.teamA}
+        teamB={teams.teamB}
+        eigenerName={eigenerName}
+        eigenerGast={eigenerGast}
+        data-testid={testId}
+      />
     </div>
-  )
-}
-
-/** Ein Team als Abschnitt mit Überschrift und Liste; die Zahl zählt den Auswechselspieler mit. */
-function Team({
-  name,
-  kennung,
-  eintraege,
-  eigenerName,
-  eigenerGast,
-  testId,
-}: {
-  name: string
-  kennung: string
-  eintraege: readonly TeamEintrag[]
-  eigenerName: string | null | undefined
-  eigenerGast: boolean
-  testId: string
-}) {
-  const titelId = `${testId}-${kennung}-titel`
-  return (
-    <section className={style.team} aria-labelledby={titelId} data-testid={`${testId}-${kennung}`}>
-      <h3 id={titelId} className={style.teamTitel}>
-        {name} ({eintraege.length})
-      </h3>
-      <ul className={style.liste}>
-        {eintraege.map((eintrag) => {
-          const eigen = eintrag.anzeigeName === eigenerName && eintrag.gast === eigenerGast
-          return (
-            <li key={`${eintrag.anzeigeName}-${String(eintrag.gast)}`} className={style.eintrag}>
-              <span className={style.name}>
-                {eintrag.anzeigeName}
-                {eintrag.gast && ' (Gast)'}
-                {eigen && ' (du)'}
-              </span>
-              {eintrag.auswechselspieler && (
-                <span className={style.auswechsel} data-testid={`${testId}-auswechselspieler`}>
-                  <Icon name="person_edit_dark" groesse={1.25} />
-                  <span>Auswechselspieler</span>
-                </span>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </section>
   )
 }

@@ -5,6 +5,7 @@ import { ergebnisSatz } from '@/api/ergebnis/ergebnisText'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
+import ErgebnisEingabe from '@/components/ErgebnisEingabe/ErgebnisEingabe'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useErgebnisErfassen } from '@/hooks/useErgebnisErfassen'
@@ -25,13 +26,6 @@ type ErgebnisFormularEigenschaften = {
 /** Rückfalltext für Fehler, die weder vom Server stammen noch Netzfehler sind. */
 const FEHLER_ERSATZ = 'Das Ergebnis konnte nicht eingetragen werden. Bitte versuche es erneut.'
 
-/** Die drei Ausgänge in der Reihenfolge der Anzeige. */
-const AUSGAENGE: { wert: Sieger; text: string; testId: string }[] = [
-  { wert: 'A', text: 'Team A', testId: 'ergebnis-sieger-a' },
-  { wert: 'B', text: 'Team B', testId: 'ergebnis-sieger-b' },
-  { wert: 'U', text: 'Unentschieden', testId: 'ergebnis-sieger-u' },
-]
-
 /**
  * Formular zum Eintragen des Ergebnisses (A21, E17). Rendert Eingabe **und**
  * Aktionsleiste: Die Schaltfläche hängt am Zustand der Eingabe.
@@ -40,9 +34,8 @@ const AUSGAENGE: { wert: Sieger; text: string; testId: string }[] = [
  * dauerhafter Hinweis über der Schaltfläche **und** ein Bestätigungsdialog mit dem
  * Satz, der nachher dasteht. Mehrere tippen nach dem Abpfiff gleichzeitig.
  *
- * **„Deutlicher Sieg“ gibt es nur bei einem Sieg.** Bei „Unentschieden“ ist der Haken
- * gesperrt und wird zurückgesetzt, der Grund steht als Text – `true` bei `U` ist am
- * Server unzulässig, und `ergebnisErfassen` schickt dann ohnehin `false`.
+ * **Die Eingabe selbst** (Ausgang, „Deutlicher Sieg“, die Regel bei „Unentschieden“) steht seit C8 in
+ * `ErgebnisEingabe`; hier hängen die Schaltfläche, der Dialog und der Aufruf daran.
  *
  * Ohne Auswahl ist die Schaltfläche `aria-disabled` mit Grund (der Fokus bleibt,
  * der Grund wird vorgelesen).
@@ -57,19 +50,12 @@ export default function ErgebnisFormular({ terminId, beiAbschluss }: ErgebnisFor
   const [deutlich, setDeutlich] = useState(false)
   const [dialogOffen, setDialogOffen] = useState(false)
   const grundId = useId()
-  const hinweisId = useId()
   const beschreibungId = useId()
 
   const laedt = erfassen.isPending
   const vorhandenFehler = erfassen.error instanceof ApiFehler && erfassen.error.code === 'ERGEBNIS_VORHANDEN'
   const meldung = erfassen.isError && !vorhandenFehler ? erfassen.error : null
   const gesperrt = sieger === null
-
-  /** Wählt den Ausgang; „Unentschieden“ nimmt einen gesetzten Haken zurück. */
-  function waehlen(neu: Sieger) {
-    setSieger(neu)
-    if (neu === 'U') setDeutlich(false)
-  }
 
   /**
    * Schickt das Ergebnis; während eines Aufrufs tut ein zweiter Tipp nichts.
@@ -95,41 +81,14 @@ export default function ErgebnisFormular({ terminId, beiAbschluss }: ErgebnisFor
   return (
     <>
       <div className={style.formular} data-testid="ergebnis-formular">
-        <fieldset className={style.gruppe}>
-          <legend className={style.legende}>Wer hat gewonnen?</legend>
-          {AUSGAENGE.map((ausgang) => (
-            <label key={ausgang.wert} className={style.option}>
-              <input
-                type="radio"
-                name="sieger"
-                value={ausgang.wert}
-                checked={sieger === ausgang.wert}
-                onChange={() => waehlen(ausgang.wert)}
-                data-testid={ausgang.testId}
-              />
-              <span>{ausgang.text}</span>
-            </label>
-          ))}
-        </fieldset>
-
-        <div className={style.deutlich}>
-          <label className={style.option}>
-            <input
-              type="checkbox"
-              checked={deutlich}
-              disabled={sieger === 'U'}
-              onChange={(e) => setDeutlich(e.target.checked)}
-              aria-describedby={sieger === 'U' ? hinweisId : undefined}
-              data-testid="ergebnis-deutlich"
-            />
-            <span>Deutlicher Sieg (Tordifferenz ab 3)</span>
-          </label>
-          {sieger === 'U' && (
-            <p id={hinweisId} className={style.nebentext} data-testid="ergebnis-deutlich-grund">
-              Nur bei einem Sieg möglich.
-            </p>
-          )}
-        </div>
+        <ErgebnisEingabe
+          sieger={sieger}
+          deutlich={deutlich}
+          beiAenderung={(wahl) => {
+            setSieger(wahl.sieger)
+            setDeutlich(wahl.deutlich)
+          }}
+        />
       </div>
 
       {meldung && (

@@ -1,6 +1,6 @@
 import type { Page, Route } from '@playwright/test'
 import { sitzungNachbilden, type Sitzung } from './sitzung.js'
-import { problem, terminModell, type TerminModell, type Termine } from './termine.js'
+import { problem, terminModell, termineNachbilden, type TerminModell, type Termine } from './termine.js'
 
 /**
  * Nachbildung der Admin-Endpunkte fuer die E2E-Tests (ohne Server), C7.
@@ -393,4 +393,325 @@ export async function terminverwaltungNachbilden(page: Page, termine: Termine): 
   })
 
   return verwaltung
+}
+
+/** Die Konfiguration der Nachbildung (Form wie `Konfiguration`), ohne den nur lesbaren `halleAbsageVorlageEffektiv`. */
+export type E2EKonfiguration = {
+  minTeilnehmer: number
+  maxTeilnehmer: number
+  anzGuests: number
+  algorithmType: 'EXHAUSTIV' | 'HEURISTIK'
+  auswechselModus: 'SCHWAECHSTER_UEBERZAHL' | 'ZULETZT_ANGEMELDET'
+  anzTeamGenerator: number
+  sessionLeerlaufMinuten: number
+  sessionMaximalStunden: number
+  halleEmail: string | null
+  halleAbsageVorlage: string | null
+  halleVorlaufStunden: number
+  hallenModusAktiv: boolean
+  pushAktiv: boolean
+  pushErinnerungStunden: number
+  geaendertAm: string
+  version: number
+}
+
+/** Ein Gastplatz der Nachbildung (Form wie `GastPlatzInfo`). */
+export type E2EGastPlatz = {
+  nummer: number
+  anzeigeName: string
+  wirksam: boolean
+  belegt: boolean
+  belegtSeit?: string | null
+  gastName?: string | null
+  gastStufe?: 'STARK' | 'MITTEL' | 'SCHWACH' | null
+  sitzungGueltig?: boolean | null
+}
+
+/** Beobachtbarer Stand der nachgebildeten Konfiguration, Gastplätze, Gast-Stufe, Halle, Ergebniskorrektur und manuellen Teams (C8). */
+export type KonfigurationWelt = {
+  konfiguration: E2EKonfiguration
+  gastplaetze: E2EGastPlatz[]
+  /** Eingegangene Koerper der Schreibaufrufe, in Reihenfolge. */
+  koerper: {
+    geaendert: Record<string, unknown>[]
+    freigegeben: Record<string, unknown>[]
+    gastStufen: Record<string, unknown>[]
+    halleAbgesagt: Record<string, unknown>[]
+    ergebnisKorrigiert: Record<string, unknown>[]
+    teamsManuell: Record<string, unknown>[]
+  }
+  /** `X-FuBo-Kein-Refresh` je Lesen (Wert des Kopfes oder `null`). */
+  abrufe: { konfiguration: (string | null)[]; gaeste: (string | null)[] }
+  /** Gesetzt: Der Versand der Hallenabsage scheitert mit `503`, und es bleibt nichts zurueck. */
+  mailFehler: boolean
+  /** Eine zweite Person aendert die Konfiguration: `version` zaehlt hoch. */
+  fremdeAenderung: (aenderung?: Partial<Omit<E2EKonfiguration, 'version'>>) => void
+  /** Eine zweite Person korrigiert das Ergebnis eines Termins: `version` zaehlt hoch. */
+  fremdeErgebnisAenderung: (terminId: number, aenderung?: { sieger?: 'A' | 'B' | 'U'; deutlich?: boolean }) => void
+}
+
+/** Die Ersatzvorlage des Servers fuer die Hallenabsage (Beispieltext). */
+export const E2E_ABSAGEVORLAGE = 'Guten Tag, wir müssen den Termin leider absagen.'
+
+/** Die Vorgaben des Servers; Hallenmodus aus, keine Adresse. */
+export function e2eKonfiguration(teil: Partial<E2EKonfiguration> = {}): E2EKonfiguration {
+  return {
+    minTeilnehmer: 6,
+    maxTeilnehmer: 22,
+    anzGuests: 4,
+    algorithmType: 'EXHAUSTIV',
+    auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+    anzTeamGenerator: 1,
+    sessionLeerlaufMinuten: 15,
+    sessionMaximalStunden: 1,
+    halleEmail: null,
+    halleAbsageVorlage: null,
+    halleVorlaufStunden: 48,
+    hallenModusAktiv: false,
+    pushAktiv: true,
+    pushErinnerungStunden: 24,
+    geaendertAm: '2099-01-01T10:00:00Z',
+    version: 1,
+    ...teil,
+  }
+}
+
+/** Vier Plaetze: 1 belegt mit lebender Sitzung (`Beispielgast`), 2 verwaist, 3 und 4 frei. */
+export function e2eGastplaetze(): E2EGastPlatz[] {
+  const frei = (nummer: number): E2EGastPlatz => ({ nummer, anzeigeName: `Gast ${String(nummer)}`, wirksam: true, belegt: false })
+  return [
+    {
+      ...frei(1),
+      belegt: true,
+      belegtSeit: '2099-01-13T18:00:00Z',
+      gastName: 'Beispielgast',
+      gastStufe: 'STARK',
+      sitzungGueltig: true,
+    },
+    {
+      ...frei(2),
+      belegt: true,
+      belegtSeit: '2099-01-12T18:00:00Z',
+      gastName: 'Beispielgast Zwei',
+      gastStufe: 'SCHWACH',
+      sitzungGueltig: false,
+    },
+    frei(3),
+    frei(4),
+  ]
+}
+
+const KONFIGURATION_PFLICHT = [
+  'version',
+  'minTeilnehmer',
+  'maxTeilnehmer',
+  'anzGuests',
+  'algorithmType',
+  'auswechselModus',
+  'anzTeamGenerator',
+  'sessionLeerlaufMinuten',
+  'sessionMaximalStunden',
+  'halleEmail',
+  'halleAbsageVorlage',
+  'halleVorlaufStunden',
+  'hallenModusAktiv',
+  'pushAktiv',
+  'pushErinnerungStunden',
+] as const
+
+/**
+ * Bildet Konfiguration, Gastplaetze und die Gast-Stufe (Stufe 4) nach. Wird **nach** `termineNachbilden` aufgerufen:
+ * Die Stufe aendert die `zusagen` der Termine an Ort und Stelle und erhoeht die `teilnehmerVersion`.
+ */
+export async function konfigurationNachbilden(
+  page: Page,
+  termine: Termine,
+  start: { konfiguration?: Partial<E2EKonfiguration>; admin?: AdminWelt } = {},
+): Promise<KonfigurationWelt> {
+  const welt: KonfigurationWelt = {
+    konfiguration: e2eKonfiguration(start.konfiguration),
+    gastplaetze: e2eGastplaetze(),
+    koerper: { geaendert: [], freigegeben: [], gastStufen: [], halleAbgesagt: [], ergebnisKorrigiert: [], teamsManuell: [] },
+    abrufe: { konfiguration: [], gaeste: [] },
+    mailFehler: false,
+    fremdeAenderung: (aenderung = {}) => {
+      Object.assign(welt.konfiguration, aenderung)
+      welt.konfiguration.version += 1
+    },
+    fremdeErgebnisAenderung: (terminId, aenderung = {}) => {
+      const modell = termine.modelle.find((t) => t.terminId === terminId)
+      if (!modell?.ergebnis) throw new Error(`Termin ${String(terminId)} hat kein Ergebnis`)
+      modell.ergebnis = { ...modell.ergebnis, ...aenderung, korrigiertAm: new Date().toISOString(), version: modell.ergebnis.version + 1 }
+    },
+  }
+
+  await page.route('**/api/v1/admin/config/lesen', (route) => {
+    welt.abrufe.konfiguration.push(route.request().headers()['x-fubo-kein-refresh'] ?? null)
+    return route.fulfill({
+      json: { ...welt.konfiguration, halleAbsageVorlageEffektiv: welt.konfiguration.halleAbsageVorlage ?? E2E_ABSAGEVORLAGE },
+    })
+  })
+
+  // Voll-Update wie am Server: fehlendes Pflichtfeld ⇒ 400 mit `felder`, abweichende `version` ⇒ 409.
+  await page.route('**/api/v1/admin/config/aendern', (route) => {
+    const k = route.request().postDataJSON() as Record<string, unknown>
+    welt.koerper.geaendert.push(k)
+    const fehlend = KONFIGURATION_PFLICHT.filter((feld) => k[feld] === undefined)
+    if (fehlend.length > 0) return eingabeUngueltig(route, Object.fromEntries(fehlend.map((feld) => [feld, 'Pflichtfeld.'])))
+    if (k.version !== welt.konfiguration.version) {
+      return problem(route, 409, 'DATEN_VERALTET', 'Die Konfiguration wurde zwischenzeitlich geändert.')
+    }
+    if ((k.maxTeilnehmer as number) < (k.minTeilnehmer as number)) {
+      return eingabeUngueltig(route, { maxTeilnehmer: 'Die Höchstzahl darf nicht unter der Mindestzahl liegen.' })
+    }
+    for (const feld of KONFIGURATION_PFLICHT) {
+      if (feld !== 'version') (welt.konfiguration as Record<string, unknown>)[feld] = k[feld]
+    }
+    welt.konfiguration.version += 1
+    return route.fulfill({ status: 204 })
+  })
+
+  await page.route('**/api/v1/admin/gast/lesen', (route) => {
+    welt.abrufe.gaeste.push(route.request().headers()['x-fubo-kein-refresh'] ?? null)
+    return route.fulfill({ json: welt.gastplaetze })
+  })
+
+  await page.route('**/api/v1/admin/gast/freigeben', (route) => {
+    const k = route.request().postDataJSON() as { slotIds?: number[]; alle?: boolean }
+    welt.koerper.freigegeben.push(k)
+    const nummern = k.alle ? welt.gastplaetze.filter((p) => p.belegt).map((p) => p.nummer) : (k.slotIds ?? [])
+    welt.gastplaetze = welt.gastplaetze.map((p) =>
+      nummern.includes(p.nummer) ? { nummer: p.nummer, anzeigeName: p.anzeigeName, wirksam: p.wirksam, belegt: false } : p,
+    )
+    return route.fulfill({ status: 204 })
+  })
+
+  await page.route('**/api/v1/admin/teilnahme/gast-stufe', (route) => {
+    const k = route.request().postDataJSON() as { terminId: number; gastName: string; stufe: 'STARK' | 'MITTEL' | 'SCHWACH' }
+    welt.koerper.gastStufen.push(k)
+    const modell = termine.modelle.find((t) => t.terminId === k.terminId)
+    const zusage = modell?.zusagen.find((z) => z.gast && z.name === k.gastName)
+    if (!modell || !zusage) {
+      return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Teilnahme dieses Gastes vor.')
+    }
+    modell.teilnehmerVersion += 1
+    return route.fulfill({ status: 204 })
+  })
+
+  // Hallenabsage: Pruefung wie am Server (Modus, Termin, Status, Frist, Adresse, bereits abgesagt), dann Versand.
+  await page.route('**/api/v1/admin/halle/absagen', (route) => {
+    const k = route.request().postDataJSON() as { terminId: number }
+    welt.koerper.halleAbgesagt.push(k)
+    if (!welt.konfiguration.hallenModusAktiv) return problem(route, 409, 'HALLE_MODUS_INAKTIV', 'Der Hallenmodus ist abgeschaltet.')
+    const modell = termine.modelle.find((t) => t.terminId === k.terminId)
+    if (!modell) return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+    if (modell.status === 'ABGESCHLOSSEN') return problem(route, 409, 'TERMIN_GESCHLOSSEN', 'Der Termin ist ABGESCHLOSSEN.')
+    const bis = modell.halleAbsageMoeglichBis ?? `${modell.datum}T${modell.uhrzeit.slice(0, 5)}:00`
+    if (Date.now() >= Date.parse(bis)) {
+      return problem(route, 409, 'HALLE_FRIST_ABGELAUFEN', `Die Absage ist nur bis ${bis} möglich.`)
+    }
+    if (!welt.konfiguration.halleEmail) {
+      return problem(route, 409, 'HALLE_NICHT_KONFIGURIERT', 'Es ist keine E-Mail-Adresse des Hallenbetreibers hinterlegt.')
+    }
+    if (modell.halleAbgesagtAm) {
+      return problem(route, 409, 'HALLE_BEREITS_ABGESAGT', `Die Absage ging bereits am ${modell.halleAbgesagtAm} hinaus.`)
+    }
+    if (welt.mailFehler) return problem(route, 503, 'VERSAND_FEHLGESCHLAGEN', 'Die E-Mail konnte nicht gesendet werden.')
+    modell.halleAbgesagtAm = new Date().toISOString()
+    modell.status = 'ABGESAGT'
+    modell.version += 1
+    return route.fulfill({ status: 204 })
+  })
+
+  // Ergebniskorrektur: Voll-Update; abweichende `version` ⇒ 409, `deutlich` bei `U` ⇒ 400.
+  await page.route('**/api/v1/admin/ergebnis/korrigieren', (route) => {
+    const k = route.request().postDataJSON() as { terminId: number; sieger: 'A' | 'B' | 'U'; deutlich: boolean; version: number }
+    welt.koerper.ergebnisKorrigiert.push(k)
+    const modell = termine.modelle.find((t) => t.terminId === k.terminId)
+    if (!modell?.ergebnis) return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt kein Ergebnis vor.')
+    if (k.sieger === 'U' && k.deutlich) return eingabeUngueltig(route, { deutlich: 'Bei einem Unentschieden nicht möglich.' })
+    if (k.version !== modell.ergebnis.version) {
+      return problem(route, 409, 'DATEN_VERALTET', 'Das Ergebnis wurde zwischenzeitlich korrigiert.')
+    }
+    modell.ergebnis = {
+      ...modell.ergebnis,
+      sieger: k.sieger,
+      deutlich: k.deutlich,
+      korrigiertAm: new Date().toISOString(),
+      version: modell.ergebnis.version + 1,
+    }
+    return route.fulfill({ status: 204 })
+  })
+
+  // Manuelle Teamgenerierung: Zahl gegen die Konfiguration, unvollstaendige Skillkarte ⇒ 409. Gerechnet wird zum Schein.
+  await page.route('**/api/v1/admin/teams/generieren', (route) => {
+    const k = route.request().postDataJSON() as { spielerIds?: number[]; gaeste?: { name?: string | null; stufe: string }[] }
+    welt.koerper.teamsManuell.push(k)
+    const profile = start.admin?.profile ?? beispielProfile()
+    const gewaehlt: E2EProfil[] = []
+    for (const id of k.spielerIds ?? []) {
+      const profil = profile.find((p) => p.spielerId === id)
+      if (!profil || !profil.aktiv) return eingabeUngueltig(route, { spielerIds: `Das Profil ${String(id)} ist unbekannt oder gesperrt.` })
+      if (profil.rolle === 'ADMIN') return problem(route, 409, 'PROFIL_GESCHUETZT', 'Das Adminprofil kann nicht eingeteilt werden.')
+      gewaehlt.push(profil)
+    }
+    const gaeste = k.gaeste ?? []
+    const anzahl = gewaehlt.length + gaeste.length
+    const { minTeilnehmer, maxTeilnehmer } = welt.konfiguration
+    if (anzahl < minTeilnehmer) {
+      return problem(route, 409, 'ZU_WENIG_TEILNEHMER', `Es braucht mindestens ${String(minTeilnehmer)} Teilnehmer, ausgewählt sind ${String(anzahl)}.`)
+    }
+    if (anzahl > maxTeilnehmer) {
+      return problem(route, 409, 'ZU_VIELE_TEILNEHMER', `Es sind höchstens ${String(maxTeilnehmer)} Teilnehmer erlaubt, ausgewählt sind ${String(anzahl)}.`)
+    }
+    const luecke = gewaehlt.filter((p) => E2E_KATEGORIEN.some((kat) => p.skills[kat.schluessel] === undefined))
+    if (luecke.length > 0) {
+      return problem(route, 409, 'SKILLWERTE_UNVOLLSTAENDIG', `Die Skillwerte von ${luecke.map((p) => p.name).join(', ')} sind unvollständig.`)
+    }
+    const namen = [
+      ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false })),
+      ...gaeste.map((g, i) => ({ anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`, gast: true })),
+    ]
+    const haelfte = Math.ceil(namen.length / 2)
+    const teamA = namen.slice(0, haelfte).map((n) => ({ ...n, auswechselspieler: false }))
+    const teamB = namen.slice(haelfte).map((n) => ({ ...n, auswechselspieler: false }))
+    const ungerade = namen.length % 2 === 1
+    if (ungerade) teamA[teamA.length - 1].auswechselspieler = true
+    return route.fulfill({
+      json: {
+        algorithmType: welt.konfiguration.algorithmType,
+        auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+        auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
+        differenzTeamstaerke: 1.25,
+        teamA,
+        teamB,
+      },
+    })
+  })
+
+  return welt
+}
+
+/** Breite, um die die Seite ueber das Fenster hinausragt (0 = kein seitliches Scrollen). */
+export async function ueberhangHorizontal(page: Page): Promise<number> {
+  return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+}
+
+/**
+ * Startet die Admin-Welt der C8-Specs: Sitzung (Admin), Profile, Termine, Terminverwaltung, Konfiguration, Gastplaetze,
+ * Halle, Ergebniskorrektur und manuelle Teams; danach oeffnet sie `pfad`. Ohne Angabe gibt es einen geplanten Termin 1.
+ */
+export async function adminStart(
+  page: Page,
+  pfad: string,
+  optionen: { modelle?: TerminModell[]; konfiguration?: Partial<E2EKonfiguration>; zusatzProfile?: E2EProfil[] } = {},
+) {
+  const admin = await adminNachbilden(page)
+  // Zusaetzliche Spielerprofile stehen vor dem Adminprofil (Serverreihenfolge).
+  if (optionen.zusatzProfile) admin.profile.splice(admin.profile.length - 1, 0, ...optionen.zusatzProfile)
+  const termine = await termineNachbilden(page, optionen.modelle ?? [terminModell({ terminId: 1, datum: '2099-01-13', uhrzeit: '19:00:00' })])
+  await terminverwaltungNachbilden(page, termine)
+  const welt = await konfigurationNachbilden(page, termine, { konfiguration: optionen.konfiguration, admin })
+  await page.goto(pfad)
+  return { admin, termine, welt }
 }

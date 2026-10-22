@@ -12,6 +12,15 @@ import type { components } from '@/api/common/types/schema'
 /** Körper von `POST /admin/termin/anlegen`: Datum, Uhrzeit, optional der Ort. */
 export type TerminAnlegen = components['schemas']['TerminAnlegenRequest']
 
+/** Skill-Stufe eines Gastes (Selbsteinschätzung, A8). */
+export type GastStufe = components['schemas']['GastStufe']
+
+/** Körper von `POST /admin/teilnahme/gast-stufe`: Termin, Gastname (zeichengenau) und neue Stufe. */
+export type GastStufeAenderung = components['schemas']['GastStufeRequest']
+
+/** Körper von `POST /admin/ergebnis/korrigieren` (`ErgebnisKorrigierenRequest`): Voll-Update mit `version`. */
+export type ErgebnisKorrektur = components['schemas']['ErgebnisKorrigierenRequest']
+
 /** Antwort von `POST /admin/termin/anlegen`. */
 export type TerminAngelegt = components['schemas']['TerminAngelegt']
 
@@ -91,4 +100,50 @@ export async function terminAbsagen(terminId: number): Promise<void> {
  */
 export async function terminEntfernen(terminId: number): Promise<void> {
   await aufrufen<void>('POST', '/admin/termin/entfernen', { body: { terminId } })
+}
+
+/**
+ * Korrigiert die Skill-Stufe eines Gastes an einer Teilnahme (`204`, C8 E13).
+ *
+ * **Die einzige Adminaktion an einer Teilnahme:** Zusage, Name und Position in der Warteschlange ändern sich nicht.
+ * Der Vorgang erhöht die `teilnehmerVersion` des Termins (eine vorhandene Einteilung gilt danach als veraltet) und
+ * öffnet das Generierungskontingent neu. Auch die Stufe eines abgesagten Gastes lässt sich setzen.
+ *
+ * **`gastName` geht roh hinaus:** ohne „(Gast)“, ohne Trimmen – der Server vergleicht zeichengenau.
+ * Fehler: `404 INHALT_NICHT_GEFUNDEN` (für diesen Termin liegt keine Teilnahme dieses Gastes vor).
+ *
+ * @param anfrage `terminId`, `gastName` (wie `teilnehmer[].anzeigeName`) und `stufe`.
+ */
+export async function gastStufeAendern(anfrage: GastStufeAenderung): Promise<void> {
+  await aufrufen<void>('POST', '/admin/teilnahme/gast-stufe', { body: anfrage })
+}
+
+/**
+ * Sagt den Termin per E-Mail an den Hallenbetreiber ab (`POST /admin/halle/absagen`, `204`, C8 10.1).
+ *
+ * **Versendet eine echte E-Mail und ist nicht zurückzunehmen.** Ein geplanter Termin wird dabei ebenfalls `ABGESAGT`;
+ * `halleAbgesagtAm` ist danach gesetzt. Fehler (`409`), in der Reihenfolge der Prüfung am Server:
+ * `HALLE_MODUS_INAKTIV` (**auch für unbekannte Termine**, nicht `404`), `TERMIN_GESCHLOSSEN`, `HALLE_FRIST_ABGELAUFEN`,
+ * `HALLE_NICHT_KONFIGURIERT` und `HALLE_BEREITS_ABGESAGT` (**kein Bedienfehler**, sondern ein Doppelklick).
+ * `503 VERSAND_FEHLGESCHLAGEN`: Es bleibt nichts zurück, der Aufruf lässt sich unverändert wiederholen – vom Menschen,
+ * **nie automatisch** (Mutationen werden nicht wiederholt).
+ *
+ * @param terminId Id des Termins.
+ */
+export async function halleAbsagen(terminId: number): Promise<void> {
+  await aufrufen<void>('POST', '/admin/halle/absagen', { body: { terminId } })
+}
+
+/**
+ * Korrigiert ein erfasstes Ergebnis (`POST /admin/ergebnis/korrigieren`, `204`, C8 10.2; zog aus `admin.ts` hierher).
+ *
+ * **Voll-Update:** `sieger`, `deutlich` und `version` sind Pflicht, auch wenn sich ein Wert nicht ändert. `version` ist
+ * der Stand aus dem Feld `ergebnis` der Einzelansicht. Bei Abweichung antwortet der Server mit `409 DATEN_VERALTET` –
+ * das heißt **„neu laden und erneut speichern“, nicht „Eingabe falsch“**. `404`: Für den Termin liegt kein Ergebnis vor.
+ * **Bei `sieger: 'U'` ist `deutlich: true` ein `400`;** die Oberfläche sendet dann `false` (der Aufrufer setzt es).
+ *
+ * @param anfrage Termin, neuer Ausgang und der Stand des Datensatzes.
+ */
+export async function ergebnisKorrigieren(anfrage: ErgebnisKorrektur): Promise<void> {
+  await aufrufen<void>('POST', '/admin/ergebnis/korrigieren', { body: anfrage })
 }

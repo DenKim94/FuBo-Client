@@ -14,8 +14,8 @@ type TerminStatus = components['schemas']['TerminStatus']
  */
 export const EIGENER_NAME = 'Beispielspieler 03'
 
-/** Eine Zusage in Meldereihenfolge. */
-export type Zusage = { name: string; gast: boolean }
+/** Eine Zusage in Meldereihenfolge. Bei einem Gast kann die Stufe stehen (nur der Server kennt sie, C8). */
+export type Zusage = { name: string; gast: boolean; stufe?: components['schemas']['GastStufe'] }
 
 /**
  * Zustand eines Termins am nachgebildeten Server.
@@ -61,6 +61,10 @@ export type TerminModell = {
   laeufe: Record<number, number>
   /** Die nachgebildete Sitzung ist der Admin: Er darf ohne Zusage generieren (`403 KEINE_ZUSAGE` sonst). */
   adminSitzung?: boolean
+  /** Zeitpunkt der Hallenabsage (C8) oder ungesetzt/`null`: noch nicht abgesagt. */
+  halleAbgesagtAm?: string | null
+  /** Spätester Zeitpunkt der Hallenabsage (C8); ungesetzt gilt der Beginn des Termins. */
+  halleAbsageMoeglichBis?: string
 }
 
 /**
@@ -136,8 +140,8 @@ export function detailsVon(modell: TerminModell): TerminDetails {
         }
       : null,
     ergebnis: modell.ergebnis,
-    halleAbgesagtAm: null,
-    halleAbsageMoeglichBis: `${modell.datum}T${modell.uhrzeit.slice(0, 5)}:00`,
+    halleAbgesagtAm: modell.halleAbgesagtAm ?? null,
+    halleAbsageMoeglichBis: modell.halleAbsageMoeglichBis ?? `${modell.datum}T${modell.uhrzeit.slice(0, 5)}:00`,
     kontingentGenerierung: kontingentVon(modell),
   }
 }

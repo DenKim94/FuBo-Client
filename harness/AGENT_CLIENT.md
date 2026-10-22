@@ -3,7 +3,7 @@
 > Gilt für den Agenten, der **ausschließlich die Frontend-Seite (`client/`)** bearbeitet.
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`.
-> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten. Die ausführliche Vorfassung mit allen Herleitungen liegt unter
+> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten, **am 22.10.2026** um C8 (Admin-Verwaltung, Teil 2). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
 > `archive/AGENT_CLIENT_2026-10-17c.md`, die Fassung vor der Design-Überarbeitung unter `archive/AGENT_CLIENT_2026-10-18b.md`, ältere unter `archive/AGENT_CLIENT_2026-10-03.md` und `…-10-17.md`/`…-10-17b.md`.
 
 ### Rolle
@@ -146,7 +146,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `PasswortFeld`, `PasswortRegeln`, `Hinweis`, `Textlink`, `Restzeitbalken`, Hook `useSperre`; aus C5 `TabLeiste`, `TerminAnsicht`,
   `Teilnehmerliste`, `TeamsAnzeige`, `ErgebnisAnzeige`, `ErgebnisFormular` u. a.; aus C7 `Bestaetigung` (Dialog für jede nicht umkehrbare Aktion), `Verwaltungsliste`,
   `SkillFelder`, `ProfilListe`/`ProfilZeile`, `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; aus der Design-Überarbeitung (18.10.2026) `Segmente`, `Schalter`, `Feldzeile`, `Netzdiagramm`,
-  `ProfilKennzeichen`, `ProfilLader` (siehe unten, „Design-Überarbeitung Admin“).
+  `ProfilKennzeichen`, `ProfilLader` (siehe unten, „Design-Überarbeitung Admin“); aus C8 `StufeWahl` (Radiogruppe der Gast-Stufe über `Segmente`), `Textbereich` (mehrzeiliges Feld, Gegenstück zu `Feld`),
+  `Haken` (Kontrollkästchen mit Erklärung), `ErgebnisEingabe` (Eingabeteil aus `ErgebnisFormular`, gemeinsam mit der Korrektur), `TeamListen` (aus `TeamsAnzeige`, gemeinsam mit `AdminTeams`), Hook `useZeitpunktErreicht` (Uhr nie im Render).
 - **Passwort- und Codefelder (C4):**
   - `PasswortFeld` (umhüllt `Feld`): Auge-Umschalter als reiner Symbol-`button` (`visibility_{on,off}_dark.png`) mit festem `aria-label`
     „Passwort anzeigen" und `aria-pressed`; Pflicht (kein Wiederholungsfeld); verbirgt beim Absenden wieder; `maxLength` 72; **kein `trim()`**;
@@ -216,6 +217,15 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   - **Zeit:** keine Uhr im Render; Vergangenheit und Serienprüfung beim Absenden. Feldfehler des Servers nur an das Feld, das er meint (`TERMIN_BELEGT` am Uhrzeitfeld); Anzeigetext ist der Server-`detail`, Logik verzweigt über `code`.
   - **Tests:** Seiten je Zustand (laden, leer, Fehler, Normalfall, jeder Fehlercode); `src/test/mocks/admin.ts` ist zustandsbehaftet (`adminWelt`, `protokoll`); E2E-Nachbildung `e2e/hilfen/admin.ts`; eine Layout-Schleife über alle Admin-Pfade
     bei 360 px (`admin-layout.spec.ts`); Gegenproben (Skript wertet „failed" aus) für Nur-Geändertes, `key={version}`, Polling, Sperrdialog, `NAME_PIN_FALSCH`, `mutateAsync`, Übersprungenen-Absatz, Neulesen.
+- **Admin-Verwaltung, Teil 2 (C8):**
+  - **Ein Baumeister für den Konfigurationskörper:** `konfigurationAnfrage` (`src/api/admin/konfigurationEingabe.ts`) ist die einzige Stelle, die den Körper von `POST /admin/konfiguration/aendern` baut: **Voll-Update mit genau 15 Schlüsseln**, leere Adresse und Vorlage ⇒ `null`, `halleAbsageVorlageEffektiv` nie senden. Ein Test und ein E2E-Fall zählen die Schlüssel.
+  - **Voll-Update und E5 auch bei Ergebniskorrektur und Konfiguration:** Abfrage und Mutation gehören dem **Elternbaustein**, das Formular bekommt `key={version}`; nach `409 DATEN_VERALTET` steht es mit dem frischen Stand da und ein Text erklärt es. **Nie alte Eingaben mit neuer Version senden.**
+  - **`beiAbbruch` eines Dialogs nur ausführen, solange der Dialog offen ist** (`if (!dialogOffen) return`): `Dialog` meldet `onClose` auch beim programmatischen `close()`; ein `reset()` der Mutation würde sonst den Konflikt löschen, bevor die Seite ihn zeigt.
+  - **Gesperrt wirkt als `aria-disabled` mit Grund als Text** (Hallenabsage: „Frist erreicht“, „Adresse fehlt“; Ergebniskorrektur ohne Änderung: „Es gibt keine Änderung.“), nie `disabled`. Die Hallenfrist kommt aus der Geräteuhr über `useZeitpunktErreicht` (nur Darstellung, der Server entscheidet); **`HALLE_BEREITS_ABGESAGT` ist kein Fehler**, bei `503 VERSAND_FEHLGESCHLAGEN` bleibt der Dialog offen und nichts wird automatisch wiederholt.
+  - **Gastplätze:** `gast/freigeben` sendet in der Oberfläche **nur `slotIds`, nie `alle`**. Zustand eines Platzes immer als Text („angemeldet“, „Sitzung abgelaufen“, „nicht mehr vergeben“).
+  - **Manuelle Generierung:** das Ergebnis wird **nicht gespeichert** (kein Cache-Schlüssel, Zustand der Mutation) und **bei jeder Änderung der Auswahl verworfen** (`reset()`); `differenzTeamstaerke` nur in `AdminTeams`. Skillwerte bleiben in `AdminProfilDetail`/`AdminProfilFormular`.
+  - **Haftende `Aktionsleiste` und Fokus:** Sie misst ihre Höhe und setzt `--aktionsleiste-ist` an `html`; `global.scss` leitet daraus `scroll-padding-bottom` ab (WCAG 2.4.11, sonst liegen per Tab fokussierte Felder unter der Leiste). Beim Bau neuer Seiten mit Leiste nichts Eigenes dazu tun.
+  - **Tests:** Hook-Tests für Stufe 4 und 5 in `src/hooks/admin/verwaltungHooks.test.tsx`; **MSW nimmt den ersten passenden Handler** – `terminHandlers` kennt `*/teams/generieren`, das auch `/admin/teams/generieren` trifft, deshalb in Tests mit beiden `adminHandler` **zuerst**. Zustände von TanStack Query erreichen `result.current` erst nach dem Benachrichtigungstakt: mit `waitFor` prüfen. E2E: Einstieg über `adminStart` (`e2e/hilfen/admin.ts`), Konfigurationsmock `konfigurationNachbilden`; **Radiogruppen mit `check()` ohne `force`** (ein erzwungener Klick trifft die Mitte, auch wenn dort die Leiste liegt). Gegenproben für Körper (15 Schlüssel), `key={version}`, Hallenmodus-Prüfung, `HALLE_BEREITS_ABGESAGT`, `deutlich` bei `U`, Verwerfen des Ergebnisses, `slotIds`; **Mutanten mit `npx vite build` bauen** (`npm run build` bricht an `tsc` ab und lässt das alte `dist` stehen).
 - **Dialog:** natives `<dialog>` mit `showModal()`, gesteuert über `offen`, Titel über `useId`, optional `symbol` (schmückend) und `beschreibungId`
   (`aria-describedby`). Unterbrechungsfeindliche Dialoge mit `festhalten`: weist Escape ab und öffnet wieder, wenn der Browser `cancel` überspringt
   (Close Watcher, Chrome 122; auch Zurück-Geste unter Android). Unten angedockt, Safe-Area im Dialog selbst. Abdunkelung über `--farbe-abdunkelung` direkt
@@ -242,7 +252,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **E2E-Sitzung** in `e2e/hilfen/sitzung.ts` (`sitzungNachbilden` mit `stage`, `rolle`; zählt verlängernde Abrufe). Relative Importe in `e2e/` mit Endung `.js`
   (NodeNext). Sieben Geräteprojekte gegen die gebaute Fassung, **drei Chromium und vier WebKit**; **die vier WebKit-Projekte sind seit dem 18.10.2026 abgeschaltet**
   (CI-Lauf vom 17.10.2026: Tests quer durch die Dateien rot, Ursache ungeklärt; `WEBKIT_E2E=1` schaltet sie in `playwright.config.ts` wieder ein, im CI zusätzlich
-  `webkit` in `playwright install`). Im CI läuft nur Chromium (453 Läufe, 3 Projekte); iPhone- und iPad-Verhalten bleibt Handprüfung. PWA-Tests (`e2e/*.pwa.spec.ts`, `pwa.spec.ts`) nur Chromium. Tab-Navigation ist in WebKit ohne Systemeinstellung nicht
+  `webkit` in `playwright install`). Im CI läuft nur Chromium (588 Läufe nach C8, 3 Projekte); iPhone- und iPad-Verhalten bleibt Handprüfung. PWA-Tests (`e2e/*.pwa.spec.ts`, `pwa.spec.ts`) nur Chromium. Tab-Navigation ist in WebKit ohne Systemeinstellung nicht
   möglich (`test.skip` für `webkit`, Handprüfung). API ohne Server über `page.route`. Klick auf `aria-disabled` mit `force: true`. Safe-Area,
   `beforeinstallprompt`, Web Push auf iOS bleiben Handprüfungen.
 - Validierung: `npm run lint`, `typecheck`, `test`, `build`, `test:e2e`; nach Abhängigkeitsänderungen `npm ci` in frischem Baum (`npm install` repariert die
