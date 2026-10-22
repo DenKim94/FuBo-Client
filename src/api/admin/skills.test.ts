@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import {
   mitte,
+  vorgabe,
   profilAenderung,
   skillsAenderung,
   skillsVollstaendig,
   skillZahl,
   type SkillKategorie,
 } from './skills'
+import { SKILL_VORGABEN } from './skillVorgaben'
 
 /** Erfundene Kategorien: Nichts darf von `ANGRIFF` oder `TORWART` abhängen. */
 function kategorie(schluessel: string, minWert: number, maxWert: number): SkillKategorie {
@@ -17,6 +19,34 @@ const zehn = kategorie('ZEHN', 0, 10)
 const klein = kategorie('KLEIN', 0, 3)
 const verschoben = kategorie('VERSCHOBEN', 2, 5)
 const alle = [zehn, klein, verschoben]
+
+describe('vorgabe', () => {
+  test('ohne Abweichung gilt die Mitte der Skala', () => {
+    expect(vorgabe(zehn)).toBe(5)
+    expect(vorgabe(klein, { ANDERE: 1 })).toBe(2)
+  })
+
+  test('eine Abweichung im Bereich gilt, auch die untere Grenze', () => {
+    expect(vorgabe(klein, { KLEIN: 0 })).toBe(0)
+    expect(vorgabe(zehn, { ZEHN: 10 })).toBe(10)
+  })
+
+  test('eine Abweichung ausserhalb des Bereichs oder keine ganze Zahl zählt nicht', () => {
+    expect(vorgabe(verschoben, { VERSCHOBEN: 0 })).toBe(4)
+    expect(vorgabe(klein, { KLEIN: 4 })).toBe(2)
+    expect(vorgabe(klein, { KLEIN: 1.5 })).toBe(2)
+  })
+})
+
+describe('Vorgaben beim Anlegen (SKILL_VORGABEN)', () => {
+  test('Torwart startet bei 0, solange 0 im Bereich liegt', () => {
+    expect(vorgabe({ ...klein, schluessel: 'TORWART' }, SKILL_VORGABEN)).toBe(0)
+  })
+
+  test('andere Kategorien behalten die Mitte', () => {
+    expect(vorgabe({ ...klein, schluessel: 'ANGRIFF', maxWert: 6 }, SKILL_VORGABEN)).toBe(3)
+  })
+})
 
 describe('mitte', () => {
   test('rundet die Mitte der Skala', () => {

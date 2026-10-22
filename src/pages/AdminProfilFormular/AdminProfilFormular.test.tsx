@@ -71,12 +71,12 @@ function eingabeUngueltig(felder: Record<string, string>) {
 }
 
 describe('Anlegen', () => {
-  test('zeigt Überschrift, vorbelegte Werte (Mitte der Skala) und den Hinweis dazu', async () => {
+  test('zeigt Überschrift, vorbelegte Werte (Mitte der Skala, Torwart 0) und den Hinweis dazu', async () => {
     rendern('/admin/profile/neu', bereitstellen())
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Profil anlegen' })).toBeInTheDocument()
     expect(gewaehlt('ANGRIFF')).toBe('3')
-    expect(gewaehlt('TORWART')).toBe('2')
+    expect(gewaehlt('TORWART')).toBe('0')
     expect(screen.getByTestId('skill-vorbelegt-hinweis')).toHaveTextContent('Bitte prüfe jeden Wert.')
     expect(screen.getByTestId('admin-profil-name')).toHaveValue('')
   })
@@ -130,7 +130,7 @@ describe('Anlegen', () => {
     expect(welt.protokoll.angelegt).toEqual([
       {
         name: 'Beispielspieler 09',
-        skills: { ANGRIFF: 6, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 2 },
+        skills: { ANGRIFF: 6, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 0 },
       },
     ])
     expect(liste).toHaveTextContent('/admin/profile')

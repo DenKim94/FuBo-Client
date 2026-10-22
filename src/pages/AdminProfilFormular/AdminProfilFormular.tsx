@@ -1,7 +1,8 @@
 import { useId, useRef, useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router'
 import type { SpielerDetails } from '@/api/admin/adminProfile'
-import { mitte, profilAenderung, skillZahl, type SkillKategorie } from '@/api/admin/skills'
+import { profilAenderung, skillZahl, vorgabe, type SkillKategorie } from '@/api/admin/skills'
+import { SKILL_VORGABEN } from '@/api/admin/skillVorgaben'
 import { ApiFehler } from '@/api/common/fehler'
 import { ADMIN_PFADE } from '@/app/schutz/zielpfad'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
@@ -91,10 +92,13 @@ function skillFehlerAus(fehler: ApiFehler | null, kategorien: SkillKategorie[]):
   return ergebnis
 }
 
-/** Anlegen: Werte mit der Mitte der Skala vorbelegt und sichtbar; gesendet werden **alle** Kategorien. */
+/**
+ * Anlegen: Werte vorbelegt und sichtbar (Mitte der Skala, Torwart 0; `SKILL_VORGABEN`); gesendet werden **alle**
+ * Kategorien.
+ */
 function AnlegenFormular({ kategorien }: { kategorien: SkillKategorie[] }) {
   const [name, setName] = useState('')
-  const [werte, setWerte] = useState(() => Object.fromEntries(kategorien.map((k) => [k.schluessel, String(mitte(k))])))
+  const [werte, setWerte] = useState(() => Object.fromEntries(kategorien.map((k) => [k.schluessel, String(vorgabe(k, SKILL_VORGABEN))])))
   const anlegen = useProfilAnlegen()
   const navigate = useNavigate()
   const nameFeld = useRef<HTMLInputElement>(null)

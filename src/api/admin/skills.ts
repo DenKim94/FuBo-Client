@@ -24,6 +24,22 @@ export function mitte(kategorie: SkillKategorie): number {
 }
 
 /**
+ * Vorbelegung einer Kategorie beim Anlegen: der Wert aus `abweichungen`, sonst die Mitte der Skala.
+ *
+ * Die Tabelle kommt vom Aufrufer (`SKILL_VORGABEN`), damit diese Datei keine Kategorie beim Namen kennt. Ein
+ * abweichender Wert ausserhalb des Bereichs (keine ganze Zahl oder ausserhalb von `minWert` bis `maxWert`) zählt
+ * nicht: Der Bereich kommt vom Server, eine veraltete Tabelle darf keinen ungültigen Wert vorschlagen.
+ *
+ * @param kategorie Die Kategorie.
+ * @param abweichungen Abweichende Vorgaben je Schlüssel.
+ */
+export function vorgabe(kategorie: SkillKategorie, abweichungen: Readonly<Record<string, number>> = {}): number {
+  const wert = abweichungen[kategorie.schluessel]
+  if (wert !== undefined && Number.isInteger(wert) && wert >= kategorie.minWert && wert <= kategorie.maxWert) return wert
+  return mitte(kategorie)
+}
+
+/**
  * Hat das Profil zu **jeder** aktiven Kategorie einen Wert?
  *
  * `GET /admin/user/lesen` liefert nur Kategorien, zu denen eine Zeile existiert. Profile

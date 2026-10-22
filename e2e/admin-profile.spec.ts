@@ -41,9 +41,9 @@ test.describe('Profilverwaltung', () => {
     await page.getByTestId('admin-profil-anlegen').click()
     await expect(page).toHaveURL(/\/admin\/profile\/neu$/)
     await expect(page.getByTestId('admin-profil-formular')).toBeVisible()
-    // Vorbelegt mit der Mitte der Skala und sichtbar (nicht nur als Platzhalter).
+    // Vorbelegt und sichtbar (nicht nur als Platzhalter): Mitte der Skala, Torwart 0.
     await expect(page.getByTestId('skill-ANGRIFF-3')).toBeChecked()
-    await expect(page.getByTestId('skill-TORWART-2')).toBeChecked()
+    await expect(page.getByTestId('skill-TORWART-0')).toBeChecked()
 
     await page.getByTestId('admin-profil-name').fill('  Beispielspieler 04  ')
     await page.getByTestId('skill-ANGRIFF-5').check()
@@ -53,7 +53,7 @@ test.describe('Profilverwaltung', () => {
     await expect(page.getByTestId('admin-profile-hinweis')).toContainText('Beispielspieler 04')
     await expect(page.getByTestId('admin-profile-anzahl')).toHaveText('4 Spielerprofile')
     expect(welt.profilKoerper.angelegt).toEqual([
-      { name: 'Beispielspieler 04', skills: { ANGRIFF: 5, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 2 } },
+      { name: 'Beispielspieler 04', skills: { ANGRIFF: 5, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 0 } },
     ])
   })
 
