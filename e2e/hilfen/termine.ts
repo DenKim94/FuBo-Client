@@ -169,7 +169,18 @@ function details(m: TerminModell) {
     ergebnis: m.ergebnis,
     halleAbgesagtAm: null,
     halleAbsageMoeglichBis: `${m.datum}T${m.uhrzeit.slice(0, 5)}:00`,
+    kontingentGenerierung: kontingentVon(m),
   }
+}
+
+/**
+ * Restkontingent der Sitzung wie am Server (seit 22.10.2026): `null` ohne Zusage (und nicht Admin) oder bei einem
+ * Termin, der nicht `GEPLANT` ist; sonst `erlaubt` und `uebrig` im aktuellen Kontingentstand.
+ */
+export function kontingentVon(m: TerminModell): { erlaubt: number; uebrig: number } | null {
+  if (m.status !== 'GEPLANT' || (m.eigene !== true && !m.adminSitzung)) return null
+  const verbraucht = m.laeufe[m.kontingentVersion ?? m.teilnehmerVersion] ?? 0
+  return { erlaubt: m.kontingent, uebrig: Math.max(0, m.kontingent - verbraucht) }
 }
 
 export function problem(route: Route, status: number, code: string, detail: string) {

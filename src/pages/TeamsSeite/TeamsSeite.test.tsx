@@ -211,24 +211,37 @@ describe('TeamsSeite: Generieren', () => {
     await waitFor(() => expect(screen.getByTestId('teams-anzeige-kopf')).toHaveFocus())
   })
 
-  test('sperrt nach KONTINGENT_ERSCHOEPFT bis sich die Teilnehmerliste aendert, ohne Fehlermeldung', async () => {
-    const welt = rendern('/teams/102', teilnehmend({ terminId: 102, kontingent: 0 }))
-    await userEvent.click(await screen.findByTestId('teams-generieren'))
+  test('sperrt direkt nach dem letzten erlaubten Lauf, ohne Fehlversuch; eine Absage öffnet nicht, eine neue Zusage schon', async () => {
+    const welt = rendern('/teams/102', teilnehmend({ terminId: 102, kontingent: 1, kontingentVersion: 1 }))
+    expect(await screen.findByTestId('teams-kontingent')).toHaveTextContent('noch 1 von 1 Generierung')
 
-    expect(await screen.findByTestId('teams-grund')).toHaveTextContent('Das Kontingent für diese Teilnehmerliste ist aufgebraucht.')
+    await userEvent.click(screen.getByTestId('teams-generieren'))
+
+    // Nach dem Lauf liest der Hook den Termin neu: `uebrig = 0`, gesperrt, ohne zweiten Versuch und ohne Meldung.
+    expect(await screen.findByTestId('teams-grund')).toHaveTextContent(
+      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.',
+    )
     expect(screen.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.queryByTestId('teams-kontingent')).not.toBeInTheDocument()
     expect(screen.queryByTestId('teams-fehler')).not.toBeInTheDocument()
-
-    // Ein weiterer Tipp tut nichts, bis die Liste sich aendert.
     await userEvent.click(screen.getByTestId('teams-generieren'))
     expect(welt.protokoll.generierungen).toHaveLength(1)
 
-    // Jemand sagt zu: neue Teilnehmerversion, die Sperre faellt.
+    // Jemand sagt ab: neue Teilnehmerversion, gleicher Kontingentstand – die Sperre bleibt.
+    welt.modelle[0].zusagen.pop()
     welt.modelle[0].teilnehmerVersion += 1
+    await queryClient.invalidateQueries({ queryKey: schluessel.terminAlle })
+    await waitFor(() => expect(screen.getByTestId('teams-anzeige-veraltet')).toBeInTheDocument())
+    expect(screen.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
+
+    // Jemand sagt neu zu: neuer Kontingentstand, die Sperre fällt.
     welt.modelle[0].zusagen.push({ name: 'Beispielspieler 30', gast: false })
+    welt.modelle[0].teilnehmerVersion += 1
+    welt.modelle[0].kontingentVersion = 2
     await queryClient.invalidateQueries({ queryKey: schluessel.terminAlle })
     await waitFor(() => expect(screen.queryByTestId('teams-grund')).not.toBeInTheDocument())
     expect(screen.getByTestId('teams-generieren')).not.toHaveAttribute('aria-disabled')
+    expect(screen.getByTestId('teams-kontingent')).toHaveTextContent('noch 1 von 1 Generierung')
   })
 
   test('zeigt einen anderen Fehler als Meldung und behaelt die Aktion', async () => {

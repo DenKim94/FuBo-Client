@@ -14,6 +14,9 @@ export type Teilnehmerliste = components['schemas']['Teilnehmerliste']
 export type TeilnehmerEintrag = components['schemas']['TeilnehmerEintrag']
 
 /** Zustand eines Termins: `GEPLANT`, `ABGESAGT` oder `ABGESCHLOSSEN`. */
+/** Restkontingent der Teamgenerierung der lesenden Sitzung (`erlaubt`, `uebrig`), nur in der Einzelansicht. */
+export type KontingentGenerierung = components['schemas']['KontingentGenerierung']
+
 export type TerminStatus = components['schemas']['TerminStatus']
 
 /** Optionen von {@link termineLesen}. */

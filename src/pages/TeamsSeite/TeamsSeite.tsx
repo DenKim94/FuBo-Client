@@ -1,11 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import { ApiFehler } from '@/api/common/fehler'
-import { schluessel } from '@/api/common/schluessel'
 import { spieltMit } from '@/api/termine/teilnahme'
 import { naechsterTermin } from '@/api/termine/terminZeit'
-import type { TerminDetails } from '@/api/termine/termine'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Hinweis from '@/components/Hinweis/Hinweis'
@@ -73,10 +70,9 @@ function TeamsHub() {
  * einen eigenen Leerzustand. Die Einteilung kommt aus dem Einzeltermin mit dessen
  * Polling, damit eine fremde Generierung und „veraltet“ ohne Neuladen erscheinen.
  *
- * **Kontingent:** Der Server nennt die Erschöpfung nur im Fehler. Die Seite merkt
- * sich die `teilnehmerVersion`, zu der er sie meldete, und sperrt die Aktion,
- * solange sie gleich bleibt (E15). Nach dem Neuladen ist der Merker weg; der erste
- * Tipp liefert dann erneut den `409`, ohne Kontingent zu verbrauchen.
+ * **Kontingent:** Der Einzeltermin nennt das Restkontingent der eigenen Sitzung (`kontingentGenerierung`, seit
+ * 22.10.2026); die Leiste sperrt bei `uebrig = 0` sofort. Einen eigenen Merker nach `409 KONTINGENT_ERSCHOEPFT`
+ * braucht die Seite nicht mehr: Der Hook liest danach neu, und der Server-Wert sperrt.
  *
  * Wie `TerminAnsicht` ist die Leiste das letzte Element der Seite, damit sie über
  * dem ganzen Inhalt unten haftet.
@@ -86,9 +82,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
   const termin = abfrage.data
   const begonnen = useBegonnen(termin)
   const { sitzung, istGast, istAdmin } = useSitzung()
-  const queryClient = useQueryClient()
   const ueberschriftRef = useRef<HTMLHeadingElement>(null)
-  const [kontingentBei, setKontingentBei] = useState<number | null>(null)
   // Zählt erfolgreiche Läufe: Jeder setzt den Fokus einmal auf die Überschrift.
   const [fokusAnfragen, setFokusAnfragen] = useState(0)
 
@@ -147,14 +141,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
           mindestzahlErreicht={liste.mindestzahlErreicht}
           minTeilnehmer={liste.minTeilnehmer}
           begonnen={begonnen}
-          gesperrtDurchKontingent={kontingentBei !== null && kontingentBei === termin.teilnehmerVersion}
-          beiKontingentErschoepft={() =>
-            // Die frischeste Version: Der Hook hat den Einzeltermin vor diesem Aufruf neu gelesen.
-            setKontingentBei(
-              queryClient.getQueryData<TerminDetails>(schluessel.termin(String(terminId)))?.teilnehmerVersion ??
-                termin.teilnehmerVersion,
-            )
-          }
+          kontingent={termin.kontingentGenerierung}
           beiErfolg={() => setFokusAnfragen((n) => n + 1)}
         />
       )

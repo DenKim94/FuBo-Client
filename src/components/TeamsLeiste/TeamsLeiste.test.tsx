@@ -21,7 +21,6 @@ function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeo
   const welt = terminHandlers([terminModell(modellTeil)])
   mockServer.use(...welt.handlers)
   const beiErfolg = vi.fn()
-  const beiKontingentErschoepft = vi.fn()
   render(
     <TeamsLeiste
       terminId={102}
@@ -31,14 +30,13 @@ function rendern(teil: Partial<Eigenschaften> = {}, modellTeil: Parameters<typeo
       mindestzahlErreicht
       minTeilnehmer={6}
       begonnen={false}
-      gesperrtDurchKontingent={false}
+      kontingent={{ erlaubt: 2, uebrig: 2 }}
       beiErfolg={beiErfolg}
-      beiKontingentErschoepft={beiKontingentErschoepft}
       {...teil}
     />,
     { wrapper: QueryUmgebung },
   )
-  return { welt, beiErfolg, beiKontingentErschoepft }
+  return { welt, beiErfolg }
 }
 
 describe('TeamsLeiste', () => {
@@ -53,9 +51,8 @@ describe('TeamsLeiste', () => {
           mindestzahlErreicht
           minTeilnehmer={6}
           begonnen={false}
-          gesperrtDurchKontingent={false}
+          kontingent={null}
           beiErfolg={() => {}}
-          beiKontingentErschoepft={() => {}}
         />
       </QueryUmgebung>,
     )
@@ -120,7 +117,7 @@ describe('TeamsLeiste', () => {
   })
 
   test('der fehlende Teilnehmerstatus geht den anderen Gründen vor', () => {
-    rendern({ berechtigt: false, mindestzahlErreicht: false, gesperrtDurchKontingent: true })
+    rendern({ berechtigt: false, mindestzahlErreicht: false, kontingent: { erlaubt: 1, uebrig: 0 } })
 
     expect(screen.getByTestId('teams-grund')).toHaveTextContent('Nur Teilnehmer des Termins')
   })
@@ -139,19 +136,19 @@ describe('TeamsLeiste', () => {
     expect(welt.protokoll.generierungen).toHaveLength(0)
   })
 
-  test('sperrt nach erschoepftem Kontingent mit Grund und Weg zur Freigabe', async () => {
-    const { welt } = rendern({ gesperrtDurchKontingent: true })
+  test('sperrt bei uebrig = 0 sofort, mit Grund und Weg zur Freigabe, ohne Fehlversuch', async () => {
+    const { welt } = rendern({ kontingent: { erlaubt: 1, uebrig: 0 } })
 
     expect(screen.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
     expect(screen.getByTestId('teams-grund')).toHaveTextContent(
-      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.',
+      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.',
     )
     await userEvent.click(screen.getByTestId('teams-generieren'))
     expect(welt.protokoll.generierungen).toHaveLength(0)
   })
 
   test('nennt zuerst die fehlende Mindestzahl, wenn beides zutrifft', () => {
-    rendern({ mindestzahlErreicht: false, gesperrtDurchKontingent: true })
+    rendern({ mindestzahlErreicht: false, kontingent: { erlaubt: 1, uebrig: 0 } })
     expect(screen.getByTestId('teams-grund')).toHaveTextContent('Zusagen sind erforderlich')
   })
 
@@ -162,17 +159,18 @@ describe('TeamsLeiste', () => {
     expect(screen.queryByTestId('aktionsleiste')).not.toBeInTheDocument()
   })
 
-  test('behandelt KONTINGENT_ERSCHOEPFT als gesperrten Zustand und nicht als Fehlermeldung', async () => {
-    const { beiKontingentErschoepft } = rendern({}, { terminId: 102, eigene: true, kontingent: 0 })
+  test('meldet der Server trotz Anzeige KONTINGENT_ERSCHOEPFT (veralteter Stand), ist das keine Fehlermeldung', async () => {
+    // Die Anzeige sagt „1 übrig“, der Server ist weiter: Ein anderer Tab hat den Lauf schon verbraucht.
+    const { welt } = rendern({ kontingent: { erlaubt: 1, uebrig: 1 } }, { terminId: 102, eigene: true, kontingent: 0 })
     await userEvent.click(screen.getByTestId('teams-generieren'))
 
-    await waitFor(() => expect(beiKontingentErschoepft).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(welt.protokoll.generierungen).toHaveLength(1))
     expect(screen.queryByTestId('teams-fehler')).not.toBeInTheDocument()
   })
 
   test('zeigt andere Fehler als Meldung, der zweite Tipp wiederholt', async () => {
     let versuche = 0
-    const { beiErfolg, beiKontingentErschoepft } = rendern()
+    const { beiErfolg } = rendern()
     // Nach `rendern`: Spaeter angemeldete Handler gehen vor (MSW stellt `use` voran).
     mockServer.use(
       http.post('*/teams/generieren', () => {
@@ -188,7 +186,6 @@ describe('TeamsLeiste', () => {
     await userEvent.click(screen.getByTestId('teams-generieren'))
 
     expect(await screen.findByTestId('teams-fehler')).toHaveTextContent('Die Teilnehmerliste hat sich geändert.')
-    expect(beiKontingentErschoepft).not.toHaveBeenCalled()
 
     await userEvent.click(screen.getByTestId('teams-generieren'))
     await waitFor(() => expect(beiErfolg).toHaveBeenCalledTimes(1))
@@ -218,7 +215,7 @@ describe('TeamsLeiste', () => {
     expect(laeufe).toBe(1)
   })
 
-  test('zeigt das verbleibende Kontingent nur, wenn die Seite es kennt', () => {
+  test('zeigt das Restkontingent, solange etwas übrig ist; Einzahl bei einem erlaubten Lauf', () => {
     const { unmount } = render(
       <QueryUmgebung>
         <TeamsLeiste
@@ -229,16 +226,38 @@ describe('TeamsLeiste', () => {
           mindestzahlErreicht
           minTeilnehmer={6}
           begonnen={false}
-          gesperrtDurchKontingent={false}
+          kontingent={{ erlaubt: 2, uebrig: 1 }}
           beiErfolg={() => {}}
-          beiKontingentErschoepft={() => {}}
-          kontingent={{ uebrig: 1, max: 2 }}
         />
       </QueryUmgebung>,
     )
     expect(screen.getByTestId('teams-kontingent')).toHaveTextContent('noch 1 von 2 Generierungen')
     unmount()
-    rendern()
+    const zweite = rendern({ kontingent: { erlaubt: 1, uebrig: 1 } })
+    expect(screen.getByTestId('teams-kontingent')).toHaveTextContent('noch 1 von 1 Generierung')
+    expect(zweite.welt).toBeDefined()
+  })
+
+  test('zeigt keine Zahl ohne Server-Wert (null) und keine, wenn die Aktion gesperrt ist', () => {
+    const { unmount } = render(
+      <QueryUmgebung>
+        <TeamsLeiste
+          terminId={102}
+          vorhanden={false}
+          veraltet={false}
+          berechtigt
+          mindestzahlErreicht
+          minTeilnehmer={6}
+          begonnen={false}
+          kontingent={null}
+          beiErfolg={() => {}}
+        />
+      </QueryUmgebung>,
+    )
     expect(screen.queryByTestId('teams-kontingent')).not.toBeInTheDocument()
+    unmount()
+    rendern({ kontingent: { erlaubt: 2, uebrig: 0 } })
+    expect(screen.queryByTestId('teams-kontingent')).not.toBeInTheDocument()
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Das Kontingent für diese Teilnehmerliste ist aufgebraucht.')
   })
 })

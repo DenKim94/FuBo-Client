@@ -94,30 +94,31 @@ test.describe('Tab Teams', () => {
     await expect.poll(() => welt.generierungen.length).toBe(2)
   })
 
-  test('sperrt nach erschoepftem Kontingent mit Grund, bis jemand neu zusagt', async ({ page }) => {
+  test('sperrt direkt nach dem letzten erlaubten Lauf mit Grund, bis jemand neu zusagt', async ({ page }) => {
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true, kontingent: 1 })])
     await teamsNachbilden(page, welt)
     await page.clock.install()
     await page.goto('/teams')
+    await expect(page.getByTestId('teams-kontingent')).toHaveText('noch 1 von 1 Generierung')
     await page.getByTestId('teams-generieren').click()
     await expect(page.getByTestId('teams-anzeige')).toBeVisible()
 
-    // Gleiche Teilnehmerversion, Kontingent 1: Der zweite Lauf scheitert, der Server nennt keine Zahl.
-    await page.getByTestId('teams-generieren').click()
-    await page.getByTestId('teams-ersetzen-bestaetigen').click()
-
-    await expect(page.getByTestId('teams-grund')).toHaveText('Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.')
+    // Ohne zweiten Versuch: Der Termin nennt `uebrig = 0`, die Aktion ist sofort gesperrt.
+    await expect(page.getByTestId('teams-grund')).toHaveText(
+      'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.',
+    )
     await expect(page.getByTestId('teams-generieren')).toHaveAttribute('aria-disabled', 'true')
+    await expect(page.getByTestId('teams-kontingent')).toHaveCount(0)
     // Keine Fehlermeldung: Das ist ein Zustand, kein Fehler.
     await expect(page.getByTestId('teams-fehler')).toHaveCount(0)
+    expect(welt.generierungen).toHaveLength(1)
 
-    // Ein Tipp auf die gesperrte Aktion verbraucht nichts und sendet nichts.
+    // Ein Tipp auf die gesperrte Aktion sendet nichts.
     // `force`: Playwright haelt `aria-disabled` fuer „nicht bedienbar“; ein Finger tippt trotzdem.
-    const gesendet = welt.generierungen.length
     await page.getByTestId('teams-generieren').click({ force: true })
-    expect(welt.generierungen.length).toBe(gesendet)
+    expect(welt.generierungen).toHaveLength(1)
 
-    // Jemand sagt neu zu: neue Version und (am Server) neuer Kontingentstand. Eine Absage oeffnete es nicht (22.10.2026).
+    // Jemand sagt neu zu: neue Version und neuer Kontingentstand (eine Absage oeffnete es nicht, 22.10.2026).
     welt.modelle[0].zusagen.push({ name: 'Beispielspieler 40', gast: false })
     welt.modelle[0].teilnehmerVersion += 1
     await page.clock.runFor(21_000)

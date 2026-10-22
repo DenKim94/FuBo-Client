@@ -31,10 +31,11 @@ describe('TeamsAnzeige', () => {
     expect(within(screen.getByTestId('teams-anzeige-a')).getAllByRole('listitem')).toHaveLength(2)
   })
 
-  test('nennt Ersteller und Zeitpunkt in der Ueberschrift der Einteilung', () => {
+  test('nennt den Zeitpunkt der letzten Einteilung in der Ueberschrift, ohne Ersteller', () => {
     rendern(einteilung())
     const kopf = screen.getByRole('heading', { level: 2 })
-    expect(kopf).toHaveTextContent('Einteilung von Beispielspieler 01,')
+    expect(kopf).toHaveTextContent(/^Letzte Einteilung am /)
+    expect(kopf).not.toHaveTextContent('Beispielspieler 01')
     expect(kopf).toHaveTextContent('Uhr')
     // Programmatisch fokussierbar, aber nicht per Tab erreichbar.
     expect(kopf).toHaveAttribute('tabindex', '-1')

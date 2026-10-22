@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { ApiFehler } from '@/api/common/fehler'
+import type { KontingentGenerierung } from '@/api/termine/termine'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Dialog from '@/components/Dialog/Dialog'
@@ -31,14 +32,13 @@ type TeamsLeisteEigenschaften = {
   minTeilnehmer: number
   /** Der Termin hat begonnen: keine Aktion mehr, die Einteilung steht fest (E8). */
   begonnen: boolean
-  /** Der Server hat für diese `teilnehmerVersion` `KONTINGENT_ERSCHOEPFT` gemeldet (E15; siehe unten zur Absage). */
-  gesperrtDurchKontingent: boolean
-  /** Der Lauf meldete `KONTINGENT_ERSCHOEPFT`: Die Seite merkt sich die `teilnehmerVersion`. */
-  beiKontingentErschoepft: () => void
+  /**
+   * Restkontingent der eigenen Sitzung (`kontingentGenerierung` der Einzelansicht, Server-Wert seit 22.10.2026) oder
+   * `null` (darf nicht generieren oder Termin nicht `GEPLANT`). `uebrig = 0` sperrt die Aktion sofort.
+   */
+  kontingent: KontingentGenerierung | null
   /** Ein Lauf war erfolgreich und die Daten sind neu gelesen: Die Seite setzt den Fokus. */
   beiErfolg: () => void
-  /** Verbleibendes Kontingent; die Seite übergibt in C5 nichts, weil der Server die Zahl nicht liefert (E15). */
-  kontingent?: { uebrig: number; max: number }
 }
 
 /** Rückfalltext für Fehler, die weder vom Server stammen noch Netzfehler sind. */
@@ -52,18 +52,18 @@ const FEHLER_ERSATZ = 'Die Teams konnten nicht generiert werden. Bitte versuche 
  * | `GEPLANT`, berechtigt, Mindestzahl erreicht, Kontingent offen | Aktion bedienbar |
  * | nicht zugesagt, abgesagt oder auf der Warteschlange (nicht Admin) | `aria-disabled`, Grund „Nur Teilnehmer …“ |
  * | Mindestzahl nicht erreicht (Server-Wert) | `aria-disabled`, Grund mit Soll und Ist |
- * | Kontingent erschöpft (`409`) | `aria-disabled`, Grund und Weg zur Freigabe |
+ * | Kontingent erschöpft (`kontingent.uebrig = 0`) | `aria-disabled`, Grund und Weg zur Freigabe |
  * | begonnen | keine Aktion, Hinweis „Die Einteilung steht fest.“ |
  *
  * **Gesperrt heißt `aria-disabled`:** Der Fokus bleibt erreichbar und der Grund
  * wird vorgelesen (`aria-describedby`). Der Klick tut dann nichts.
  *
- * **Kontingent:** Der Server liefert nur den Fehler, nie die Zahl. Nach
- * `KONTINGENT_ERSCHOEPFT` ist die Aktion gesperrt, bis sich die `teilnehmerVersion` ändert (die Seite hält den
- * Merker). Seit 22.10.2026 öffnet der Server das Kontingent nur bei neuen Zusagen (nicht bei Absagen); seinen
- * Kontingentstand liefert er nicht. Nach einer Absage gibt die Seite die Aktion deshalb frei, der nächste Tipp
- * meldet erneut `KONTINGENT_ERSCHOEPFT` (ohne Kontingent zu verbrauchen) und sperrt wieder. `KONTINGENT_ERSCHOEPFT`
- * ist **keine** Fehlermeldung, sondern der gesperrte Zustand mit Grund.
+ * **Kontingent aus dem Termin** (seit 22.10.2026): Der Einzeltermin nennt das Restkontingent der eigenen Sitzung
+ * (`kontingentGenerierung`). Nach dem letzten erlaubten Lauf liest der Hook den Termin neu, `uebrig` ist `0`, und
+ * die Aktion ist **sofort** gesperrt – ohne einen Fehlversuch. Solange Läufe übrig sind, steht „noch x von y
+ * Generierungen“ über der Aktion. Die Zahl ist eine Anzeige; durchgesetzt wird das Kontingent vom Server. Meldet
+ * er trotzdem `KONTINGENT_ERSCHOEPFT` (jemand war schneller, Stand veraltet), ist das **keine** Fehlermeldung: Der
+ * Hook liest neu, und `uebrig = 0` sperrt mit Grund. Eine Absage öffnet das Kontingent nicht, eine neue Zusage schon.
  *
  * **Rückfrage nur beim Ersetzen einer aktuellen Einteilung** (E16): Ein Lauf
  * löst die bisherige Einteilung ab und verbraucht Kontingent. Ist sie veraltet
@@ -82,10 +82,8 @@ export default function TeamsLeiste({
   mindestzahlErreicht,
   minTeilnehmer,
   begonnen,
-  gesperrtDurchKontingent,
-  beiKontingentErschoepft,
-  beiErfolg,
   kontingent,
+  beiErfolg,
 }: TeamsLeisteEigenschaften) {
   const generieren = useTeamsGenerieren(terminId)
   const [rueckfrage, setRueckfrage] = useState(false)
@@ -109,8 +107,8 @@ export default function TeamsLeiste({
     grund = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
   } else if (!mindestzahlErreicht) {
     grund = `Mindestens ${String(minTeilnehmer)} Zusagen sind erforderlich.`
-  } else if (gesperrtDurchKontingent) {
-    grund = 'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine neue Zusage setzt es zurück.'
+  } else if (kontingent?.uebrig === 0) {
+    grund = 'Das Kontingent für diese Teilnehmerliste ist aufgebraucht. Eine Änderung der Teilnehmerliste setzt es zurück.'
   }
   const gesperrt = grund !== null
 
@@ -127,9 +125,6 @@ export default function TeamsLeiste({
       onSuccess: () => {
         setErfolg(true)
         beiErfolg()
-      },
-      onError: (e) => {
-        if (e instanceof ApiFehler && e.code === 'KONTINGENT_ERSCHOEPFT') beiKontingentErschoepft()
       },
     })
   }
@@ -156,9 +151,10 @@ export default function TeamsLeiste({
       <Aktionsleiste>
         {/* Ein Kind: Die Leiste legt ihre Kinder nebeneinander, Grund und Aktion gehören untereinander. */}
         <div className={style.spalte}>
-          {kontingent && (
+          {/* Nur solange etwas übrig ist und nichts anderes sperrt: Bei 0 sagt der Grund dasselbe genauer. */}
+          {kontingent && !gesperrt && (
             <p className={style.kontingent} data-testid="teams-kontingent">
-              noch {kontingent.uebrig} von {kontingent.max} Generierungen
+              noch {kontingent.uebrig} von {kontingent.erlaubt} {kontingent.erlaubt === 1 ? 'Generierung' : 'Generierungen'}
             </p>
           )}
           {grund && (

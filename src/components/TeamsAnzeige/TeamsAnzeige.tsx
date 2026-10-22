@@ -48,7 +48,7 @@ export default function TeamsAnzeige({
   return (
     <div className={style.anzeige} data-testid={testId}>
       <h2 className={style.kopf} tabIndex={-1} ref={ueberschriftRef} data-testid={`${testId}-kopf`}>
-        Einteilung von {teams.erzeugtVon}, {zeitpunktKurz(teams.erzeugtAm)}
+        Letzte Einteilung am {zeitpunktKurz(teams.erzeugtAm)}
       </h2>
 
       {teams.veraltet && (

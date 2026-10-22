@@ -698,6 +698,8 @@ export interface paths {
          *     **Der Aufruf vor jeder Änderung:** `/admin/termin/aendern` verlangt die `version` aus dieser Antwort zurück.
          *
          *     **Die Teilnehmerliste kommt mit S4-Paket 7 dazu** – als zusätzliches Feld, nicht als zweiter Endpunkt: Wer einen Termin öffnet, will die Teilnehmer sehen, und zwei Aufrufe für eine Ansicht sind zwei Gelegenheiten für einen inkonsistenten Stand.
+         *
+         *     **Das Restkontingent der Teamgenerierung** (`kontingentGenerierung`) kam am 22.10.2026 dazu – nur hier, nicht in der Liste; Bedeutung und `null`-Fälle stehen am Feld.
          */
         get: operations["terminLesen"];
         put?: never;
@@ -910,6 +912,8 @@ export interface paths {
          *     **Der Endpunkt liegt bewusst nicht unter `/admin/`, aber nicht jeder Angemeldete darf ihn nutzen** (Änderung vom 22.10.2026, **brechend** für Clients). Generieren dürfen der `ADMIN` und jeder Teilnehmer **mit Zusage an genau diesem Termin** – `USER` und `GAST`; wer in der Warteschlange steht, hat zugesagt und zählt mit. Wer nie zugesagt oder wieder abgesagt hat, erhält `403 KEINE_ZUSAGE`. Die Regel hängt an den Daten des Termins und steht deshalb im Dienst, nicht im Pfad. **Ein Client blendet die Schaltfläche für alle anderen aus** – `eigeneRueckmeldung` in der Termin-Einzelansicht liefert dafür die Auskunft; der Admin sieht sie immer.
          *
          *     Begrenzt wird danach über das Kontingent: `anzTeamGenerator` Läufe **je Nutzer, je Termin und je Kontingentstand**. Den Kontingentstand erhöhen nur **neue Zusagen** (auch die Zusage nach einer Absage), **Änderungen eines Skillwerts** eines zugesagten Spielers durch den Admin und **Änderungen der Gast-Stufe**; dann steht das Kontingent wieder offen, zurückgesetzt wird es nie. **Eine Absage – auch das Sperren eines Profils – öffnet es nicht**, ebenso keine wiederholte Zusage. Eine Absage lässt eine bestehende Einteilung dennoch als `veraltet` gelten.
+         *
+         *     **Das Restkontingent steht vorab in `GET /termine/{terminId}/lesen`** – im Feld `kontingentGenerierung` (`erlaubt`, `uebrig`; **`null`**, wenn die Sitzung hier nicht generieren darf oder der Termin nicht `GEPLANT` ist). Dort lässt sich die Schaltfläche bei `uebrig = 0` sperren, statt den Lauf mit `409 KONTINGENT_ERSCHOEPFT` scheitern zu lassen. Das Feld ist eine Anzeige; durchgesetzt wird das Kontingent weiterhin hier.
          *
          *     **Ein neuer Lauf löst den bisherigen ab.** Es gibt je Termin höchstens eine aktuelle Einteilung; ältere bleiben als Historie in der Datenbank und sind über die API nicht erreichbar.
          *
@@ -1873,6 +1877,33 @@ export interface components {
             eigeneRueckmeldung?: boolean | null;
         };
         /**
+         * @description Das Restkontingent der Teamgenerierung für die Sitzung, die den Termin liest (Änderung vom 22.10.2026).
+         *
+         *     **Nur eigene Zahlen:** `erlaubt` ist die Einstellung `anzTeamGenerator`, `uebrig` der Rest dieses Aufrufers an diesem Termin im aktuellen Kontingentstand. Andere Akteure, Skillwerte und Kontingentstände tauchen nicht auf.
+         *
+         *     **Anzeige, keine Sicherung.** Die Zahl ist ein Schnappschuss; zwischen Lesen und Generieren kann sich der Stand ändern. Durchgesetzt wird das Kontingent allein von `POST /teams/generieren` (`409 KONTINGENT_ERSCHOEPFT`).
+         *
+         *     **`uebrig` ist nie negativ.** Senkt der Admin `anzTeamGenerator` unter die bereits verbrauchte Zahl, steht `0` da.
+         *
+         *     **`uebrig = 0` genau dann, wenn ein Lauf jetzt an `KONTINGENT_ERSCHOEPFT` scheitern würde** – sofern nicht vorher ein anderer Grund greift (etwa `TEAMS_FIXIERT` oder `ZU_WENIG_TEILNEHMER`; die Anzeige berücksichtigt diese Gründe nicht).
+         * @example {
+         *       "erlaubt": 2,
+         *       "uebrig": 1
+         *     }
+         */
+        KontingentGenerierung: {
+            /**
+             * Format: int32
+             * @description Zulässige Läufe je Nutzer, Termin und Kontingentstand – der Wert von `anzTeamGenerator` zum Zeitpunkt des Lesens.
+             */
+            erlaubt: number;
+            /**
+             * Format: int32
+             * @description Noch verfügbare Läufe der lesenden Sitzung: `max(0, erlaubt − verbraucht)`. Neue Zusagen, Skill-Änderungen und Gast-Stufen-Änderungen setzen ihn wieder auf `erlaubt`; eine Absage ändert ihn nicht.
+             */
+            uebrig: number;
+        };
+        /**
          * @description Die Einzelansicht eines Termins: dieselben Felder wie in der Liste, dazu die `version` und die Teilnehmerliste.
          *
          *     **Die Teilnehmerliste hat keinen eigenen Endpunkt.** Wer einen Termin öffnet, will die Teilnehmer sehen, und zwei Aufrufe für eine Ansicht sind zwei Gelegenheiten für einen inkonsistenten Stand – zwischen ihnen kann jemand zusagen, und die Zahl im Kopf passte dann nicht mehr zur Liste darunter.
@@ -1882,6 +1913,8 @@ export interface components {
          *     **Mit S6 kam `ergebnis` dazu** – wieder ein nullbares Feld und damit additiv.
          *
          *     **Mit S7 kamen `halleAbgesagtAm` und `halleAbsageMoeglichBis` dazu** – das erste nullbar, das zweite immer gefüllt und aus Feldern abgeleitet, die der Client schon hat. Beide sind additiv. **Damit stehen fünf Zusatzfelder über den Stammdaten; der nächste gehört geprüft, nicht angehängt.**
+         *
+         *     **Am 22.10.2026 kam `kontingentGenerierung` dazu** – das sechste Zusatzfeld, geprüft und ausdrücklich begründet: Der Client muss die Schaltfläche „Teams generieren“ vor dem Klick sperren können, und die Zahl ist nur mit dem Kontingentstand der lesenden Sitzung zu ermitteln. Das Feld ist ein Pflichtfeld mit nullbarem Wert und damit **additiv**; es steht nur hier, nicht in `TerminUebersicht`.
          */
         TerminDetails: components["schemas"]["TerminUebersicht"] & {
             /**
@@ -1925,6 +1958,18 @@ export interface components {
              *     **Es ist eine Tatsache über den Termin, keine Berechtigungsaussage.** Ein Feld „darf ich jetzt noch absagen“ stünde bei `USER` und `GAST` bedeutungslos mit in der Antwort; deshalb rechnet der Adminbildschirm die Frage selbst aus. **Der Server setzt die Regel trotzdem durch** – die Client-Rechnung blendet einen Knopf aus, sie ist keine Sicherung.
              */
             halleAbsageMoeglichBis: string;
+            /**
+             * @description Das Restkontingent der Teamgenerierung der **lesenden Sitzung** oder **`null`**.
+             *
+             *     **`null` heißt: Die Sitzung darf an diesem Termin nicht generieren** – sie ist weder Admin noch hat sie zugesagt (dieselbe Bedingung wie bei `403 KEINE_ZUSAGE`) – **oder der Termin ist nicht `GEPLANT`** (abgesagt oder abgeschlossen). Ein Client blendet die Schaltfläche dann ohnehin aus. `null` ist bewusst nicht `uebrig = 0`: Bei `0` hilft eine neue Zusage oder eine Skill-Änderung, bei `null` nicht.
+             *
+             *     **Nur in der Einzelansicht.** `TerminUebersicht` trägt das Feld nicht: Es wäre eine Abfrage je Listeneintrag.
+             *
+             *     **Ein Pflichtfeld, auch mit `null`.** Der Schlüssel fehlt nie; ein Client unterscheidet nicht zwischen „fehlt“ und „`null`“.
+             *
+             *     **Sperre nur bei `uebrig = 0`:** Der Client darf die Schaltfläche ab `uebrig = 0` sperren und kann „noch `uebrig` von `erlaubt` Generierungen“ anzeigen. Die Sicherung bleibt beim Server.
+             */
+            kontingentGenerierung: components["schemas"]["KontingentGenerierung"] | null;
         };
         /** @description Anfragekörper von `/admin/termin/anlegen`. */
         TerminAnlegenRequest: {
@@ -4252,7 +4297,7 @@ export interface operations {
              *     - `TEAMS_FIXIERT` – der Termin hat begonnen; die Einteilung steht fest (A18). Der Server setzt das Kennzeichen selbst, spätestens fünf Minuten nach Anpfiff.
              *     - `ZU_WENIG_TEILNEHMER` – die Zusagen erreichen `minTeilnehmer` nicht; `detail` nennt Ist und Soll.
              *     - `SKILLWERTE_UNVOLLSTAENDIG` – einem Eingeteilten fehlt der Wert zu einer aktiven Kategorie; `detail` nennt die Namen. Ein Altbestand, der über `/admin/user/bearbeiten` zu beheben ist.
-             *     - `KONTINGENT_ERSCHOEPFT` – für diesen Kontingentstand ist die zulässige Anzahl Läufe verbraucht. **Kein `Retry-After`**: Es ist keine Drosselung über die Zeit, sondern ein Zustand, der sich ändert, sobald jemand neu zusagt oder sich ein Skillwert oder eine Gast-Stufe ändert. Eine Absage ändert ihn nicht.
+             *     - `KONTINGENT_ERSCHOEPFT` – für diesen Kontingentstand ist die zulässige Anzahl Läufe verbraucht. **Kein `Retry-After`**: Es ist keine Drosselung über die Zeit, sondern ein Zustand, der sich ändert, sobald jemand neu zusagt oder sich ein Skillwert oder eine Gast-Stufe ändert. Eine Absage ändert ihn nicht. Vorab lesbar als `kontingentGenerierung.uebrig = 0` in `GET /termine/{terminId}/lesen`.
              *     - `TEILNEHMER_GEAENDERT` – während des Laufs hat jemand zu- oder abgesagt. Der Aufruf lässt sich unverändert wiederholen; es geht nichts verloren (der Lauf wird vollständig zurückgenommen, auch das verbuchte Kontingent).
              */
             409: {
