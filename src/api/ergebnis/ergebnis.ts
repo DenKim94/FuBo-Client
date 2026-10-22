@@ -24,7 +24,8 @@ export type Sieger = components['schemas']['Sieger']
  *
  * Fehler: `409 ERGEBNIS_VORHANDEN` (jemand war schneller – **kein Fehler im
  * eigentlichen Sinn**), `409 TERMIN_NICHT_ABGESCHLOSSEN`, `409 KEINE_EINTEILUNG`,
- * `404 INHALT_NICHT_GEFUNDEN`.
+ * `404 INHALT_NICHT_GEFUNDEN`, `403 NICHT_EINGETEILT` (weder Admin noch in der aktuellen Einteilung; seit
+ * 22.10.2026, geprüft nach Status und Einteilung, vor `ERGEBNIS_VORHANDEN`).
  *
  * @param terminId Technischer Schlüssel des Termins.
  * @param sieger Ausgang des Spiels.

@@ -124,6 +124,30 @@ describe('useErgebnisErfassen', () => {
     expect(welt.protokoll.detailabrufe.length).toBeGreaterThan(vorher)
   })
 
+  test('liest bei 403 NICHT_EINGETEILT neu und schreibt nichts', async () => {
+    // Die eigene Sitzung steht nicht in der Einteilung: Der nachgebildete Server weist wie der echte ab.
+    const modell = abgeschlossen({
+      zusagen: [
+        { name: 'Beispielspieler 11', gast: false },
+        { name: 'Beispielspieler 12', gast: false },
+      ],
+      eigene: false,
+    })
+    const welt = terminHandlers([modell])
+    mockServer.use(...welt.handlers)
+    const { result } = hookRendern()
+    await warteAufDaten(result)
+    const vorher = welt.protokoll.detailabrufe.length
+
+    await act(async () => {
+      await result.current.erfassen.mutateAsync({ sieger: 'A', deutlich: false }).catch(() => {})
+    })
+
+    await waitFor(() => expect(result.current.erfassen.error).toMatchObject({ status: 403, code: 'NICHT_EINGETEILT' }))
+    expect(welt.protokoll.detailabrufe.length).toBeGreaterThan(vorher)
+    expect(welt.modelle[0].ergebnis).toBeNull()
+  })
+
   test('wiederholt bei 500 nicht und liest nicht neu', async () => {
     const welt = terminHandlers([abgeschlossen()])
     mockServer.use(...welt.handlers)

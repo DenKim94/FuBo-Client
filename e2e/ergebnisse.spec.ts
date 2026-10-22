@@ -62,6 +62,20 @@ test.describe('Tab Ergebnisse', () => {
     await expect(page.getByTestId('aktionsleiste')).toHaveCount(0)
   })
 
+  test('wer nicht eingeteilt war, sieht statt des Formulars einen Hinweis', async ({ page }) => {
+    // Hoechstzahl 8, die eigene Zusage ist die neunte: Warteschlange, also nicht eingeteilt.
+    const zusagen: Zusage[] = [...zusagenMitEigener.slice(1), { name: 'Beispielspieler 30', gast: false }, { name: EIGENER_NAME, gast: false }]
+    const welt = await termineNachbilden(page, [abgeschlossen({ terminId: 102, zusagen, max: 8 })])
+    const ergebnisse = await ergebnisseNachbilden(page, welt)
+    await page.goto('/ergebnisse')
+
+    await expect(page.getByTestId('ergebnis-nicht-eingeteilt')).toHaveText(
+      'Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.',
+    )
+    await expect(page.getByTestId('ergebnis-absenden')).toHaveCount(0)
+    expect(ergebnisse.erfassungen).toHaveLength(0)
+  })
+
   test('traegt das Ergebnis ein: Formular, Bestaetigung, Anzeige, Fokus und Bilanz', async ({ page }) => {
     const welt = await termineNachbilden(page, [abgeschlossen({ terminId: 102 })])
     const ergebnisse = await ergebnisseNachbilden(page, welt)
@@ -193,7 +207,9 @@ test.describe('Tab Ergebnisse', () => {
 test.describe('Gast', () => {
   test('sieht keine Bilanz und ruft sie nicht ab', async ({ page }) => {
     await sitzungNachbilden(page, { leerlaufSek: 900, rolle: 'GAST' })
-    const welt = await termineNachbilden(page, [abgeschlossen({ terminId: 102 })])
+    // Der Gast („Beispielgast“, `hilfen/sitzung.ts`) ist eingeteilt: Nur dann erscheint das Formular (seit 22.10.2026).
+    const zusagen: Zusage[] = [{ name: 'Beispielgast', gast: true }, ...zusagenMitEigener.slice(1)]
+    const welt = await termineNachbilden(page, [abgeschlossen({ terminId: 102, zusagen })])
     const ergebnisse = await ergebnisseNachbilden(page, welt)
     await page.goto('/ergebnisse')
 

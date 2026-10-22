@@ -6,7 +6,7 @@ import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import { useTermin } from '@/hooks/useTermin'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
-import { teamsAus, terminHandlers, terminModell } from '@/test/mocks/termine'
+import { EIGENER_NAME, teamsAus, terminHandlers, terminModell } from '@/test/mocks/termine'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
 import ErgebnisFormular from './ErgebnisFormular'
 
@@ -18,6 +18,7 @@ afterEach(() => {
 /** Rendert das Formular gegen einen abgeschlossenen Termin mit Einteilung (Serverzustand der Mocks). */
 function rendern() {
   const modell = terminModell({ terminId: 102, status: 'ABGESCHLOSSEN', datum: '2000-01-01' })
+  modell.zusagen.unshift({ name: EIGENER_NAME, gast: false })
   modell.teams = teamsAus(modell)
   const welt = terminHandlers([modell])
   mockServer.use(...welt.handlers)
@@ -184,6 +185,7 @@ describe('ErgebnisFormular: Eintragen', () => {
 describe('ErgebnisFormular: Abschluss trotz Austausch', () => {
   test('meldet den Abschluss auch dann, wenn die Seite das Formular beim Neulesen schon ausgetauscht hat', async () => {
     const modell = terminModell({ terminId: 102, status: 'ABGESCHLOSSEN', datum: '2000-01-01' })
+    modell.zusagen.unshift({ name: EIGENER_NAME, gast: false })
     modell.teams = teamsAus(modell)
     const welt = terminHandlers([modell])
     mockServer.use(...welt.handlers)
@@ -200,6 +202,7 @@ describe('ErgebnisFormular: Abschluss trotz Austausch', () => {
 
   test('meldet bei ERGEBNIS_VORHANDEN den Abschluss auch nach dem Austausch', async () => {
     const modell = terminModell({ terminId: 102, status: 'ABGESCHLOSSEN', datum: '2000-01-01' })
+    modell.zusagen.unshift({ name: EIGENER_NAME, gast: false })
     modell.teams = teamsAus(modell)
     const welt = terminHandlers([modell])
     mockServer.use(...welt.handlers)

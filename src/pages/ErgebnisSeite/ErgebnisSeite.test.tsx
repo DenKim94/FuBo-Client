@@ -4,11 +4,12 @@ import { HttpResponse, http } from 'msw'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
-import { beispielSitzung } from '@/test/mocks/handlers'
+import { beispielAdminSitzung, beispielSitzung } from '@/test/mocks/handlers'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
 import {
   beispielErgebnis,
+  EIGENER_NAME,
   teamsAus,
   terminHandlers,
   terminModell,
@@ -44,9 +45,11 @@ function vorTagen(n: number): string {
   return heuteIso(new Date(Date.now() - n * 86_400_000))
 }
 
-/** Ein abgeschlossener Termin; mit Einteilung, wenn nichts anderes gesagt ist. */
+/** Ein abgeschlossener Termin mit eigener Teilnahme; mit Einteilung, wenn nichts anderes gesagt ist. */
 function abgeschlossen(teil: Partial<TerminModell> & { terminId: number }, mitTeams = true): TerminModell {
   const modell = terminModell({ status: 'ABGESCHLOSSEN', datum: '2000-01-01', ...teil })
+  // Die eigene Sitzung spielte mit und steht damit in der Einteilung: Nur dann darf sie eintragen (22.10.2026).
+  if (!teil.zusagen) modell.zusagen = [{ name: EIGENER_NAME, gast: false }, ...modell.zusagen]
   if (mitTeams && !modell.teams) modell.teams = teamsAus(modell, 'Beispielspieler 01')
   return modell
 }
@@ -160,6 +163,33 @@ describe('ErgebnisSeite: Bilanz', () => {
     expect(await screen.findByTestId('ergebnis-anzeige')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByTestId('bilanz-karte')).not.toBeInTheDocument())
     expect(welt.protokoll.bilanzabrufe).toHaveLength(0)
+  })
+})
+
+describe('ErgebnisSeite: nur Eingeteilte tragen ein', () => {
+  test('wer nicht eingeteilt war (etwa auf der Warteschlange), sieht statt des Formulars einen Hinweis', async () => {
+    // Die eigene Sitzung steht nicht in der Einteilung (die Zusagen enthalten sie nicht).
+    const modell = abgeschlossen({ terminId: 4, zusagen: [{ name: 'Beispielspieler 11', gast: false }, { name: 'Beispielspieler 12', gast: false }] })
+    rendern('/ergebnisse/4', modell)
+
+    expect(await screen.findByTestId('ergebnis-nicht-eingeteilt')).toHaveTextContent(
+      'Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.',
+    )
+    expect(screen.queryByTestId('ergebnis-formular')).not.toBeInTheDocument()
+    // Die Einteilung bleibt sichtbar.
+    expect(screen.getByTestId('teams-anzeige')).toBeInTheDocument()
+  })
+
+  test('der Admin darf auch ohne Einteilung eintragen (wie am Server)', async () => {
+    mockServer.use(http.get('*/auth/session/lesen', () => HttpResponse.json(beispielAdminSitzung)))
+    const modell = {
+      ...abgeschlossen({ terminId: 4, zusagen: [{ name: 'Beispielspieler 11', gast: false }, { name: 'Beispielspieler 12', gast: false }] }),
+      adminSitzung: true,
+    }
+    rendern('/ergebnisse/4', modell)
+
+    expect(await screen.findByTestId('ergebnis-formular')).toBeInTheDocument()
+    expect(screen.queryByTestId('ergebnis-nicht-eingeteilt')).not.toBeInTheDocument()
   })
 })
 

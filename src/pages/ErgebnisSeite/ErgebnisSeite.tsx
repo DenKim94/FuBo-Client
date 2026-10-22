@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import { ApiFehler } from '@/api/common/fehler'
+import { istEingeteilt } from '@/api/termine/teilnahme'
 import BilanzKarte from '@/components/BilanzKarte/BilanzKarte'
 import ErgebnisAnzeige from '@/components/ErgebnisAnzeige/ErgebnisAnzeige'
 import ErgebnisFormular from '@/components/ErgebnisFormular/ErgebnisFormular'
@@ -77,7 +78,7 @@ function ErgebnisHub() {
  * | Status | Einteilung | Ergebnis | Zeigt |
  * |---|---|---|---|
  * | ABGESCHLOSSEN | – | ja | Anzeige |
- * | ABGESCHLOSSEN | ja | nein | Formular |
+ * | ABGESCHLOSSEN | ja | nein | Formular, wenn eingeteilt oder Admin; sonst Hinweis „nur Eingeteilte“ |
  * | ABGESCHLOSSEN | nein | nein | Leerzustand (ohne Einteilung kein Ergebnis) |
  * | GEPLANT | | | Hinweis „erst nach Abschluss“ |
  * | ABGESAGT | | | Hinweis „abgesagt“ |
@@ -92,7 +93,7 @@ function ErgebnisHub() {
 function ErgebnisTermin({ terminId }: { terminId: number }) {
   const abfrage = useTermin(terminId)
   const termin = abfrage.data
-  const { sitzung, istGast } = useSitzung()
+  const { sitzung, istGast, istAdmin } = useSitzung()
   const ueberschriftRef = useRef<HTMLHeadingElement>(null)
   const [abschluss, setAbschluss] = useState<'erfasst' | 'vorhanden' | null>(null)
   // Zählt abgeschlossene Läufe: Jeder setzt den Fokus einmal auf die Überschrift.
@@ -134,6 +135,13 @@ function ErgebnisTermin({ terminId }: { terminId: number }) {
           )}
           <ErgebnisAnzeige ergebnis={ergebnis} ueberschriftRef={ueberschriftRef} />
         </>
+      )
+    } else if (teams && !istAdmin && !istEingeteilt(teams, sitzung?.anzeigeName, istGast)) {
+      // Eintragen dürfen nur die Eingeteilten und der Admin (Vertrag vom 22.10.2026, `403 NICHT_EINGETEILT`).
+      zustand = (
+        <Hinweis data-testid="ergebnis-nicht-eingeteilt">
+          Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.
+        </Hinweis>
       )
     } else if (teams) {
       formular = (

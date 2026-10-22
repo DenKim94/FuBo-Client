@@ -19,7 +19,8 @@ export type Ergebnisse = {
  * Terminmodells, damit die naechste Einzelansicht es zeigt, und zaehlt in der Bilanz, wenn
  * die eigene Person in der Einteilung steht (Gaeste fuehren keine Bilanz).
  *
- * Pruefreihenfolge wie am Server: Termin, Status, Einteilung, vorhandenes Ergebnis,
+ * Pruefreihenfolge wie am Server: Termin, Status, Einteilung, eingeteilt (`403 NICHT_EINGETEILT`, ausser Admin;
+ * seit 22.10.2026), vorhandenes Ergebnis,
  * Eingabe (`deutlich` bei `U` ist unzulaessig).
  *
  * @param page Die Seite des Tests.
@@ -47,6 +48,11 @@ export async function ergebnisseNachbilden(page: Page, welt: Termine): Promise<E
         return problem(route, 409, 'TERMIN_NICHT_ABGESCHLOSSEN', `Der Termin ist ${m.status}, ein Ergebnis ist noch nicht möglich.`)
       }
       if (!m.teams) return problem(route, 409, 'KEINE_EINTEILUNG', 'Für diesen Termin gibt es keine Einteilung.')
+      // Wie am Server (seit 22.10.2026): nur Eingeteilte und der Admin.
+      const eingeteilt = [...m.teams.teamA, ...m.teams.teamB].some((e) => e.anzeigeName === EIGENER_NAME && !e.gast)
+      if (!eingeteilt && !m.adminSitzung) {
+        return problem(route, 403, 'NICHT_EINGETEILT', 'Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.')
+      }
       if (m.ergebnis) {
         return problem(route, 409, 'ERGEBNIS_VORHANDEN', `Das Ergebnis wurde bereits von ${m.ergebnis.erfasstVon} erfasst.`)
       }

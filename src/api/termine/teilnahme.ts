@@ -24,3 +24,24 @@ export function spieltMit(termin: TerminDetails, eigenerName: string | null | un
   const eintrag = termin.teilnehmerliste.teilnehmer.find((e) => e.anzeigeName === eigenerName && e.gast === eigenerGast)
   return eintrag !== undefined && !eintrag.wartet
 }
+
+/**
+ * Steht der Aufrufer in der aktuellen Teameinteilung (Team A oder B, auch als Auswechselspieler)?
+ *
+ * Grundlage der Berechtigung, ein Ergebnis zu erfassen (`POST /ergebnis/erfassen`, seit 22.10.2026; der Admin
+ * immer): Der Vertrag sichert zu, dass „eingeteilt“ genau „steht in `teams.teamA` oder `teams.teamB`“ heißt und
+ * Name **und** Gast-Kennzeichen den Eintrag eindeutig bestimmen. Die Auskunft ist eine Anzeige; durchgesetzt wird
+ * sie vom Server (`403 NICHT_EINGETEILT`).
+ *
+ * @param teams Die Einteilung des Termins oder `null`.
+ * @param eigenerName Anzeigename der eigenen Sitzung.
+ * @param eigenerGast `true` bei einer Gastsitzung.
+ */
+export function istEingeteilt(
+  teams: TerminDetails['teams'],
+  eigenerName: string | null | undefined,
+  eigenerGast: boolean,
+): boolean {
+  if (!teams || !eigenerName) return false
+  return [...teams.teamA, ...teams.teamB].some((e) => e.anzeigeName === eigenerName && e.gast === eigenerGast)
+}

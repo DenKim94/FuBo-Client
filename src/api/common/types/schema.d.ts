@@ -919,7 +919,7 @@ export interface paths {
          *
          *     **`201` und kein `200`:** Es entsteht eine Ressource. Einen `Location`-Header trägt die Antwort trotzdem nicht – die Einteilung hat keine eigene Adresse, sie reist in `GET /termine/{terminId}/lesen` mit.
          *
-         *     **Der Seed wird je Lauf neu gezogen.** Bei `anzTeamGenerator > 1` liefert derselbe Teilnehmerkreis deshalb eine andere, gleich gute Einteilung – das ist der Zweck der Einstellung und kein Fehler.
+         *     **Jeder Lauf mischt die Teams neu durch** (Änderung vom 22.10.2026; **verhaltensändernd, aber ohne Änderung an Feldern**): Der Seed wird je Lauf neu gezogen und wählt **zufällig unter allen Aufteilungen, die höchstens einen Skillpunkt der am höchsten gewichteten Kategorie schlechter ausgeglichen sind als das Optimum** – nicht mehr nur unter den exakt gleich guten. **Die aktuelle Einteilung des Termins ist dabei ausgeschlossen:** Dieselben zwei Gruppen mit vertauschten Namen `teamA`/`teamB` zählen als dieselbe Einteilung. Solange der Teilnehmerkreis derselbe ist (auch nach einer Skill-Änderung), liefert ein neuer Lauf also nie die bisherige Aufteilung. Liegt im Band nur die bisherige, gilt die beste Alternative – dann kann die Einteilung etwas schlechter ausgeglichen sein als das Band erlaubt. Wer neu zu- oder abgesagt hat, ändert den Kreis; die Regel entfällt dann von selbst. **Die Auswahl ist klein:** Bei wenigen Spielern liegen oft nur ein bis zwei Aufteilungen im Band, sodass sich zwei bis drei Einteilungen abwechseln können.
          */
         post: operations["teamsGenerieren"];
         delete?: never;
@@ -947,6 +947,8 @@ export interface paths {
          *
          *     **Kein Kontingent.** A15 zählt Läufe je Termin und Teilnehmerstand, beides gibt es hier nicht; derselbe Aufruf liefert beliebig oft `200`.
          *
+         *     **Gewählt wird wie am Termin aus dem Band um das Optimum** (Änderung vom 22.10.2026), **aber ohne eine bisherige Einteilung zu meiden**: Es wird nichts gespeichert, also gibt es nichts, was sich wiederholen könnte. Zwei Aufrufe mit derselben Auswahl können dieselbe Einteilung liefern, besonders bei einem eindeutigen Optimum.
+         *
          *     **Keine Vorschau des Spieltags.** Wer den Lauf dafür benutzt, sieht das Ergebnis für eine Gruppe, die er selbst zusammengestellt hat – nicht die des Termins.
          *
          *     **`maxTeilnehmer` begrenzt hier, es schneidet nicht ab** (`409 ZU_VIELE_TEILNEHMER`). Am Termin ist es die Grenze zur Warteschlange; hier gibt es keine, in die jemand rutschen könnte.
@@ -973,9 +975,13 @@ export interface paths {
          *
          *     **Der erste Eintrag gilt.** Je Termin gibt es genau ein Ergebnis; der zweite Versuch liefert `409 ERGEBNIS_VORHANDEN`. **Das ist kein Bedienfehler** – nach dem Abpfiff tippen mehrere gleichzeitig. Die Oberfläche sollte „hat schon jemand erfasst" melden und danach das vorhandene Ergebnis aus `GET /termine/{terminId}/lesen` zeigen, nicht eine Fehlermeldung.
          *
-         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`.** Wer einträgt, ist der, der mit dem Telefon auf dem Platz steht – auch ein `GAST`. „Der erste Eintrag gilt" ergibt nur einen Sinn, wenn mehrere es versuchen dürfen. Korrigieren darf danach nur der Admin.
+         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`, aber nicht jeder Angemeldete darf ihn nutzen** (Änderung vom 22.10.2026, **brechend** für Clients). Eintragen dürfen der `ADMIN` und **die Eingeteilten der aktuellen Teameinteilung dieses Termins** – Team A, Team B und der Auswechselspieler, `USER` wie `GAST`. Wer nur zugesagt hat und nicht eingeteilt wurde (Warteschlange, Zusage nach dem Lauf), wer abgesagt oder sich nie gemeldet hat, erhält `403 NICHT_EINGETEILT`. **Der Grund:** Nach dem Termin ist die Einteilung der einzige verlässliche Nachweis, wer gespielt hat – und die Grundlage der Bilanz. Weil der erste Eintrag gilt und nur der Admin korrigieren kann, dürfte sonst ein Außenstehender das endgültige Ergebnis setzen. Maßgeblich ist die **aktuelle** Einteilung, auch wenn sie `veraltet` ist; wer nur in einer früheren, abgelösten Einteilung stand, ist nicht eingeteilt. Die Regel hängt an den Daten des Termins und steht deshalb im Dienst, nicht im Pfad. Korrigieren darf danach nur der Admin (`POST /admin/ergebnis/korrigieren`, unverändert).
+         *
+         *     **Woran der Client die Berechtigung erkennt, ohne neues Feld:** Eingeteilt ist genau, wer in `teams.teamA` oder `teams.teamB` der Einzelansicht (`GET /termine/{terminId}/lesen`) steht – der Auswechselspieler ist dort Teil einer der beiden Listen (`auswechselspieler: true`). Der Client sucht den Eintrag mit dem **eigenen Namen und passendem `gast`-Wert**; die Kombination ist je Termin eindeutig (Profilnamen und Gastnamen sind je für sich eindeutig, und ein Gast kann sich nicht unter einem Profilnamen anmelden). Der Admin braucht keinen Eintrag. Das Ergebnisformular gehört nur diesen Sitzungen; alle anderen sehen stattdessen einen Hinweis. Die Auskunft ist eine Anzeige, keine Sicherung – durchgesetzt wird sie beim Eintrag.
          *
          *     **Zwei Vorbedingungen:** Der Termin ist `ABGESCHLOSSEN` (er wechselt 30 Minuten nach Beginn selbsttätig dorthin, A18 – war die Mindestzahl an Zusagen nicht erreicht, wird er stattdessen `ABGESAGT`), und es gibt eine Teameinteilung – ohne sie hätte das Ergebnis keine beteiligten Spieler.
+         *
+         *     **Prüfreihenfolge:** `404 INHALT_NICHT_GEFUNDEN` → `409 TERMIN_NICHT_ABGESCHLOSSEN` → `409 KEINE_EINTEILUNG` → **`403 NICHT_EINGETEILT`** → Eintrag (`409 ERGEBNIS_VORHANDEN`). Ohne Einteilung gibt es niemanden, der eingeteilt war, und der Status eines Termins ist für alle sichtbar. **Ein Nicht-Eingeteilter erfährt durch die Reihenfolge nicht, ob schon ein Ergebnis vorliegt:** Er bekommt `403`, nie `409 ERGEBNIS_VORHANDEN`.
          *
          *     **Die Bilanz aller Eingeteilten wird im selben Vorgang neu berechnet.** Gäste führen keine; der Auswechselspieler zählt mit.
          *
@@ -1265,7 +1271,7 @@ export interface components {
          * @description Maschinenlesbarer Fehlercode. Die Liste wächst mit den Meilensteinen; ein unbekannter Wert ist vom Frontend wie ein allgemeiner Fehler zu behandeln.
          * @enum {string}
          */
-        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "KEINE_ZUSAGE" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT" | "NAME_PIN_FALSCH" | "NAME_AENDERUNG_UNGUELTIG" | "NAME_AENDERUNG_GEDROSSELT";
+        Fehlercode: "PIN_FALSCH" | "PIN_GESPERRT" | "ADMIN_PASSWORT_FALSCH" | "SESSION_UNGUELTIG" | "KEINE_BERECHTIGUNG" | "NAME_BELEGT" | "KEIN_GAST_SLOT_FREI" | "EINGABE_UNGUELTIG" | "INHALT_NICHT_GEFUNDEN" | "RESET_PIN_FALSCH" | "RESET_UNGUELTIG" | "RESET_GEDROSSELT" | "VERSAND_FEHLGESCHLAGEN" | "PROFIL_GESCHUETZT" | "PROFIL_IN_VERWENDUNG" | "DATEN_VERALTET" | "INTERNER_FEHLER" | "TERMIN_BELEGT" | "TERMIN_GESCHLOSSEN" | "TERMIN_IN_VERWENDUNG" | "ZU_WENIG_TEILNEHMER" | "ZU_VIELE_TEILNEHMER" | "SKILLWERTE_UNVOLLSTAENDIG" | "KONTINGENT_ERSCHOEPFT" | "KEINE_ZUSAGE" | "TEILNEHMER_GEAENDERT" | "TEAMS_FIXIERT" | "ERGEBNIS_VORHANDEN" | "TERMIN_NICHT_ABGESCHLOSSEN" | "KEINE_EINTEILUNG" | "NICHT_EINGETEILT" | "HALLE_FRIST_ABGELAUFEN" | "HALLE_NICHT_KONFIGURIERT" | "HALLE_BEREITS_ABGESAGT" | "HALLE_MODUS_INAKTIV" | "PUSH_NICHT_KONFIGURIERT" | "NAME_PIN_FALSCH" | "NAME_AENDERUNG_UNGUELTIG" | "NAME_AENDERUNG_GEDROSSELT";
         /**
          * @description Stufe des zweistufigen Logins. Wird serverseitig erzwungen.
          * @enum {string}
@@ -1573,8 +1579,10 @@ export interface components {
         /**
          * @description Verfahren der Teamgenerierung (A15). Beide nutzen dieselbe Zielfunktion und dieselbe Datengrundlage und sind gegeneinander austauschbar.
          *
-         *     - `EXHAUSTIV` (Vorgabe): vollständige Enumeration, liefert das globale Optimum, bis 22 Teilnehmer beherrschbar.
-         *     - `HEURISTIK`: seed-basierte lokale Suche, liefert je Seed eine andere, nah-optimale Lösung.
+         *     - `EXHAUSTIV` (Vorgabe): vollständige Enumeration, bis 22 Teilnehmer beherrschbar. Bestimmt das globale Optimum und wählt per Seed **zufällig unter allen Aufteilungen, die höchstens einen Skillpunkt der am höchsten gewichteten Kategorie schlechter sind** (seit 22.10.2026; vorher nur unter den exakt gleich guten).
+         *     - `HEURISTIK`: seed-basierte lokale Suche mit Neustarts; wählt unter den besten Ergebnissen der Läufe und ihren Einzeltausch-Nachbarn nach derselben Bandregel.
+         *
+         *     Beide meiden bei einem Termin-Lauf die aktuelle Einteilung des Termins (siehe `POST /teams/generieren`).
          * @enum {string}
          */
         AlgorithmType: "EXHAUSTIV" | "HEURISTIK";
@@ -1926,6 +1934,8 @@ export interface components {
             /**
              * @description Die aktuelle Teameinteilung oder **`null`, solange niemand generiert hat** – kein Fehler, sondern der Normalzustand.
              *
+             *     **Wer in `teamA` oder `teamB` steht, ist eingeteilt** – daran erkennt der Client, ob die Sitzung ein Ergebnis eintragen darf (`POST /ergebnis/erfassen`, seit 22.10.2026; der Admin immer).
+             *
              *     Sie steht hier und nicht hinter einem eigenen Endpunkt: Das Dashboard zeigt Termin, Teilnehmerliste und Teams zusammen, und zwei Aufrufe für eine Ansicht sind zwei Gelegenheiten für einen inkonsistenten Stand.
              */
             teams?: components["schemas"]["Teameinteilung"] | null;
@@ -2165,6 +2175,8 @@ export interface components {
         /**
          * @description Die aktuelle Teameinteilung eines Termins (A20a, A20b).
          *
+         *     **Wer in `teamA` oder `teamB` steht, ist eingeteilt** – und nur der (seit dem 22.10.2026 Voraussetzung für `POST /ergebnis/erfassen`). Der Auswechselspieler steht in einer der beiden Listen, nicht daneben; wer nur in der Teilnehmerliste steht (Warteschlange), ist nicht eingeteilt. Das ist zugesichert und ändert sich nicht, ohne dass der Vertrag es nennt.
+         *
          *     Sie erscheint an zwei Stellen in derselben Form: als Feld `teams` in `TerminDetails` und als Antwort von `POST /teams/generieren`. Wer gerade generiert hat, sieht dasselbe wie der, der den Termin öffnet.
          *
          *     **Ohne `differenzTeamstaerke`.** Der Wert ist die gewichtete Summe der Kategoriedifferenzen und damit eine Aussage über Skillsummen; wer ihn über viele Läufe sammelt und die wechselnden Aufstellungen kennt, kann auf einzelne Werte schließen (A12). Unterhalb von `/admin/` ist er erlaubt und steht dort in `ManuelleEinteilung`.
@@ -2230,7 +2242,7 @@ export interface components {
             auswechselspieler?: string | null;
             /**
              * Format: double
-             * @description Die **Kosten der Zielfunktion** – die gewichtete Summe der Kategoriedifferenzen, **nicht** die Differenz der Gesamtstärken, die der Name nahelegt. `0` heißt perfekt ausgeglichen, größer heißt schlechter. Nur im Adminbildschirm (A12).
+             * @description Die **Kosten der Zielfunktion** – die gewichtete Summe der Kategoriedifferenzen, **nicht** die Differenz der Gesamtstärken, die der Name nahelegt. `0` heißt perfekt ausgeglichen, größer heißt schlechter. **Seit dem 22.10.2026 nicht mehr zwingend das Minimum:** Die Einteilung wird aus dem Band bis zu einem Skillpunkt der höchstgewichteten Kategorie über dem Optimum gewählt, der Wert kann also über dem bestmöglichen liegen. Nur im Adminbildschirm (A12).
              */
             differenzTeamstaerke: number;
             /** @description Team A. */
@@ -4447,6 +4459,24 @@ export interface operations {
             };
             400: components["responses"]["EingabeUngueltig"];
             401: components["responses"]["SitzungUngueltig"];
+            /** @description `NICHT_EINGETEILT` – die Sitzung gehört weder dem Admin noch einem Teilnehmer, der in der **aktuellen** Teameinteilung dieses Termins steht: nur zugesagt (Warteschlange, Zusage nach dem Lauf), abgesagt, nie gemeldet oder nur in einer früheren, abgelösten Einteilung. Wiederholen hilft nicht; der Zustand ändert sich für einen abgeschlossenen Termin nicht mehr. Die Prüfung steht **nach** `TERMIN_NICHT_ABGESCHLOSSEN` und `KEINE_EINTEILUNG` und **vor** `ERGEBNIS_VORHANDEN`. Ein Client zeigt einen Hinweis und liest den Termin neu. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "detail": "Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.",
+                     *       "code": "NICHT_EINGETEILT"
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
             /** @description `INHALT_NICHT_GEFUNDEN` – es gibt keinen Termin mit dieser Id. */
             404: {
                 headers: {

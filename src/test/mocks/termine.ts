@@ -322,7 +322,7 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
     }),
 
     // Ergebnis erfassen (C5, Stufe 3). Prüfreihenfolge wie am Server: Termin, Status,
-    // Einteilung, vorhandenes Ergebnis. **Der erste Eintrag gilt:** ein zweiter Aufruf
+    // Einteilung, eingeteilt (403, außer Admin), vorhandenes Ergebnis. **Der erste Eintrag gilt:** ein zweiter Aufruf
     // liefert `409 ERGEBNIS_VORHANDEN` und ändert nichts. Die Bilanz zählt den eigenen Ausgang.
     http.post('*/ergebnis/erfassen', async ({ request }) => {
       const { terminId, sieger, deutlich } = (await request.json()) as {
@@ -337,6 +337,11 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
         return problem(409, 'TERMIN_NICHT_ABGESCHLOSSEN', `Der Termin ist ${modell.status}, ein Ergebnis ist noch nicht möglich.`)
       }
       if (!modell.teams) return problem(409, 'KEINE_EINTEILUNG', 'Für diesen Termin gibt es keine Einteilung.')
+      // Wie am Server (seit 22.10.2026): nur Eingeteilte (Name und Gast-Kennzeichen der Sitzung) und der Admin.
+      const eingeteilt = [...modell.teams.teamA, ...modell.teams.teamB].some((e) => e.anzeigeName === EIGENER_NAME && !e.gast)
+      if (!eingeteilt && !modell.adminSitzung) {
+        return problem(403, 'NICHT_EINGETEILT', 'Ein Ergebnis eintragen darf nur, wer in diesem Termin eingeteilt war.')
+      }
       if (modell.ergebnis) return problem(409, 'ERGEBNIS_VORHANDEN', `Das Ergebnis wurde bereits von ${modell.ergebnis.erfasstVon} erfasst.`)
       if (sieger === 'U' && deutlich) return problem(400, 'EINGABE_UNGUELTIG', 'Bei Unentschieden ist deutlich nicht zulässig.')
       modell.ergebnis = {

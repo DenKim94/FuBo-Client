@@ -16,7 +16,8 @@ export type ErgebnisEingabe = { sieger: Sieger; deutlich: boolean }
  * **Auch bei `409` und `404` wird neu gelesen:** `ERGEBNIS_VORHANDEN` heißt, dass
  * jemand schneller war – der Einzeltermin trägt dann das Ergebnis, und die Ansicht
  * zeigt es statt des Formulars. `TERMIN_NICHT_ABGESCHLOSSEN` und `KEINE_EINTEILUNG`
- * sagen, dass die Anzeige veraltet war. Bei Netzfehlern und `≥ 500` bleibt der
+ * sagen, dass die Anzeige veraltet war. `403 NICHT_EINGETEILT` (seit 22.10.2026) ebenso: Die neu gelesene
+ * Einteilung bestimmt, ob das Formular noch erscheint. Bei Netzfehlern und `≥ 500` bleibt der
  * Stand; ein zweiter Tipp wiederholt. **Mutationen werden nie automatisch
  * wiederholt:** Der erste Eintrag gilt, ein Löschen gibt es nicht.
  *
@@ -37,7 +38,12 @@ export function useErgebnisErfassen(terminId: number): UseMutationResult<Ergebni
     mutationFn: ({ sieger, deutlich }: ErgebnisEingabe) => ergebnisErfassen(terminId, sieger, deutlich),
     onSuccess: neuLesen,
     onError: (fehler) => {
-      if (fehler instanceof ApiFehler && (fehler.status === 409 || fehler.status === 404)) return neuLesen()
+      if (
+        fehler instanceof ApiFehler &&
+        (fehler.status === 409 || fehler.status === 404 || fehler.code === 'NICHT_EINGETEILT')
+      ) {
+        return neuLesen()
+      }
     },
   })
 }

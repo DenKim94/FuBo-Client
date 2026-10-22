@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { detailsVon, terminModell } from '@/test/mocks/termine'
-import { spieltMit } from './teilnahme'
+import { detailsVon, teamsAus, terminModell } from '@/test/mocks/termine'
+import { istEingeteilt, spieltMit } from './teilnahme'
 
 const ICH = 'Beispielspieler 01'
 
@@ -38,5 +38,40 @@ describe('spieltMit', () => {
 
   test('ohne Anzeigenamen (Sitzung noch nicht geladen): spielt nicht mit', () => {
     expect(spieltMit(termin([{ name: ICH, gast: false }], true), undefined, false)).toBe(false)
+  })
+})
+
+describe('istEingeteilt', () => {
+  /** Einteilung aus drei Zusagen bei Höchstzahl 2: Der dritte (Warteschlange) ist nicht eingeteilt. */
+  const teams = teamsAus(
+    terminModell({
+      terminId: 1,
+      max: 2,
+      zusagen: [
+        { name: ICH, gast: false },
+        { name: 'Beispielgast', gast: true },
+        { name: 'Beispielspieler 13', gast: false },
+      ],
+    }),
+  )
+
+  test('steht in Team A oder B (auch als Auswechselspieler): eingeteilt', () => {
+    expect(istEingeteilt(teams, ICH, false)).toBe(true)
+    expect(istEingeteilt(teams, 'Beispielgast', true)).toBe(true)
+  })
+
+  test('auf der Warteschlange oder gar nicht dabei: nicht eingeteilt', () => {
+    expect(istEingeteilt(teams, 'Beispielspieler 13', false)).toBe(false)
+    expect(istEingeteilt(teams, 'Beispielspieler 99', false)).toBe(false)
+  })
+
+  test('Name und Gast-Kennzeichen müssen passen', () => {
+    expect(istEingeteilt(teams, ICH, true)).toBe(false)
+    expect(istEingeteilt(teams, 'Beispielgast', false)).toBe(false)
+  })
+
+  test('ohne Einteilung oder ohne Namen: nicht eingeteilt', () => {
+    expect(istEingeteilt(null, ICH, false)).toBe(false)
+    expect(istEingeteilt(teams, undefined, false)).toBe(false)
   })
 })
