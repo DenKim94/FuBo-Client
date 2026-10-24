@@ -37,6 +37,9 @@ test.describe('Hallenabsage', () => {
     const { welt, termine } = await start(page, '/admin/termine/1', { konfiguration: HALLE })
 
     await expect(page.getByTestId('admin-halle-moeglich')).toContainText('Absage möglich bis 13.01., 19:00 Uhr.')
+    // Blau gefuellt (`akzent`, --farbe-link #1a5ba8) mit Brief-Symbol; rot ist erst die Bestaetigung im Dialog.
+    await expect(page.getByTestId('admin-halle-absagen')).toHaveCSS('background-color', 'rgb(26, 91, 168)')
+    await expect(page.getByTestId('admin-halle-absagen').getByTestId('icon-mail_icon_light')).toBeVisible()
     await page.getByTestId('admin-halle-absagen').click()
     await expect(page.getByTestId('admin-halle-dialog')).toContainText('lässt sich nicht zurücknehmen')
     await page.getByTestId('admin-halle-dialog-bestaetigen').click()

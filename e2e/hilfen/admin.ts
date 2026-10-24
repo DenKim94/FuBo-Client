@@ -436,6 +436,8 @@ export type KonfigurationWelt = {
     geaendert: Record<string, unknown>[]
     freigegeben: Record<string, unknown>[]
     gastStufen: Record<string, unknown>[]
+    /** Koerper von `/admin/teilnahme/gast-absagen` (Vertragsvorschlag vom 24.10.2026). */
+    gastAbgesagt: Record<string, unknown>[]
     halleAbgesagt: Record<string, unknown>[]
     ergebnisKorrigiert: Record<string, unknown>[]
     teamsManuell: Record<string, unknown>[]
@@ -531,7 +533,7 @@ export async function konfigurationNachbilden(
   const welt: KonfigurationWelt = {
     konfiguration: e2eKonfiguration(start.konfiguration),
     gastplaetze: e2eGastplaetze(),
-    koerper: { geaendert: [], freigegeben: [], gastStufen: [], halleAbgesagt: [], ergebnisKorrigiert: [], teamsManuell: [] },
+    koerper: { geaendert: [], freigegeben: [], gastStufen: [], gastAbgesagt: [], halleAbgesagt: [], ergebnisKorrigiert: [], teamsManuell: [] },
     abrufe: { konfiguration: [], gaeste: [] },
     mailFehler: false,
     fremdeAenderung: (aenderung = {}) => {
@@ -583,6 +585,22 @@ export async function konfigurationNachbilden(
     welt.gastplaetze = welt.gastplaetze.map((p) =>
       nummern.includes(p.nummer) ? { nummer: p.nummer, anzeigeName: p.anzeigeName, wirksam: p.wirksam, belegt: false } : p,
     )
+    return route.fulfill({ status: 204 })
+  })
+
+  // Gast absagen (Vertragsvorschlag vom 24.10.2026): wirkt wie die Absage des Gastes, Kontingent bleibt.
+  await page.route('**/api/v1/admin/teilnahme/gast-absagen', (route) => {
+    const k = route.request().postDataJSON() as { terminId: number; gastName: string }
+    welt.koerper.gastAbgesagt.push(k)
+    const modell = termine.modelle.find((t) => t.terminId === k.terminId)
+    const zusage = modell?.zusagen.find((z) => z.gast && z.name === k.gastName)
+    if (!modell || !zusage) {
+      return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
+    }
+    if (modell.status !== 'GEPLANT') return problem(route, 409, 'TERMIN_GESCHLOSSEN', 'Der Termin nimmt keine Rückmeldungen mehr an.')
+    modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+    modell.kontingentVersion ??= modell.teilnehmerVersion
+    modell.teilnehmerVersion += 1
     return route.fulfill({ status: 204 })
   })
 

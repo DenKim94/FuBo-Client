@@ -91,12 +91,13 @@ function Ansicht({ profil, kategorien }: AnsichtEigenschaften) {
       <Aktionsleiste>
         <CustomButton
           art="primaer"
+          symbol="person_edit_dark"
           breit
           className={style.aktion}
           onClick={() => void navigate(ADMIN_PFADE.profilBearbeiten(profil.spielerId))}
           data-testid="admin-profil-skills-bearbeiten"
         >
-          Skills bearbeiten
+          Profil bearbeiten
         </CustomButton>
       </Aktionsleiste>
     </section>

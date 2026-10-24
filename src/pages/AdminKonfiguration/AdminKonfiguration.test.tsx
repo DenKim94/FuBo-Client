@@ -3,7 +3,7 @@ import { http } from 'msw'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient } from '@/app/queryClient'
-import { adminHandler, adminWelt, beispielKonfiguration, STANDARD_ABSAGEVORLAGE } from '@/test/mocks/admin'
+import { adminHandler, adminWelt, beispielKonfiguration } from '@/test/mocks/admin'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
@@ -49,10 +49,22 @@ describe('AdminKonfiguration – Lesen', () => {
     expect(welt.protokoll.konfigurationAbrufe).toEqual([null])
   })
 
-  test('zeigt den wirksamen Text der Absage, wenn die Vorlage leer ist', async () => {
+  test('Hallenmodus und Push sind Schalter (role="switch", 24.10.2026), keine Kästchen', async () => {
     rendern()
 
-    expect(await screen.findByTestId('admin-konfig-vorlage-effektiv-text')).toHaveTextContent(STANDARD_ABSAGEVORLAGE)
+    expect(await screen.findByRole('switch', { name: 'Hallenmodus' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: 'Push-Benachrichtigungen' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+  })
+
+  test('ein Antippen schaltet um und gibt „Speichern“ frei; wirksam erst mit dem Speichern', async () => {
+    const welt = rendern()
+
+    fireEvent.click(await screen.findByRole('switch', { name: 'Hallenmodus' }))
+
+    expect(screen.getByRole('switch', { name: 'Hallenmodus' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('admin-konfig-speichern')).not.toHaveAttribute('aria-disabled')
+    expect(welt.protokoll.konfigurationGeaendert).toEqual([])
   })
 
   test('ein Fehler beim Laden zeigt einen Fehlerzustand; „Erneut versuchen“ lädt neu und zeigt das Formular', async () => {

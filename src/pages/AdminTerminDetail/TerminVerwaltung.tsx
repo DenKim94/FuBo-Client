@@ -6,7 +6,6 @@ import Hinweis from '@/components/Hinweis/Hinweis'
 import Textlink from '@/components/Textlink/Textlink'
 import { useTerminAendern } from '@/hooks/admin/useTerminAendern'
 import { useTermin } from '@/hooks/useTermin'
-import GastStufeListe from './GastStufeListe'
 import TerminErgebnis from './TerminErgebnis'
 import TerminHalle from './TerminHalle'
 import TerminAendernFormular from './TerminAendernFormular'
@@ -27,7 +26,8 @@ type TerminVerwaltungEigenschaften = {
  * zweiter Schlüssel) und zeigt die Abschnitte nur, wenn Daten da sind; Laden, `404` und Fehler zeigt `TerminAnsicht`.
  *
  * **Reihenfolge der Abschnitte** (jeder ein eigener Baustein, damit C8 sie einhängen kann):
- * „Termin ändern“ (`GEPLANT`) – C8: „Gäste“ (`GEPLANT`), „Hallenabsage“, „Ergebnis“ (`ABGESCHLOSSEN`) – „Weitere Aktionen“.
+ * „Termin ändern“ (`GEPLANT`) – C8: „Hallenabsage“, „Ergebnis“ (`ABGESCHLOSSEN`) – „Weitere Aktionen“. Die Stufe eines
+ * Gastes ändert der Admin seit 24.10.2026 nur in der Gäste-Verwaltung (`/admin/gaeste`).
  *
  * **E5:** Dieser Baustein besitzt Abfrage **und** Mutation des Änderungsformulars. `key={termin.version}` baut das
  * Formular nach jedem Stand neu auf; die Meldung zu `DATEN_VERALTET` überlebt den Neuaufbau, weil sie in der Mutation
@@ -100,7 +100,6 @@ export default function TerminVerwaltung({ terminId, ueberschriftRef }: TerminVe
         </section>
       )}
 
-      {termin.status === 'GEPLANT' && <GastStufeListe termin={termin} />}
 
       <TerminHalle termin={termin} fokusAufUeberschrift={zurUeberschrift} />
 

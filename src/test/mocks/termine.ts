@@ -1,4 +1,5 @@
 import { HttpResponse, http } from 'msw'
+import type { TeilnehmerEintragAdmin } from '@/api/admin/adminTermine'
 import type { components } from '@/api/common/types/schema'
 import { beginnVon } from '@/api/termine/terminZeit'
 import { problem } from './problem'
@@ -117,7 +118,7 @@ export function uebersichtVon(modell: TerminModell): TerminUebersicht {
  * Position über `max` heißt `wartet`; `mindestzahlErreicht` zählt alle Zusagen,
  * auch die wartenden – wie beim Server.
  */
-export function detailsVon(modell: TerminModell): TerminDetails {
+export function detailsVon(modell: TerminModell, gastStufeFuerAdmin = false): TerminDetails {
   return {
     ...uebersichtVon(modell),
     version: modell.version,
@@ -125,12 +126,12 @@ export function detailsVon(modell: TerminModell): TerminDetails {
       minTeilnehmer: modell.min,
       maxTeilnehmer: modell.max,
       mindestzahlErreicht: modell.zusagen.length >= modell.min,
-      teilnehmer: modell.zusagen.map((z, i) => ({
-        position: i + 1,
-        anzeigeName: z.name,
-        gast: z.gast,
-        wartet: i + 1 > modell.max,
-      })),
+      teilnehmer: modell.zusagen.map((z, i) => {
+        const eintrag: TeilnehmerEintragAdmin = { position: i + 1, anzeigeName: z.name, gast: z.gast, wartet: i + 1 > modell.max }
+        // Vertragsvorschlag vom 24.10.2026: Der Admin sieht die Stufe eines Gastes (ohne Angabe gilt MITTEL wie am Server).
+        if (gastStufeFuerAdmin && z.gast) eintrag.gastStufe = z.stufe ?? 'MITTEL'
+        return eintrag
+      }),
     },
     teams: modell.teams
       ? {
@@ -247,7 +248,13 @@ export type TerminProtokoll = {
  *
  * @param modelle Die Termine der nachgebildeten Welt; Reihenfolge wie vom Server (aufsteigend).
  */
-export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminId: 102 })]) {
+export function terminHandlers(
+  modelle: TerminModell[] = [terminModell({ terminId: 102 })],
+  optionen: {
+    /** Bildet den Vertragsvorschlag vom 24.10.2026 nach: `gastStufe` je Gast in der Teilnehmerliste (nur Admin). */
+    gastStufeFuerAdmin?: boolean
+  } = {},
+) {
   const protokoll: TerminProtokoll = {
     listenabrufe: [],
     detailabrufe: [],
@@ -272,7 +279,7 @@ export function terminHandlers(modelle: TerminModell[] = [terminModell({ terminI
       protokoll.detailabrufe.push(request.headers.get('X-FuBo-Kein-Refresh'))
       const modell = modelle.find((m) => String(m.terminId) === params.terminId)
       return modell
-        ? HttpResponse.json(detailsVon(modell))
+        ? HttpResponse.json(detailsVon(modell, optionen.gastStufeFuerAdmin))
         : problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
     }),
 

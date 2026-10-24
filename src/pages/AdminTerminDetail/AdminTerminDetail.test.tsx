@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http } from 'msw'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
@@ -66,6 +66,10 @@ describe('AdminTerminDetail – Aufbau', () => {
     expect(await screen.findByRole('heading', { level: 1, name: /19:00 Uhr/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Termin ändern' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Weitere Aktionen' })).toBeInTheDocument()
+    // Die Stufe eines Gastes gehört seit 24.10.2026 in die Gäste-Verwaltung: kein Abschnitt „Gäste“ mehr, obwohl der
+    // Beispieltermin einen Gast hat.
+    expect(screen.queryByRole('heading', { level: 2, name: 'Gäste' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Stufe ändern/ })).not.toBeInTheDocument()
     // Der Admin hat weder Zusagestatus noch Rückmeldeleiste noch eine haftende Aktionsleiste.
     expect(screen.queryByTestId('termin-zusagestatus')).not.toBeInTheDocument()
     expect(screen.queryByTestId('rueckmeldung-zusagen')).not.toBeInTheDocument()
@@ -122,7 +126,6 @@ describe('AdminTerminDetail – Aufbau', () => {
 
     expect(await screen.findByTestId('admin-termin-entfernen')).toBeInTheDocument()
     expect(screen.queryByTestId('admin-termin-aendern')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('admin-termin-abschliessen')).not.toBeInTheDocument()
     expect(screen.queryByTestId('admin-termin-absagen')).not.toBeInTheDocument()
   })
 
@@ -294,18 +297,13 @@ describe('AdminTerminDetail – Termin ändern', () => {
 })
 
 describe('AdminTerminDetail – Weitere Aktionen', () => {
-  test('„Termin abschließen“ nennt die Folgen, sendet status und version, und der Fokus geht auf die Überschrift', async () => {
-    const { welt } = rendern()
-    await userEvent.click(await screen.findByTestId('admin-termin-abschliessen'))
+  test('es gibt kein „Termin abschließen“ (der Server schließt selbst ab); geplant: nur „Termin absagen“ und „Termin entfernen“', async () => {
+    rendern()
 
-    expect(screen.getByTestId('admin-abschliessen-dialog')).toHaveTextContent('Das lässt sich nicht rückgängig machen.')
-    await userEvent.click(screen.getByTestId('admin-abschliessen-dialog-bestaetigen'))
-
-    expect(await screen.findByTestId('termin-abgeschlossen')).toBeInTheDocument()
-    expect(welt.protokoll.terminGeaendert).toEqual([{ terminId: 101, version: 1, status: 'ABGESCHLOSSEN' }])
-    expect(screen.queryByTestId('admin-abschliessen-dialog')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('admin-termin-aktionen')).not.toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole('heading', { level: 1 })).toHaveFocus())
+    const aktionen = await screen.findByTestId('admin-termin-aktionen')
+    expect(within(aktionen).getAllByRole('button').map((b) => b.textContent)).toEqual(['Termin absagen', 'Termin entfernen'])
+    expect(screen.queryByTestId('admin-termin-abschliessen')).not.toBeInTheDocument()
+    expect(screen.queryByText(/abschließen/i)).not.toBeInTheDocument()
   })
 
   test('„Termin absagen“ nennt die Folgen, sendet nur die Id, der Termin zeigt „abgesagt“, nur „entfernen“ bleibt', async () => {
@@ -340,16 +338,6 @@ describe('AdminTerminDetail – Weitere Aktionen', () => {
 
     expect(await screen.findByTestId('admin-absagen-dialog-fehler')).toBeInTheDocument()
     expect(screen.getByTestId('admin-absagen-dialog')).toBeInTheDocument()
-  })
-
-  test('ein Fehler beim Abschließen bleibt im Dialog sichtbar, der Dialog bleibt offen', async () => {
-    rendern()
-    mockServer.use(http.post('*/admin/termin/aendern', () => problem(500, 'INTERNER_FEHLER', 'Interner Fehler.')))
-    await userEvent.click(await screen.findByTestId('admin-termin-abschliessen'))
-    await userEvent.click(screen.getByTestId('admin-abschliessen-dialog-bestaetigen'))
-
-    expect(await screen.findByTestId('admin-abschliessen-dialog-fehler')).toBeInTheDocument()
-    expect(screen.getByTestId('admin-abschliessen-dialog')).toBeInTheDocument()
   })
 
   test('„Termin entfernen“ nennt die Folgen; Erfolg führt mit Hinweis zur Liste', async () => {

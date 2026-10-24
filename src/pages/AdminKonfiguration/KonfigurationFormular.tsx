@@ -20,7 +20,7 @@ import Auswahlliste from '@/components/Auswahlliste/Auswahlliste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Feld from '@/components/Feld/Feld'
-import Haken from '@/components/Haken/Haken'
+import Schalter from '@/components/Schalter/Schalter'
 import Hinweis from '@/components/Hinweis/Hinweis'
 import Textbereich from '@/components/Textbereich/Textbereich'
 import style from './AdminKonfiguration.module.scss'
@@ -184,7 +184,7 @@ export default function KonfigurationFormular({
         <fieldset className={style.gruppe}>
           <legend className={style.legende}>Team-Generator</legend>
           <Auswahlliste
-            beschriftung="Verfahren"
+            beschriftung="Typ"
             optionen={VERFAHREN}
             wert={form.algorithmType}
             beiAenderung={(wert) => {
@@ -196,11 +196,11 @@ export default function KonfigurationFormular({
           />
           {zahlFeld(
             'anzTeamGenerator',
-            'Läufe je Person und Spieltag',
+            'Anzahl der Versuche pro Person und Spieltag zur Team-Generierung',
             'Ändert sich der Teilnehmerkreis, steht das Kontingent wieder zur Verfügung.',
           )}
           <Auswahlliste
-            beschriftung="Auswechselspieler"
+            beschriftung="Modus zum Auswechselspieler"
             optionen={REGELN}
             wert={form.auswechselModus}
             beiAenderung={(wert) => {
@@ -216,7 +216,7 @@ export default function KonfigurationFormular({
           <legend className={style.legende}>Sitzung</legend>
           {zahlFeld(
             'sessionLeerlaufMinuten',
-            'Leerlauf in Minuten',
+            'Dauer einer Sitzung in Minuten',
             'Wirkt sofort, auch für bestehende Sitzungen.',
             leerlaufKurz ? warnungId : undefined,
           )}
@@ -234,22 +234,23 @@ export default function KonfigurationFormular({
 
         <fieldset className={style.gruppe}>
           <legend className={style.legende}>Halle</legend>
-          <Haken
+          {/* Schalter statt Kästchen (24.10.2026, wie „Aktiv in der Auswahlliste“); wirksam erst mit „Speichern“. */}
+          <Schalter
             beschriftung="Hallenmodus"
-            angehakt={form.hallenModusAktiv}
-            beiAenderung={(an) => {
+            an={form.hallenModusAktiv}
+            beiUmschalten={(an) => {
               eingabe('hallenModusAktiv', an)
             }}
-            hinweis="Ausgeschaltet, bis du ihn einschaltest. Eine versandte Absage lässt sich nicht zurücknehmen."
-            schreibgeschuetzt={aendern.isPending}
-            ref={refVon<HTMLInputElement>('hallenModusAktiv')}
+            erklaerung="Bei aktiviertem Hallenmodus kann der Termin per E-Mail abgesagt werden."
+            beschaeftigt={aendern.isPending}
+            ref={refVon<HTMLButtonElement>('hallenModusAktiv')}
             data-testid="admin-konfig-hallenModusAktiv"
           />
           <Feld
             {...gemeinsam('halleEmail')}
             ref={refVon<HTMLInputElement>('halleEmail')}
             beschriftung="E-Mail des Hallenbetreibers"
-            hinweis="Leer lassen, wenn keine hinterlegt ist."
+            hinweis="Muss eine gültige E-Mail-Adresse sein, sonst kann der Termin nicht per E-Mail abgesagt werden."
             type="email"
             inputMode="email"
             autoCapitalize="none"
@@ -263,10 +264,10 @@ export default function KonfigurationFormular({
           {zahlFeld(
             'halleVorlaufStunden',
             'Vorlauf in Stunden',
-            'Bis so viele Stunden vor dem Termin ist die Absage möglich (0 = bis zum Anpfiff).',
+            'Nach Ablauf der eingestellten Frist ist eine Terminabsage per E-Mail nicht mehr möglich.',
           )}
           <Textbereich
-            beschriftung="Text der Absage"
+            beschriftung="Text zur Terminabsage per E-Mail"
             hinweis="Leer lassen für den Standardtext."
             value={form.halleAbsageVorlage}
             onChange={(e) => {
@@ -276,28 +277,22 @@ export default function KonfigurationFormular({
             ref={refVon<HTMLTextAreaElement>('halleAbsageVorlage')}
             data-testid="admin-konfig-halleAbsageVorlage"
           />
-          <div className={style.effektiv} data-testid="admin-konfig-vorlage-effektiv">
-            <p className={style.effektivTitel}>So lautet der Text, der versendet würde.</p>
-            <p className={style.effektivText} data-testid="admin-konfig-vorlage-effektiv-text">
-              {konfiguration.halleAbsageVorlageEffektiv}
-            </p>
-          </div>
         </fieldset>
 
         <fieldset className={style.gruppe}>
           <legend className={style.legende}>Benachrichtigungen</legend>
-          <Haken
+          <Schalter
             beschriftung="Push-Benachrichtigungen"
-            angehakt={form.pushAktiv}
-            beiAenderung={(an) => {
+            an={form.pushAktiv}
+            beiUmschalten={(an) => {
               eingabe('pushAktiv', an)
             }}
-            hinweis="Erinnerung an offene Rückmeldungen und Terminabsage. Jede Person kann für sich abschalten."
-            schreibgeschuetzt={aendern.isPending}
-            ref={refVon<HTMLInputElement>('pushAktiv')}
+            erklaerung="Erinnerung an offene Rückmeldungen und Terminabsage. Jede Person kann für sich abschalten."
+            beschaeftigt={aendern.isPending}
+            ref={refVon<HTMLButtonElement>('pushAktiv')}
             data-testid="admin-konfig-pushAktiv"
           />
-          {zahlFeld('pushErinnerungStunden', 'Erinnerung in Stunden', 'So viele Stunden vor dem Termin wird erinnert.')}
+          {zahlFeld('pushErinnerungStunden', 'Termin-Erinnerung in Stunden', 'So viele Stunden vor dem Termin wird erinnert.')}
         </fieldset>
 
         {aendern.isSuccess && <Hinweis data-testid="admin-konfig-gespeichert">Gespeichert.</Hinweis>}

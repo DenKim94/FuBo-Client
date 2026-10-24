@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type Ref } from 'react'
 import style from './Schalter.module.scss'
 
 /** Eigenschaften des Schalters. */
@@ -15,6 +15,8 @@ type SchalterEigenschaften = {
   erklaerung?: string
   /** Test-ID des Schalters; die Erklärung heisst `<test-id>-text`. */
   'data-testid'?: string
+  /** Zugriff auf die Schaltfläche (Fokus auf das erste fehlerhafte Feld eines Formulars). */
+  ref?: Ref<HTMLButtonElement>
 }
 
 /**
@@ -35,11 +37,13 @@ export default function Schalter({
   beschaeftigt = false,
   erklaerung,
   'data-testid': testId = 'schalter',
+  ref,
 }: SchalterEigenschaften) {
   const erklaerungId = useId()
   return (
     <div className={style.karte}>
       <button
+        ref={ref}
         type="button"
         role="switch"
         aria-checked={an}

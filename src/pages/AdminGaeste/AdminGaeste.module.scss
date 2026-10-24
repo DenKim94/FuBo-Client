@@ -76,15 +76,69 @@
   block-size: 1.25rem;
 }
 
-.aktionen {
-  display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: row;
-  gap: var(--abstand-s);
-}
-
 .nebentext {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach);
   line-height: var(--zeilenhoehe);
+}
+
+// Zwei Abschnitte: Gaeste in Terminen, Gastplaetze (getrennt durch eine Linie wie in der Terminverwaltung).
+.abschnitt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  padding-block-start: var(--abstand-m);
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.abschnittTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.terminListe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Ein Termin als Karte mit gruener Seitenlinie: dieselbe Kante wie der Kopf eines geplanten Termins.
+.termin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-inline-start: 5px solid var(--farbe-primaer);
+  border-radius: var(--radius-m);
+}
+
+.terminTitel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+}
+
+.gastListe {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin: 0;
+  margin-block-start: var(--abstand-xs);
+  padding: 0;
+  list-style: none;
+}
+
+// Name und Schaltflaeche untereinander: Die Schaltflaeche fuellt die Breite (Daumen, A2).
+.gastZeile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-xs);
+}
+
+.gastName {
+  font-weight: var(--gewicht-halbfett);
+  overflow-wrap: anywhere;
 }

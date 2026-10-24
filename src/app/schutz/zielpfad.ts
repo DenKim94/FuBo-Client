@@ -48,11 +48,11 @@ export const ADMIN_PFADE = {
   terminNeu: '/admin/termine/neu',
   /** Rolle `ADMIN`: Verwaltungsansicht eines Termins. */
   terminVerwaltung: (terminId: number) => `/admin/termine/${String(terminId)}`,
-  /** Rolle `ADMIN`: Gastplätze (C8, Stufe 4). */
+  /** Rolle `ADMIN`: Gäste-Verwaltung – Gäste in Terminen (Stufe) und Gastplätze (C8, Stufe 4). */
   gaeste: '/admin/gaeste',
   /** Rolle `ADMIN`: Konfiguration (C8, Stufe 4). */
   konfiguration: '/admin/konfiguration',
-  /** Rolle `ADMIN`: Teams ohne Termin (C8, Stufe 5). */
+  /** Rolle `ADMIN`: Team-Generator für frei gewählte Teilnehmer (C8, Stufe 5). */
   teams: '/admin/teams',
   /** Rolle `ADMIN`: zentrale PIN ändern. */
   pin: '/admin/pin',

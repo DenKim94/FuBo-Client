@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { http } from 'msw'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
@@ -49,6 +49,22 @@ describe('AdminDashboard', () => {
     expect(screen.getByTestId('admin-link-name')).toHaveAttribute('href', '/admin/name/aendern')
     expect(screen.getByTestId('admin-link-passwort')).toHaveAttribute('href', '/admin/passwort/aendern')
     expect(screen.getByRole('heading', { level: 1, name: 'Administration' })).toBeInTheDocument()
+    await screen.findByTestId('admin-termin-verwalten-link')
+  })
+
+  test('Texte und Symbole seit 24.10.2026: „Teams manuell einteilen“ mit „Team-Generator“, „Gäste“, Ausweis beim Anmeldenamen', async () => {
+    rendern([terminModell({ terminId: 1, datum: '2099-01-06' })])
+
+    const gruppen = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(gruppen).toEqual(expect.arrayContaining(['Verwaltung', 'Teams manuell einteilen', 'Zugang']))
+    expect(gruppen).not.toContain('Werkzeuge')
+    const teams = screen.getByTestId('admin-link-teams')
+    expect(teams).toHaveTextContent('Team-Generator')
+    expect(teams).toHaveTextContent('Erstelle Teams für selbst ausgewählte Teilnehmer')
+    expect(within(teams).getByTestId('icon-football_icon_dark')).toBeInTheDocument()
+    expect(screen.getByTestId('admin-link-gaeste')).toHaveTextContent('Gäste')
+    expect(within(screen.getByTestId('admin-link-name')).getByTestId('icon-id_card_icon')).toBeInTheDocument()
+    expect(within(screen.getByTestId('admin-link-name')).queryByTestId('icon-mail_icon_dark')).not.toBeInTheDocument()
     await screen.findByTestId('admin-termin-verwalten-link')
   })
 

@@ -42,26 +42,6 @@
 }
 
 // Der Text, den der Server tatsaechlich versenden wuerde: nur lesbar, mit den Absaetzen der Vorlage.
-.effektiv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-xs);
-  padding: var(--abstand-s) var(--abstand-m);
-  border: 1px solid var(--farbe-rand-bedienbar);
-  border-radius: var(--radius-m);
-}
-
-.effektivTitel {
-  font-size: var(--schrift-klein);
-  color: var(--farbe-text-schwach);
-}
-
-.effektivText {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-  line-height: var(--zeilenhoehe);
-}
-
 .nebentext {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach);

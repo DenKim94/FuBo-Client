@@ -260,20 +260,19 @@ test.describe('Termin verwalten', () => {
     expect(verwaltung.koerper.abgesagt).toEqual([{ terminId: 2 }])
   })
 
-  test('schliesst einen Termin ab: Karte „abgeschlossen“, keine Aktionen mehr', async ({ page }) => {
-    const { verwaltung } = await start(page, '/admin/termine/2')
+  test('kein „Termin abschliessen“ (der Server schliesst selbst ab); Absagen und Entfernen rot umrandet, nicht gefuellt', async ({ page }) => {
+    await start(page, '/admin/termine/2')
 
-    // Knopf und Bestätigung im Dialog sind blau (`akzent`, --farbe-link #1a5ba8); der Fokus beginnt auf „Abbrechen“.
-    const blau = 'rgb(26, 91, 168)'
-    await expect(page.getByTestId('admin-termin-abschliessen')).toHaveCSS('background-color', blau)
-    await page.getByTestId('admin-termin-abschliessen').click()
-    await expect(page.getByTestId('admin-abschliessen-dialog-bestaetigen')).toHaveCSS('background-color', blau)
-    await expect(page.getByTestId('admin-abschliessen-dialog-abbrechen')).toBeFocused()
-    await page.getByTestId('admin-abschliessen-dialog-bestaetigen').click()
-
-    await expect(page.getByTestId('termin-abgeschlossen')).toBeVisible()
-    await expect(page.getByTestId('admin-termin-aktionen')).toHaveCount(0)
-    expect(verwaltung.koerper.geaendert).toEqual([{ terminId: 2, version: 1, status: 'ABGESCHLOSSEN' }])
+    await expect(page.getByTestId('admin-termin-absagen')).toBeVisible()
+    await expect(page.getByTestId('admin-termin-abschliessen')).toHaveCount(0)
+    // `gefahrUmriss`: weisser Grund, roter Rand (--farbe-fehler #a6231c); gefuellt rot ist erst die Bestaetigung.
+    const rot = 'rgb(166, 35, 28)'
+    for (const id of ['admin-termin-absagen', 'admin-termin-entfernen']) {
+      await expect(page.getByTestId(id)).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+      await expect(page.getByTestId(id)).toHaveCSS('border-top-color', rot)
+    }
+    await page.getByTestId('admin-termin-absagen').click()
+    await expect(page.getByTestId('admin-absagen-dialog-bestaetigen')).toHaveCSS('background-color', rot)
   })
 
   test('entfernt einen Termin ohne Rueckmeldungen und kehrt mit Hinweis zur Liste zurueck', async ({ page }) => {
@@ -312,12 +311,12 @@ test.describe('Termin verwalten', () => {
     await expect(page.getByTestId('admin-termin-verwaltung')).toBeVisible()
 
     expect(await ueberhangHorizontal(page)).toBe(0)
-    // Aufgabe Terminverwaltung: Abschliessen, Absagen und Entfernen stehen untereinander gleich breit.
+    // Aufgabe Terminverwaltung: Absagen und Entfernen stehen untereinander gleich breit.
     const breiten = await Promise.all(
-      ['admin-termin-abschliessen', 'admin-termin-absagen', 'admin-termin-entfernen'].map(async (id) => (await page.getByTestId(id).boundingBox())?.width ?? 0),
+      ['admin-termin-absagen', 'admin-termin-entfernen'].map(async (id) => (await page.getByTestId(id).boundingBox())?.width ?? 0),
     )
     expect(Math.max(...breiten) - Math.min(...breiten)).toBeLessThanOrEqual(1)
-    for (const id of ['termin-datum', 'termin-uhrzeit', 'termin-ort', 'admin-termin-speichern', 'admin-termin-abschliessen', 'admin-termin-absagen', 'admin-termin-entfernen']) {
+    for (const id of ['termin-datum', 'termin-uhrzeit', 'termin-ort', 'admin-termin-speichern', 'admin-termin-absagen', 'admin-termin-entfernen']) {
       const kasten = await page.getByTestId(id).boundingBox()
       expect(kasten, id).not.toBeNull()
       expect(kasten?.height ?? 0, id).toBeGreaterThanOrEqual(44)

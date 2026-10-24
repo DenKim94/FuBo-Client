@@ -165,6 +165,7 @@ export default function TeamsLeiste({
           <CustomButton
             art="primaer"
             breit
+            symbol="football_icon_dark"
             className={style.aktion}
             laedt={laedt}
             aria-disabled={gesperrt ? true : undefined}

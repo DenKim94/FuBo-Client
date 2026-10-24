@@ -40,27 +40,6 @@
   line-height: var(--zeilenhoehe);
 }
 
-.gastListe {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-s);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-// Name oben, Schaltflaeche darunter in voller Breite (Handy zuerst).
-.gastZeile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--abstand-xs);
-}
-
-.gastName {
-  font-weight: var(--gewicht-halbfett);
-  overflow-wrap: anywhere;
-}
-
 .halleText {
   display: flex;
   flex-direction: column;

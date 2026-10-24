@@ -72,6 +72,7 @@ describe('TerminHalle – Zustände (C8 10.1)', () => {
     const knopf = screen.getByTestId('admin-halle-absagen')
     expect(knopf).not.toHaveAttribute('aria-disabled')
     expect(knopf).toHaveTextContent('Halle per E-Mail absagen')
+    expect(within(knopf).getByTestId('icon-mail_icon_light')).toBeInTheDocument()
   })
 
   test('Frist erreicht: Text statt Termin, Aktion aria-disabled mit Grund, kein Dialog; der Rest bleibt nutzbar', async () => {

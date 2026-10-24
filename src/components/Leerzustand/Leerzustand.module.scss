@@ -11,9 +11,18 @@
   text-align: center;
 }
 
+// Symbol auf einer getoenten Plakette (Akzent seit 24.10.2026, wie in der Verwaltungsliste): Ein leerer Zustand ist
+// eine Einladung, kein Fehler – darum gruen statt grau.
 .symbol {
   display: inline-flex;
-  color: var(--farbe-text-schwach);
+  align-items: center;
+  justify-content: center;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  margin-block-end: var(--abstand-xs);
+  border-radius: 50%;
+  background: var(--farbe-primaer-flaeche);
+  color: var(--farbe-primaer);
 }
 
 .titel {

@@ -8,15 +8,13 @@ import CustomButton from '@/components/CustomButton/CustomButton'
 import Hinweis from '@/components/Hinweis/Hinweis'
 import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import { useTerminAbsagen } from '@/hooks/admin/useTerminAbsagen'
-import { useTerminAendern } from '@/hooks/admin/useTerminAendern'
 import { useTerminEntfernen } from '@/hooks/admin/useTerminEntfernen'
 import style from './AdminTerminDetail.module.scss'
 
-const FEHLER_ERSATZ_ABSCHLIESSEN = 'Der Termin konnte nicht abgeschlossen werden. Bitte versuche es erneut.'
 const FEHLER_ERSATZ_ABSAGEN = 'Der Termin konnte nicht abgesagt werden. Bitte versuche es erneut.'
 const FEHLER_ERSATZ_ENTFERNEN = 'Der Termin konnte nicht entfernt werden. Bitte versuche es erneut.'
 
-type Dialog = 'abschliessen' | 'absagen' | 'entfernen' | null
+type Dialog = 'absagen' | 'entfernen' | null
 
 /** Eigenschaften der weiteren Aktionen. */
 type WeitereAktionenEigenschaften = {
@@ -26,22 +24,28 @@ type WeitereAktionenEigenschaften = {
 }
 
 /**
- * Abschnitt „Weitere Aktionen“ (C7 8.5): Termin abschliessen, absagen, entfernen. Jede Aktion fragt mit einer
- * `Bestaetigung`, die die **Folgen** nennt; der Dialog bleibt bei einem Fehler offen und zeigt ihn.
+ * Abschnitt „Weitere Aktionen“ (C7 8.5): Termin absagen, entfernen. Jede Aktion fragt mit einer `Bestaetigung`, die
+ * die **Folgen** nennt; der Dialog bleibt bei einem Fehler offen und zeigt ihn.
  *
- * - **Abschliessen** (`GEPLANT`): `terminAendern` mit `status` und der `version` des **aktuellen** Standes. Nicht
- *   rückgängig zu machen.
+ * **Kein „Termin abschließen“ mehr (seit 24.10.2026, Entscheidung des Entwicklers):** Der Server schließt jeden Termin
+ * 25 Minuten nach Beginn selbst ab (`TerminService.abgelaufeneAbschliessen`, alle 5 Minuten; unter der Mindestzahl wird
+ * er stattdessen abgesagt). Ein Knopf dafür wirkte irreführend, als sei der Abschluss Aufgabe des Admins.
+ * `terminAendern` kann `status` weiter senden; die Oberfläche nutzt es nicht.
+ *
  * - **Absagen** (`GEPLANT`): endgültig; der Zeitpunkt bleibt belegt, bis der Termin entfernt wird.
  * - **Entfernen** (`GEPLANT`, `ABGESAGT`): nur, solange nichts darauf verweist. `409 TERMIN_IN_VERWENDUNG` schliesst den
  *   Dialog und nennt den Grund; bei `GEPLANT` führt „Stattdessen absagen“ zum richtigen Weg. Erfolg: `mutateAsync`, dann
  *   zur Liste (die Seite wird ausgehängt).
+ *
+ * **Farben (seit 24.10.2026):** „Absagen“ und „Entfernen“ sind rot **umrandet** (beide endgültig); gefüllt rot ist erst
+ * die Bestätigung im Dialog, der Moment der Entscheidung. Vorher standen drei gefüllte Flächen untereinander, zwei davon
+ * rot.
  *
  * **Fokus:** Mit dem Statuswechsel verschwinden die Aktionen samt der gedrückten Schaltfläche; der Fokus wandert auf die
  * Überschrift der Karte (C5-Falle: sonst liegt er auf `body`).
  */
 export default function WeitereAktionen({ termin, fokusAufUeberschrift }: WeitereAktionenEigenschaften) {
   const [dialog, setDialog] = useState<Dialog>(null)
-  const abschliessen = useTerminAendern()
   const absagen = useTerminAbsagen()
   const entfernen = useTerminEntfernen()
   const navigate = useNavigate()
@@ -51,21 +55,9 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
   const inVerwendung = entfernen.error instanceof ApiFehler && entfernen.error.code === 'TERMIN_IN_VERWENDUNG'
 
   function oeffnen(art: Exclude<Dialog, null>) {
-    abschliessen.reset()
     absagen.reset()
     entfernen.reset()
     setDialog(art)
-  }
-
-  async function abschliessenAusfuehren() {
-    if (abschliessen.isPending) return
-    try {
-      await abschliessen.mutateAsync({ terminId: termin.terminId, version: termin.version, status: 'ABGESCHLOSSEN' })
-      setDialog(null)
-      fokusAufUeberschrift()
-    } catch {
-      // Der Fehler steht im Dialog.
-    }
   }
 
   async function absagenAusfuehren() {
@@ -110,18 +102,8 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
       <Knopfgruppe untereinander>
         {geplant && (
           <CustomButton
-            art="akzent"
-            onClick={() => {
-              oeffnen('abschliessen')
-            }}
-            data-testid="admin-termin-abschliessen"
-          >
-            Termin abschließen
-          </CustomButton>
-        )}
-        {geplant && (
-          <CustomButton
-            art="gefahr"
+            art="gefahrUmriss"
+            symbol="cancel_circle_icon_dark"
             onClick={() => {
               oeffnen('absagen')
             }}
@@ -143,7 +125,8 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         )}
         {entfernbar && (
           <CustomButton
-            art="gefahr"
+            art="gefahrUmriss"
+            symbol="delete_icon_dark"
             onClick={() => {
               oeffnen('entfernen')
             }}
@@ -153,28 +136,6 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
           </CustomButton>
         )}
       </Knopfgruppe>
-
-      <Bestaetigung
-        offen={dialog === 'abschliessen'}
-        titel="Termin abschließen?"
-        bestaetigenText="Termin abschließen"
-        // Blau wie der Knopf, der den Dialog öffnet; endgültig bleibt der Schritt trotzdem (Fokus auf „Abbrechen“).
-        art="akzent"
-        fokusAufAbbrechen
-        laedt={abschliessen.isPending}
-        fehler={dialog === 'abschliessen' ? abschliessen.error : null}
-        fehlerErsatz={FEHLER_ERSATZ_ABSCHLIESSEN}
-        beiBestaetigen={() => void abschliessenAusfuehren()}
-        beiAbbruch={() => {
-          setDialog(null)
-        }}
-        data-testid="admin-abschliessen-dialog"
-      >
-        <p>
-          Der Termin gilt danach als abgeschlossen. Änderungen sind nicht mehr möglich; Ergebnisse lassen sich
-          erfassen, sofern eine Teameinteilung vorliegt. Das lässt sich nicht rückgängig machen.
-        </p>
-      </Bestaetigung>
 
       <Bestaetigung
         offen={dialog === 'absagen'}

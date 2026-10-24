@@ -4,6 +4,12 @@ import { ergebnisSatz } from '@/api/ergebnis/ergebnisText'
 import { zeitpunktKurz } from '@/api/termine/terminZeit'
 import style from './ErgebnisAnzeige.module.scss'
 
+/**
+ * Seitenlinie in der Leibchenfarbe des Siegers (seit 24.10.2026), grau bei Unentschieden. Wiederholt nur, was der Satz
+ * sagt; wer die Teams im Kopf hat, erkennt den Sieger auf einen Blick.
+ */
+const SIEGER_KLASSE = { A: style.siegerA, B: style.siegerB, U: style.unentschieden } as const
+
 /** Eigenschaften der Ergebnisanzeige. */
 type ErgebnisAnzeigeEigenschaften = {
   /** Das Ergebnis, wie `TerminDetails.ergebnis` es liefert. */
@@ -33,7 +39,7 @@ export default function ErgebnisAnzeige({
   'data-testid': testId = 'ergebnis-anzeige',
 }: ErgebnisAnzeigeEigenschaften) {
   return (
-    <section className={style.anzeige} aria-labelledby="ergebnis-titel" data-testid={testId}>
+    <section className={`${style.anzeige} ${SIEGER_KLASSE[ergebnis.sieger]}`} aria-labelledby="ergebnis-titel" data-testid={testId}>
       <h2 id="ergebnis-titel" className={style.titel} tabIndex={-1} ref={ueberschriftRef} data-testid={`${testId}-titel`}>
         Ergebnis
       </h2>

@@ -6,6 +6,7 @@ import { queryClient } from '@/app/queryClient'
 import { adminHandler, adminWelt, beispielGastplaetze, gastPlatz } from '@/test/mocks/admin'
 import { problem } from '@/test/mocks/problem'
 import { mockServer } from '@/test/mocks/server'
+import { terminHandlers } from '@/test/mocks/termine'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
 import AdminGaeste from './AdminGaeste'
 
@@ -15,7 +16,8 @@ afterEach(() => {
 
 function rendern(gastplaetze = beispielGastplaetze()) {
   const welt = adminWelt({ gastplaetze })
-  mockServer.use(...adminHandler(welt))
+  // Erst die Admin-Handler, dann die Termine (MSW nimmt den ersten passenden).
+  mockServer.use(...adminHandler(welt), ...terminHandlers(welt.termine).handlers)
   render(
     <QueryUmgebung>
       <MemoryRouter>
@@ -31,7 +33,7 @@ describe('AdminGaeste – Anzeige', () => {
   test('zeigt Überschrift, Zusammenfassung und nur die belegten Plätze', async () => {
     const welt = rendern()
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Gastplätze' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Gäste' })).toBeInTheDocument()
     expect(screen.getByTestId('admin-gaeste-zusammenfassung')).toHaveTextContent('2 von 4 Plätzen belegt')
     expect(screen.getByTestId('admin-gast-1')).toBeInTheDocument()
     expect(screen.getByTestId('admin-gast-2')).toBeInTheDocument()
@@ -45,7 +47,7 @@ describe('AdminGaeste – Anzeige', () => {
     rendern()
 
     const lebend = await screen.findByTestId('admin-gast-1')
-    expect(within(lebend).getByRole('heading', { level: 2, name: 'Platz 1' })).toBeInTheDocument()
+    expect(within(lebend).getByRole('heading', { level: 3, name: 'Platz 1' })).toBeInTheDocument()
     expect(within(lebend).getByTestId('admin-gast-name-1')).toHaveTextContent('Beispielgast')
     expect(lebend).toHaveTextContent('Stufe: Stark')
     expect(within(lebend).getByTestId('admin-gast-zustand-1')).toHaveTextContent('angemeldet')
@@ -77,16 +79,17 @@ describe('AdminGaeste – Anzeige', () => {
   test('ohne belegten Platz erscheint der Leerzustand', async () => {
     rendern([gastPlatz({ nummer: 1 }), gastPlatz({ nummer: 2 })])
 
-    expect(await screen.findByTestId('admin-gaeste-leer')).toHaveTextContent('Zurzeit ist kein Gastplatz belegt.')
+    expect(await screen.findByTestId('admin-gaeste-leer')).toHaveTextContent('Zurzeit ist kein Gast angemeldet.')
     expect(screen.getByTestId('admin-gaeste-zusammenfassung')).toHaveTextContent('0 von 2 Plätzen belegt')
     expect(screen.queryByTestId('admin-gaeste-verwaiste')).not.toBeInTheDocument()
   })
 
-  test('der Hinweis zur Stufe verweist auf die Termine', async () => {
+  test('zwei Abschnitte: „Gäste in Terminen“ vor „Gastplätze“; der Text erklärt, dass Zusagen das Abmelden überdauern', async () => {
     rendern()
 
-    expect(await screen.findByTestId('admin-gaeste-stufen-hinweis')).toHaveTextContent('Termine → Termin → Gäste')
-    expect(screen.getByTestId('admin-gaeste-zu-termine')).toHaveAttribute('href', '/admin/termine')
+    await screen.findByTestId('admin-gaeste-zusammenfassung')
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Gäste in Terminen', 'Gastplätze'])
+    expect(screen.getByTestId('admin-gaeste-plaetze')).toHaveTextContent('seine Zusagen bleiben bestehen')
   })
 
   test('ein Fehler beim Laden zeigt den Fehlerzustand mit „Erneut versuchen“', async () => {
@@ -161,7 +164,7 @@ describe('AdminGaeste – Freigeben', () => {
     expect(screen.getByTestId('admin-gaeste-zusammenfassung')).toHaveTextContent('1 von 4 Plätzen belegt')
     // Der Fokus liegt nicht auf body, sondern auf der Überschrift.
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1, name: 'Gastplätze' })).toHaveFocus()
+      expect(screen.getByRole('heading', { level: 1, name: 'Gäste' })).toHaveFocus()
     })
   })
 

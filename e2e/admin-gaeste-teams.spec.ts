@@ -14,7 +14,7 @@ test.describe('Gastplaetze', () => {
   test('zeigt die belegten Plaetze mit Zustand als Text; freie stehen nur in der Zusammenfassung', async ({ page }) => {
     await start(page, '/admin/gaeste')
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Gastplätze' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Gäste' })).toBeVisible()
     await expect(page.getByTestId('admin-gaeste-zusammenfassung')).toHaveText('2 von 4 Plätzen belegt')
     await expect(page.getByTestId('admin-gast-zustand-1')).toContainText('angemeldet')
     await expect(page.getByTestId('admin-gast-zustand-2')).toContainText('Sitzung abgelaufen')
@@ -55,20 +55,63 @@ test.describe('Gastplaetze', () => {
   })
 })
 
-test.describe('Skill-Stufe eines Gastes im Termin', () => {
+test.describe('Skill-Stufe eines Gastes (Gaeste-Verwaltung)', () => {
   test('aendert die Stufe: Vorauswahl aus dem Gastplatz, Name unveraendert, Teilnehmerkreis zaehlt hoch', async ({ page }) => {
-    const { welt, termine } = await start(page, '/admin/termine/1')
+    const { welt, termine } = await start(page, '/admin/gaeste')
 
-    await expect(page.getByTestId('admin-termin-gaeste-abschnitt')).toContainText('Beispielgast (Gast)')
-    await page.getByTestId('admin-gast-stufe-8').click()
+    await expect(page.getByTestId('admin-gaeste-termin-1')).toContainText('Beispielgast (Gast)')
+    await page.getByTestId('admin-gast-stufe-1-8').click()
     await expect(page.getByTestId('admin-gast-stufe-wahl-STARK')).toBeChecked()
-    await page.getByTestId('admin-gast-stufe-wahl-SCHWACH').check({ force: true })
+    await page.getByTestId('admin-gast-stufe-wahl-SCHWACH').check()
     await page.getByTestId('admin-gast-stufe-dialog-bestaetigen').click()
 
     await expect(page.getByTestId('admin-gast-stufe-dialog')).toBeHidden()
     expect(welt.koerper.gastStufen).toEqual([{ terminId: 1, gastName: 'Beispielgast', stufe: 'SCHWACH' }])
     expect(termine.modelle[0].teilnehmerVersion).toBe(2)
     expect(await ueberhangHorizontal(page)).toBe(0)
+  })
+
+  test('ein abgemeldeter Gast mit Zusage erscheint, obwohl kein Gastplatz belegt ist (Befund vom 24.10.2026)', async ({ page }) => {
+    const { welt } = await start(page, '/admin/gaeste')
+    for (const platz of welt.gastplaetze) Object.assign(platz, { belegt: false, belegtSeit: null, gastName: null, gastStufe: null, sitzungGueltig: null })
+    await page.reload()
+
+    await expect(page.getByTestId('admin-gaeste-zusammenfassung')).toHaveText('0 von 4 Plätzen belegt')
+    await expect(page.getByTestId('admin-gaeste-termin-1')).toContainText('Beispielgast (Gast)')
+    await expect(page.getByTestId('admin-gaeste-leer')).toHaveText('Zurzeit ist kein Gast angemeldet.')
+    // Ohne Anmeldung und ohne Feld vom Server ist die Stufe nicht bekannt; die Zeile sagt warum.
+    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Stufe: nicht bekannt (der Gast ist nicht angemeldet)')
+  })
+
+  test('zeigt die Selbsteinschaetzung eines angemeldeten Gastes als solche', async ({ page }) => {
+    await start(page, '/admin/gaeste')
+
+    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Selbsteinschätzung: Stark (laut Anmeldung)')
+  })
+
+  test('entfernt einen Gast aus dem Termin (Absage fuer den Gast): Dialog, Koerper, Zeile weg, Hinweis, Fokus', async ({ page }) => {
+    const { welt, termine } = await start(page, '/admin/gaeste')
+
+    const entfernen = page.getByTestId('admin-gast-entfernen-1-8')
+    expect((await entfernen.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await entfernen.click()
+    await expect(page.getByTestId('admin-gast-entfernen-dialog')).toContainText('als abgesagt geführt')
+    await page.getByTestId('admin-gast-entfernen-dialog-bestaetigen').click()
+
+    await expect(page.getByTestId('admin-gaeste-termin-1')).toHaveCount(0)
+    await expect(page.getByTestId('admin-gaeste-termine-hinweis')).toContainText('Beispielgast (Gast) ist am')
+    await expect(page.getByRole('heading', { level: 2, name: 'Gäste in Terminen' })).toBeFocused()
+    expect(welt.koerper.gastAbgesagt).toEqual([{ terminId: 1, gastName: 'Beispielgast' }])
+    expect(termine.modelle[0].teilnehmerVersion).toBe(2)
+    expect(await ueberhangHorizontal(page)).toBe(0)
+  })
+
+  test('die Terminverwaltung bietet die Stufe nicht mehr an', async ({ page }) => {
+    await start(page, '/admin/termine/1')
+
+    await expect(page.getByRole('heading', { level: 2, name: 'Weitere Aktionen' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Gäste' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Stufe ändern/ })).toHaveCount(0)
   })
 })
 
@@ -79,7 +122,7 @@ test.describe('Manuelle Teamgenerierung', () => {
   test('zeigt den Hinweis vor der Auswahl; das unvollstaendige Profil ist gesperrt mit Grund, Gesperrte und Admin fehlen', async ({ page }) => {
     await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 4 }, zusatzProfile: [UNVOLLSTAENDIG] })
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Teams ohne Termin' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Team-Generator' })).toBeVisible()
     await expect(page.getByTestId('teams-manuell-hinweis')).toContainText('wird nicht gespeichert')
     await expect(page.getByTestId('admin-teams-profil-4')).toBeDisabled()
     await expect(page.getByTestId('admin-teams-unvollstaendig-4')).toHaveText('Skillwerte unvollständig')

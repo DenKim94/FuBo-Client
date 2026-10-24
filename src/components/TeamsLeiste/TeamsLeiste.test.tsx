@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, delay, http } from 'msw'
 import { afterEach, describe, expect, test, vi } from 'vitest'
@@ -60,6 +60,7 @@ describe('TeamsLeiste', () => {
     unmount()
     rendern({ vorhanden: true, veraltet: true })
     expect(screen.getByTestId('teams-generieren')).toHaveTextContent('Teams neu generieren')
+    expect(within(screen.getByTestId('teams-generieren')).getByTestId('icon-football_icon_dark')).toBeInTheDocument()
   })
 
   test('generiert ohne Einteilung sofort, ohne Hintergrundkopf, und meldet den Erfolg', async () => {

@@ -36,7 +36,7 @@ type CustomButtonEigenschaften = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 /** Kantenlänge des Symbols in rem (20 px), kleiner als das Standardsymbol, damit es zur Schrift passt. */
-const SYMBOLGROESSE = 1.25
+const SYMBOLGROESSE = 1.3
 
 /**
  * Die Schaltfläche der Anwendung (C2, Abschnitt 7.1).

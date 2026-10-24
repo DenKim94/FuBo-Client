@@ -6,7 +6,20 @@
   gap: var(--abstand-xs);
   padding: var(--abstand-m);
   border: 1px solid var(--farbe-rand-bedienbar);
+  border-inline-start: 5px solid var(--ergebnis-akzent, var(--farbe-rand-bedienbar));
   border-radius: var(--radius-m);
+}
+
+.siegerA {
+  --ergebnis-akzent: var(--farbe-team-a);
+}
+
+.siegerB {
+  --ergebnis-akzent: var(--farbe-team-b);
+}
+
+.unentschieden {
+  --ergebnis-akzent: var(--farbe-rand-bedienbar);
 }
 
 .titel {

@@ -59,8 +59,14 @@ function Team({
 }) {
   const titelId = `${testId}-${kennung}-titel`
   return (
-    <section className={style.team} aria-labelledby={titelId} data-testid={`${testId}-${kennung}`}>
+    <section
+      className={`${style.team} ${kennung === 'a' ? style.teamA : style.teamB}`}
+      aria-labelledby={titelId}
+      data-testid={`${testId}-${kennung}`}
+    >
       <h3 id={titelId} className={style.teamTitel}>
+        {/* Leibchenfarbe: hilft beim Wiederfinden, die Aussage steht im Namen. */}
+        <span className={style.marke} aria-hidden="true" />
         {name} ({eintraege.length})
       </h3>
       <ul className={style.liste}>

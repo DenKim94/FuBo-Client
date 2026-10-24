@@ -44,6 +44,19 @@
   --farbe-fehler-flaeche: #fdf2f1;
   --farbe-hinweis-flaeche: #fdf6e8;
 
+  /* --- Akzentflaechen (24.10.2026) ---
+     Getoente Flaechen hinter Symbolen (Plaketten der Verwaltungsliste, Leerzustand)
+     in den beiden Bedeutungsfarben der App. Sie tragen keine eigene Aussage; das
+     Symbol darauf erreicht die 3:1 aus WCAG 1.4.11, Text darauf AA. */
+  --farbe-primaer-flaeche: #e6f2e9; /* --farbe-primaer darauf 4.70:1, --farbe-text-schwach 5.56:1 */
+  --farbe-link-flaeche: #e8f0fa; /* --farbe-link darauf 5.88:1 */
+
+  /* --- Teamfarben ("Leibchen") ---
+     Kennzeichnen Team A und Team B als Randstreifen und Marke neben dem Namen. Die
+     Aussage steht im Namen ("Team A"), die Farbe hilft nur beim Wiederfinden. */
+  --farbe-team-a: var(--farbe-primaer);
+  --farbe-team-b: var(--farbe-link);
+
   /* --- Raender: zwei Rollen, nicht eine ---
      WCAG 1.4.11 verlangt 3:1 fuer alles, was ein Bedienelement ueberhaupt
      erkennbar macht. Eine Trennlinie zwischen zwei Listenzeilen traegt diese

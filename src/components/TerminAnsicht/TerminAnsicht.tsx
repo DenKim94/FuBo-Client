@@ -18,6 +18,16 @@ import { useTermin } from '@/hooks/useTermin'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import style from './TerminAnsicht.module.scss'
 
+/**
+ * Farbe der Seitenlinie des Kopfbereichs je Status (seit 24.10.2026): grün geplant, rot abgesagt, grau abgeschlossen.
+ * Die Linie wiederholt nur, was Text und Hinweis schon sagen; sie macht den Zustand auf einen Blick erkennbar.
+ */
+const KOPF_STATUS = {
+  GEPLANT: style.geplant,
+  ABGESAGT: style.abgesagt,
+  ABGESCHLOSSEN: style.abgeschlossen,
+} as const
+
 /** Eigenschaften der Termin-Ansicht. */
 type TerminAnsichtEigenschaften = {
   /** Technischer Schlüssel des Termins. */
@@ -120,7 +130,7 @@ export default function TerminAnsicht({
       <>
         {nachladefehler && <Fehlermeldung fehler={nachladefehler} data-testid="termin-fehler-meldung" />}
 
-        <div className={style.kopf} data-testid="termin-kopf">
+        <div className={`${style.kopf} ${KOPF_STATUS[termin.status]}`} data-testid="termin-kopf">
           <TerminKarte termin={termin} ebene={kartenEbene} ueberschriftRef={ueberschriftRef} />
 
           {geplant && (

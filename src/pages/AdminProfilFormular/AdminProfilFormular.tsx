@@ -179,6 +179,7 @@ function AnlegenFormular({ kategorien }: { kategorien: SkillKategorie[] }) {
           <CustomButton
             type="submit"
             art="primaer"
+            symbol="check_icon"
             breit
             className={style.aktion}
             laedt={anlegen.isPending}
@@ -186,7 +187,7 @@ function AnlegenFormular({ kategorien }: { kategorien: SkillKategorie[] }) {
             aria-describedby={grund !== null ? grundId : undefined}
             data-testid="admin-profil-speichern"
           >
-            Profil anlegen
+            Speichern
           </CustomButton>
         </div>
       </Aktionsleiste>

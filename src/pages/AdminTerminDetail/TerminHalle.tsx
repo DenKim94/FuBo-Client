@@ -144,7 +144,9 @@ export default function TerminHalle({ termin, fokusAufUeberschrift }: TerminHall
           )}
 
           <CustomButton
-            art="gefahr"
+            // Blau (`akzent`): ein Verwaltungsschritt nach außen, kein Abbruch im Programm; rot ist erst die Bestätigung.
+            art="akzent"
+            symbol="mail_icon_light"
             aria-disabled={gesperrt ? true : undefined}
             aria-describedby={gesperrt ? grundId : undefined}
             onClick={() => {

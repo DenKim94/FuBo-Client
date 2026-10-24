@@ -212,6 +212,7 @@ export default function AdminTermine() {
       <Aktionsleiste>
         <CustomButton
           art="primaer"
+          symbol="add_circle_icon_light"
           breit
           className={style.aktion}
           onClick={() => void navigate(ADMIN_PFADE.terminNeu)}

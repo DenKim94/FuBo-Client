@@ -56,6 +56,8 @@ export type AdminProtokoll = {
   gaesteFreigegeben: unknown[]
   /** Eingegangene Körper von `/admin/teilnahme/gast-stufe`. */
   gastStufen: unknown[]
+  /** Eingegangene Körper von `/admin/teilnahme/gast-absagen` (Vertragsvorschlag vom 24.10.2026). */
+  gastAbgesagt: unknown[]
   /** Eingegangene Körper von `/admin/halle/absagen`. */
   halleAbgesagt: unknown[]
   /** Eingegangene Körper von `/admin/ergebnis/korrigieren`. */
@@ -264,6 +266,7 @@ export function adminWelt(
       gaesteAbrufe: [],
       gaesteFreigegeben: [],
       gastStufen: [],
+      gastAbgesagt: [],
       halleAbgesagt: [],
       ergebnisKorrigiert: [],
       teamsManuell: [],
@@ -674,6 +677,25 @@ export function adminHandler(welt: AdminWelt) {
     }),
 
     // Die einzige Adminaktion an einer Teilnahme: Stufe; der Name wird zeichengenau verglichen.
+    // Vertragsvorschlag vom 24.10.2026 (server/harness/tmp/SERVER_ANFRAGE_GAST_ABSAGEN.md): wirkt wie die Absage des Gastes.
+    http.post('*/admin/teilnahme/gast-absagen', async ({ request }) => {
+      const rumpf = (await request.json()) as { terminId?: number; gastName?: string }
+      welt.protokoll.gastAbgesagt.push(rumpf)
+      const modell = welt.termine.find((t) => t.terminId === rumpf.terminId)
+      const zusage = modell?.zusagen.find((z) => z.gast && z.name === rumpf.gastName)
+      if (!modell || !zusage) {
+        return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
+      }
+      if (modell.status !== 'GEPLANT' || vergangen(modell.datum, modell.uhrzeit)) {
+        return problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin nimmt keine Rückmeldungen mehr an.')
+      }
+      modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+      // Eine Absage ändert den Kreis (Einteilung veraltet), öffnet aber kein Kontingent: Der Kontingentstand bleibt.
+      modell.kontingentVersion ??= modell.teilnehmerVersion
+      modell.teilnehmerVersion += 1
+      return new HttpResponse(null, { status: 204 })
+    }),
+
     http.post('*/admin/teilnahme/gast-stufe', async ({ request }) => {
       const rumpf = (await request.json()) as { terminId?: number; gastName?: string; stufe?: GastStufe }
       welt.protokoll.gastStufen.push(rumpf)

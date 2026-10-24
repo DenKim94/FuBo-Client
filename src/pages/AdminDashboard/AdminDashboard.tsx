@@ -12,10 +12,9 @@ import { useTermine } from '@/hooks/useTermine'
 import style from './AdminDashboard.module.scss'
 
 /**
- * Die Verwaltungsliste im Endzustand (C7, 6.2). „Gastplätze“, „Konfiguration“ und
- * „Teams ohne Termin“ stehen von Anfang an darin; ihre Ziele zeigen bis C8 auf
- * Platzhalter. Die Liste ist die Navigation des Admins (E1): Er sieht keine
- * Tab-Leiste.
+ * Die Verwaltungsliste (C7, 6.2; Texte und Symbole seit 24.10.2026). Die Liste ist
+ * die Navigation des Admins (E1): Er sieht keine Tab-Leiste. Der Ton der Plakette
+ * ordnet die Gruppen: grün für Spielbetrieb und Teams, blau für den Zugang.
  */
 const GRUPPEN: Verwaltungsgruppe[] = [
   {
@@ -24,7 +23,7 @@ const GRUPPEN: Verwaltungsgruppe[] = [
       {
         to: ADMIN_PFADE.profile,
         titel: 'Spielerprofile',
-        text: 'Profile und Skillwerte pflegen, sperren, entfernen',
+        text: 'Spielerprofile bearbeiten, sperren, entfernen',
         symbol: 'manage_accounts_icon_dark',
         'data-testid': 'admin-link-profile',
       },
@@ -37,8 +36,8 @@ const GRUPPEN: Verwaltungsgruppe[] = [
       },
       {
         to: ADMIN_PFADE.gaeste,
-        titel: 'Gastplätze',
-        text: 'Angemeldete Gäste ansehen und Plätze freigeben',
+        titel: 'Gäste verwalten',
+        text: 'Skill-Stufe ändern, Plätze freigeben',
         symbol: 'person_guest_dark',
         'data-testid': 'admin-link-gaeste',
       },
@@ -52,19 +51,20 @@ const GRUPPEN: Verwaltungsgruppe[] = [
     ],
   },
   {
-    titel: 'Werkzeuge',
+    titel: 'Teams manuell einteilen',
     eintraege: [
       {
         to: ADMIN_PFADE.teams,
-        titel: 'Teams ohne Termin',
-        text: 'Eine Einteilung für eine frei gewählte Gruppe rechnen',
-        symbol: 'chart_data_icon_dark',
+        titel: 'Team-Generator',
+        text: 'Erstelle Teams für selbst ausgewählte Teilnehmer',
+        symbol: 'football_icon_dark',
         'data-testid': 'admin-link-teams',
       },
     ],
   },
   {
     titel: 'Zugang',
+    ton: 'blau',
     eintraege: [
       {
         to: ADMIN_PFADE.pin,
@@ -77,7 +77,7 @@ const GRUPPEN: Verwaltungsgruppe[] = [
         to: ADMIN_PFADE.nameAendern,
         titel: 'Anmeldename',
         text: 'Mit Bestätigung per E-Mail ändern',
-        symbol: 'mail_icon_dark',
+        symbol: 'id_card_icon',
         'data-testid': 'admin-link-name',
       },
       {
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
       <div className={style.termin}>
         <TerminAnsicht terminId={termin.terminId} eingeklappt nurLesen kartenEbene={3}>
           <Textlink to={ADMIN_PFADE.terminVerwaltung(termin.terminId)} data-testid="admin-termin-verwalten-link">
-            Termin verwalten
+            Termin öffnen
           </Textlink>
         </TerminAnsicht>
       </div>

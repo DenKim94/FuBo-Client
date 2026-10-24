@@ -19,6 +19,11 @@ export type Verwaltungseintrag = {
 /** Eine Gruppe von Einträgen unter einer Überschrift. */
 export type Verwaltungsgruppe = {
   titel: string
+  /**
+   * Ton der Symbol-Plaketten: `gruen` (Vorgabe) oder `blau`. Ordnet die Gruppen auf einen Blick; die Aussage trägt die
+   * Überschrift, nicht die Farbe.
+   */
+  ton?: 'gruen' | 'blau'
   eintraege: Verwaltungseintrag[]
 }
 
@@ -43,7 +48,7 @@ export default function Verwaltungsliste({ gruppen, 'data-testid': testId = 'ver
   return (
     <nav aria-label="Verwaltung" className={style.liste} data-testid={testId}>
       {gruppen.map((gruppe) => (
-        <section key={gruppe.titel} className={style.gruppe}>
+        <section key={gruppe.titel} className={`${style.gruppe} ${gruppe.ton === 'blau' ? style.blau : ''}`}>
           <h2 className={style.gruppenTitel}>{gruppe.titel}</h2>
           <ul className={style.eintraege}>
             {gruppe.eintraege.map((eintrag) => (

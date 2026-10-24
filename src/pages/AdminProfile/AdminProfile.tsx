@@ -78,6 +78,7 @@ export default function AdminProfile() {
       <Aktionsleiste>
         <CustomButton
           art="primaer"
+          symbol="person_add_dark"
           breit
           className={style.aktion}
           onClick={() => void navigate(ADMIN_PFADE.profilNeu)}

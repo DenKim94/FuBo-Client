@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw'
 import { describe, expect, test } from 'vitest'
 import {
   ergebnisKorrigieren,
+  gastAbsagen,
   halleAbsagen,
   serieAnlegen,
   terminAbsagen,
@@ -120,6 +121,28 @@ describe('ergebnisKorrigieren', () => {
     expect(fehler).toBeInstanceOf(ApiFehler)
     expect((fehler as ApiFehler).status).toBe(409)
     expect((fehler as ApiFehler).code).toBe('DATEN_VERALTET')
+  })
+})
+
+describe('gastAbsagen (Vertragsvorschlag vom 24.10.2026)', () => {
+  test('sendet terminId und den Namen unverändert per POST, ohne Hintergrundkopf, und liefert nichts', async () => {
+    const sicht = aufzeichnen('/admin/teilnahme/gast-absagen', 204)
+
+    await expect(gastAbsagen({ terminId: 7, gastName: ' Beispiel  gast' })).resolves.toBeUndefined()
+
+    expect(sicht.methode).toBe('POST')
+    expect(sicht.rumpf).toEqual({ terminId: 7, gastName: ' Beispiel  gast' })
+    expect(sicht.kopf).toBeNull()
+  })
+
+  test('übersetzt 409 TERMIN_GESCHLOSSEN in einen ApiFehler mit Code und Text des Servers', async () => {
+    mockServer.use(http.post('*/admin/teilnahme/gast-absagen', () => problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin hat begonnen.')))
+
+    const fehler = await gastAbsagen({ terminId: 7, gastName: 'Beispielgast' }).catch((f: unknown) => f)
+
+    expect(fehler).toBeInstanceOf(ApiFehler)
+    expect((fehler as ApiFehler).code).toBe('TERMIN_GESCHLOSSEN')
+    expect((fehler as ApiFehler).message).toBe('Der Termin hat begonnen.')
   })
 })
 

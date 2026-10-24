@@ -12,20 +12,44 @@
   gap: var(--abstand-s);
 }
 
+// Leibchenfarben (seit 24.10.2026): Marke vor dem Namen und Randstreifen der Liste.
+.teamA {
+  --team-farbe: var(--farbe-team-a);
+}
+
+.teamB {
+  --team-farbe: var(--farbe-team-b);
+}
+
 .teamTitel {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
   font-size: var(--schrift-basis);
   font-weight: var(--gewicht-halbfett);
+}
+
+.marke {
+  flex: none;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  border-radius: var(--radius-s);
+  background: var(--team-farbe);
 }
 
 .liste {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--farbe-rand-bedienbar);
+  border-inline-start: 4px solid var(--team-farbe);
   border-radius: var(--radius-m);
 }
 
 .eintrag {
   display: flex;
+  // Passen Name und „Auswechselspieler“ nicht in eine Zeile, rutscht das Kennzeichen darunter, statt den Namen
+  // mitten im Wort zu brechen.
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--abstand-s);
@@ -38,7 +62,7 @@
 }
 
 .name {
-  flex: 1;
+  flex: 1 1 auto;
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }

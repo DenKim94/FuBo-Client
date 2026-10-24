@@ -26,7 +26,21 @@
   gap: var(--abstand-m);
   padding: var(--abstand-m);
   border: 1px solid var(--farbe-rand-bedienbar);
+  // Seitenlinie in der Farbe des Status (Akzent seit 24.10.2026); der Status steht zusaetzlich im Text.
+  border-inline-start: 5px solid var(--kopf-akzent, var(--farbe-rand-bedienbar));
   border-radius: var(--radius-m);
+}
+
+.geplant {
+  --kopf-akzent: var(--farbe-primaer);
+}
+
+.abgesagt {
+  --kopf-akzent: var(--farbe-fehler);
+}
+
+.abgeschlossen {
+  --kopf-akzent: var(--farbe-rand-bedienbar);
 }
 
 .zusagen {

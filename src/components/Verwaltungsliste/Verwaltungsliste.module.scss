@@ -1,5 +1,9 @@
 @use '@/styles/globalVars';
 
+// Zeilenhöhen von Titel und Kurzbeschreibung; daraus folgt die gemeinsame Höhe der Kacheln.
+$titel-zeile: 1.45;
+$text-zeile: 1.35;
+
 .liste {
   display: flex;
   flex-direction: column;
@@ -7,6 +11,10 @@
 }
 
 .gruppe {
+  // Ton der Symbol-Plaketten (siehe .symbol); `.blau` ueberschreibt ihn je Gruppe.
+  --plakette-grund: var(--farbe-primaer-flaeche);
+  --plakette-farbe: var(--farbe-primaer);
+
   display: flex;
   flex-direction: column;
   gap: var(--abstand-s);
@@ -27,12 +35,16 @@
   list-style: none;
 }
 
-// Die ganze Zeile ist der Link und das Tap-Ziel (mindestens 56 px).
+// Die ganze Zeile ist der Link und das Tap-Ziel. **Alle Kacheln gleich hoch** (24.10.2026): Die Mindesthöhe fasst
+// Titel und zwei Zeilen Kurzbeschreibung samt Innenabstand; eine kürzere Beschreibung steht mittig, eine längere
+// (dritte Zeile bei schmalem Bildschirm) darf die Kachel strecken – abgeschnitten wird kein Text.
 .zeile {
   display: flex;
   align-items: center;
   gap: var(--abstand-m);
-  min-block-size: 3.5rem;
+  min-block-size: calc(
+    var(--schrift-basis) * #{$titel-zeile} + var(--abstand-xs) + 2 * var(--schrift-klein) * #{$text-zeile} + 2 * var(--abstand-m)
+  );
   padding: var(--abstand-s) var(--abstand-m);
   border: 1px solid var(--farbe-rand-bedienbar);
   border-radius: var(--radius-m);
@@ -41,9 +53,23 @@
   text-decoration: none;
 }
 
+// Symbol auf einer getoenten Plakette: der Farbakzent der Liste. Ton je Gruppe (gruen, blau),
+// ueber Variablen, damit nur eine Regel die Plakette beschreibt.
+.blau {
+  --plakette-grund: var(--farbe-link-flaeche);
+  --plakette-farbe: var(--farbe-link);
+}
+
 .symbol {
   flex: none;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-m);
+  background: var(--plakette-grund);
+  color: var(--plakette-farbe);
 }
 
 .texte {
@@ -56,12 +82,13 @@
 
 .titel {
   font-weight: var(--gewicht-halbfett);
+  line-height: $titel-zeile;
 }
 
 .untertitel {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach);
-  line-height: 1.35;
+  line-height: $text-zeile;
 }
 
 // Pfeil als Rahmen eines Quadrats, gedreht: kein Zeichen, das ein Screenreader liest.

@@ -35,7 +35,7 @@ type GastZeile = { id: number; name: string; stufe: GastStufe }
 type FokusZiel = { art: 'neuer-gast'; id: number } | { art: 'hinzufuegen' } | null
 
 /**
- * Teams ohne Termin (`/admin/teams`, C8 10.3, A24): Der Admin wählt Profile und frei angelegte Gäste und lässt Teams
+ * Team-Generator (`/admin/teams`, C8 10.3, A24; bis 24.10.2026 „Teams ohne Termin“): Der Admin wählt Profile und frei angelegte Gäste und lässt Teams
  * berechnen – zum Ausprobieren, für einen Spieltag ohne Termin.
  *
  * **Nichts davon wird gespeichert** (E18): kein Schlüssel im Cache, das Ergebnis lebt im Zustand der Mutation und damit
@@ -174,7 +174,7 @@ export default function AdminTeams() {
 
   return (
     <div className={style.seite} data-testid="admin-teams">
-      <h1 className={style.titel}>Teams ohne Termin</h1>
+      <h1 className={style.titel}>Team-Generator</h1>
       <Hinweis data-testid="teams-manuell-hinweis">{TEXT_NICHT_GESPEICHERT}</Hinweis>
 
       {fehler && (
@@ -281,8 +281,13 @@ export default function AdminTeams() {
             </ul>
           </>
         )}
-        <CustomButton ref={hinzufuegenKnopf} art="sekundaer" onClick={gastHinzufuegen} data-testid="admin-teams-gast-hinzufuegen">
-          Gast hinzufügen
+        <CustomButton 
+          ref={hinzufuegenKnopf} 
+          art="akzent"
+          symbol="add_circle_icon_light"
+          onClick={gastHinzufuegen} 
+          data-testid="admin-teams-gast-hinzufuegen">
+            Gast hinzufügen
         </CustomButton>
       </fieldset>
 
@@ -341,6 +346,7 @@ export default function AdminTeams() {
           <CustomButton
             art="primaer"
             breit
+            symbol="football_icon_dark"
             className={style.aktion}
             laedt={generieren.isPending && !einteilung}
             aria-disabled={gesperrt ? true : undefined}

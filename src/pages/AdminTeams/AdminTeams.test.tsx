@@ -56,7 +56,7 @@ describe('AdminTeams – Auswahl', () => {
     rendern()
     await bereit()
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Teams ohne Termin' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Team-Generator' })).toBeInTheDocument()
     const hinweis = screen.getByTestId('teams-manuell-hinweis')
     expect(hinweis).toHaveTextContent('Die Einteilung wird nicht gespeichert')
     expect(hinweis).toHaveTextContent('Sie ist weg, sobald du die Seite verlässt.')
