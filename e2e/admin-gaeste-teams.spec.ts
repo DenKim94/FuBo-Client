@@ -1,5 +1,13 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { adminStart as start, e2eProfil, ueberhangHorizontal } from './hilfen/admin.js'
+
+/** Legt im Team-Generator einen Gast an und uebernimmt ihn (seit 24.10.2026 mit Bestaetigung). */
+async function gastAnlegen(page: Page, name = '', stufe?: 'STARK' | 'MITTEL' | 'SCHWACH') {
+  await page.getByTestId('admin-teams-gast-hinzufuegen').click()
+  if (name !== '') await page.getByTestId('admin-teams-gast-name').fill(name)
+  if (stufe) await page.getByTestId(`admin-teams-gast-stufe-${stufe}`).check()
+  await page.getByTestId('admin-teams-gast-uebernehmen').click()
+}
 
 /**
  * Prueft Gastplaetze, die Skill-Stufe eines Gastes und die manuelle Teamgenerierung im echten Browser (C8, Stufen 4 und 5)
@@ -34,7 +42,7 @@ test.describe('Gastplaetze', () => {
     await expect(page.getByText(/alle freigeben/i)).toHaveCount(0)
   })
 
-  test('„Verwaiste freigeben“ gibt nur den verwaisten Platz frei, ohne Dialog, und laesst den lebenden unberuehrt', async ({ page }) => {
+  test('„Plaetze freigeben“ gibt nur den verwaisten Platz frei, ohne Dialog, und laesst den lebenden unberuehrt', async ({ page }) => {
     const { welt } = await start(page, '/admin/gaeste')
 
     await page.getByTestId('admin-gaeste-verwaiste').click()
@@ -56,18 +64,21 @@ test.describe('Gastplaetze', () => {
 })
 
 test.describe('Skill-Stufe eines Gastes (Gaeste-Verwaltung)', () => {
-  test('aendert die Stufe: Vorauswahl aus dem Gastplatz, Name unveraendert, Teilnehmerkreis zaehlt hoch', async ({ page }) => {
+  test('aendert die Stufe: Vorauswahl aus der Teilnahme, Name unveraendert, Teilnehmerkreis zaehlt hoch, Zeile zeigt die neue Stufe', async ({ page }) => {
     const { welt, termine } = await start(page, '/admin/gaeste')
 
     await expect(page.getByTestId('admin-gaeste-termin-1')).toContainText('Beispielgast (Gast)')
+    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Aktuelle Stufe: Mittel')
     await page.getByTestId('admin-gast-stufe-1-8').click()
-    await expect(page.getByTestId('admin-gast-stufe-wahl-STARK')).toBeChecked()
+    // Die Teilnahme zaehlt (MITTEL ohne Angabe), nicht die Selbsteinschaetzung des Gastplatzes (STARK).
+    await expect(page.getByTestId('admin-gast-stufe-wahl-MITTEL')).toBeChecked()
     await page.getByTestId('admin-gast-stufe-wahl-SCHWACH').check()
     await page.getByTestId('admin-gast-stufe-dialog-bestaetigen').click()
 
     await expect(page.getByTestId('admin-gast-stufe-dialog')).toBeHidden()
     expect(welt.koerper.gastStufen).toEqual([{ terminId: 1, gastName: 'Beispielgast', stufe: 'SCHWACH' }])
     expect(termine.modelle[0].teilnehmerVersion).toBe(2)
+    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Aktuelle Stufe: Schwach')
     expect(await ueberhangHorizontal(page)).toBe(0)
   })
 
@@ -79,14 +90,8 @@ test.describe('Skill-Stufe eines Gastes (Gaeste-Verwaltung)', () => {
     await expect(page.getByTestId('admin-gaeste-zusammenfassung')).toHaveText('0 von 4 Plätzen belegt')
     await expect(page.getByTestId('admin-gaeste-termin-1')).toContainText('Beispielgast (Gast)')
     await expect(page.getByTestId('admin-gaeste-leer')).toHaveText('Zurzeit ist kein Gast angemeldet.')
-    // Ohne Anmeldung und ohne Feld vom Server ist die Stufe nicht bekannt; die Zeile sagt warum.
-    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Stufe: nicht bekannt (der Gast ist nicht angemeldet)')
-  })
-
-  test('zeigt die Selbsteinschaetzung eines angemeldeten Gastes als solche', async ({ page }) => {
-    await start(page, '/admin/gaeste')
-
-    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Selbsteinschätzung: Stark (laut Anmeldung)')
+    // Die Stufe kommt aus der Teilnahme (nur fuer den Admin) und bleibt nach dem Abmelden sichtbar.
+    await expect(page.getByTestId('admin-gast-stufe-anzeige-1-8')).toHaveText('Aktuelle Stufe: Mittel')
   })
 
   test('entfernt einen Gast aus dem Termin (Absage fuer den Gast): Dialog, Koerper, Zeile weg, Hinweis, Fokus', async ({ page }) => {
@@ -95,7 +100,7 @@ test.describe('Skill-Stufe eines Gastes (Gaeste-Verwaltung)', () => {
     const entfernen = page.getByTestId('admin-gast-entfernen-1-8')
     expect((await entfernen.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
     await entfernen.click()
-    await expect(page.getByTestId('admin-gast-entfernen-dialog')).toContainText('als abgesagt geführt')
+    await expect(page.getByTestId('admin-gast-entfernen-dialog')).toContainText('aus dem Termin entfernt.')
     await page.getByTestId('admin-gast-entfernen-dialog-bestaetigen').click()
 
     await expect(page.getByTestId('admin-gaeste-termin-1')).toHaveCount(0)
@@ -131,15 +136,13 @@ test.describe('Manuelle Teamgenerierung', () => {
     expect(await ueberhangHorizontal(page)).toBe(0)
   })
 
-  test('berechnet fuer Profile und einen Gast: Koerper, Ergebnis mit Hinweis, Ungleichgewicht, Fokus auf der Ueberschrift', async ({ page }) => {
+  test('teilt Profile und einen uebernommenen Gast ein: Koerper, Ergebnis mit Hinweis, Algorithmus, Fokus auf der Ueberschrift', async ({ page }) => {
     const { welt } = await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 4 } })
 
     await page.getByTestId('admin-teams-profil-1').check()
     await page.getByTestId('admin-teams-profil-3').check()
-    await page.getByTestId('admin-teams-gast-hinzufuegen').click()
-    await page.getByTestId('admin-teams-gast-name-1').fill('  Beispielgast  ')
-    await page.getByTestId('admin-teams-gast-stufe-1-STARK').check()
-    await expect(page.getByTestId('admin-teams-gast-stufe-1-STARK')).toBeChecked()
+    await gastAnlegen(page, '  Beispielgast  ', 'STARK')
+    await expect(page.getByTestId('admin-teams-gast-1')).toContainText('Stufe: Stark')
     await page.getByTestId('admin-teams-berechnen').click()
 
     const ergebnis = page.getByTestId('admin-teams-ergebnis')
@@ -148,8 +151,8 @@ test.describe('Manuelle Teamgenerierung', () => {
     await expect(ergebnis.getByRole('heading', { level: 2, name: 'Ergebnis' })).toBeFocused()
     await expect(page.getByTestId('teams-manuell-hinweis-ergebnis')).toContainText('wird nicht gespeichert')
     await expect(page.getByTestId('admin-teams-ergebnis-teams-b')).toContainText('Beispielgast (Gast)')
-    await expect(page.getByTestId('admin-teams-ungleichgewicht')).toHaveText('Ungleichgewicht: 1,25')
-    await expect(page.getByTestId('admin-teams-verfahren')).toHaveText('Gerechnet mit: Exakt.')
+    await expect(page.getByTestId('admin-teams-verfahren')).toHaveText('Algorithmus-Typ: Standard')
+    await expect(ergebnis).not.toContainText('Ungleichgewicht')
     // Keine Skillwerte im Ergebnis.
     await expect(ergebnis).not.toContainText(/Angriff|Verteidigung|Torwart/)
     expect(await ueberhangHorizontal(page)).toBe(0)
@@ -167,14 +170,14 @@ test.describe('Manuelle Teamgenerierung', () => {
     await expect(page.getByTestId('admin-teams-regel-abweichung')).toContainText('keine Anmeldereihenfolge')
   })
 
-  test('jede Aenderung der Auswahl laesst das Ergebnis verschwinden (M12); „Erneut berechnen“ sendet dieselbe Auswahl', async ({ page }) => {
+  test('jede Aenderung der Auswahl laesst das Ergebnis verschwinden (M12); ein zweiter Lauf sendet dieselbe Auswahl', async ({ page }) => {
     const { welt } = await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 4 } })
     await page.getByTestId('admin-teams-profil-1').check()
     await page.getByTestId('admin-teams-profil-3').check()
     await page.getByTestId('admin-teams-berechnen').click()
     await expect(page.getByTestId('admin-teams-ergebnis')).toBeVisible()
 
-    await page.getByTestId('admin-teams-erneut').click()
+    await page.getByTestId('admin-teams-berechnen').click()
     await expect.poll(() => welt.koerper.teamsManuell.length).toBe(2)
     expect(welt.koerper.teamsManuell[1]).toEqual(welt.koerper.teamsManuell[0])
 
@@ -182,7 +185,7 @@ test.describe('Manuelle Teamgenerierung', () => {
     await expect(page.getByTestId('admin-teams-ergebnis')).toHaveCount(0)
   })
 
-  test('ausserhalb der Grenzen ist „Teams berechnen“ gesperrt (mit Grund), ein Tipp sendet nichts', async ({ page }) => {
+  test('ausserhalb der Grenzen ist „Teams einteilen“ gesperrt (mit Grund), ein Tipp sendet nichts', async ({ page }) => {
     const { welt } = await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 4 } })
     const knopf = page.getByTestId('admin-teams-berechnen')
 
@@ -195,9 +198,30 @@ test.describe('Manuelle Teamgenerierung', () => {
     expect(welt.koerper.teamsManuell).toEqual([])
   })
 
+  test('die Gast-Eingabe laesst sich abbrechen; solange sie offen ist, sperrt „Teams einteilen“ mit Grund', async ({ page }) => {
+    await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 8 } })
+    await page.getByTestId('admin-teams-profil-1').check()
+    await page.getByTestId('admin-teams-profil-3').check()
+    await page.getByTestId('admin-teams-gast-hinzufuegen').click()
+
+    await expect(page.getByTestId('admin-teams-gast-name')).toBeFocused()
+    await expect(page.getByTestId('admin-teams-berechnen')).toHaveAttribute('aria-disabled', 'true')
+    await expect(page.getByTestId('admin-teams-grund')).toHaveText('Bitte übernimm den Gast oder brich die Eingabe ab.')
+    for (const id of ['admin-teams-gast-abbrechen', 'admin-teams-gast-uebernehmen']) {
+      expect((await page.getByTestId(id).boundingBox())?.height ?? 0, id).toBeGreaterThanOrEqual(44)
+    }
+
+    await page.getByTestId('admin-teams-gast-abbrechen').click()
+    await expect(page.getByTestId('admin-teams-gast-eingabe')).toHaveCount(0)
+    await expect(page.getByTestId('admin-teams-gast-1')).toHaveCount(0)
+    await expect(page.getByTestId('admin-teams-gast-hinzufuegen')).toBeFocused()
+    await expect(page.getByTestId('admin-teams-berechnen')).not.toHaveAttribute('aria-disabled', 'true')
+    expect(await ueberhangHorizontal(page)).toBe(0)
+  })
+
   test('ein Gast laesst sich entfernen (Fokus auf „Gast hinzufuegen“); Tap-Ziele sind mindestens 44 px hoch, die Leiste verdeckt nichts', async ({ page }) => {
     await start(page, '/admin/teams', { konfiguration: { minTeilnehmer: 2, maxTeilnehmer: 8 } })
-    for (let i = 0; i < 4; i += 1) await page.getByTestId('admin-teams-gast-hinzufuegen').click()
+    for (let i = 0; i < 4; i += 1) await gastAnlegen(page)
 
     await page.getByTestId('admin-teams-gast-entfernen-4').click()
     await expect(page.getByTestId('admin-teams-gast-4')).toHaveCount(0)

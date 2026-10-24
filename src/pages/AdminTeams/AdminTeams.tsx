@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GastStufe } from '@/api/admin/adminTermine'
 import type { ManuelleGenerierung } from '@/api/admin/adminTeams'
-import { regelText, verfahrenText } from '@/api/admin/konfigurationText'
+import { verfahrenText } from '@/api/admin/konfigurationText'
 import { skillsVollstaendig } from '@/api/admin/skills'
 import { ApiFehler } from '@/api/common/fehler'
 import { ADMIN_PFADE } from '@/app/schutz/zielpfad'
@@ -11,6 +11,7 @@ import Feld from '@/components/Feld/Feld'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Hinweis from '@/components/Hinweis/Hinweis'
+import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import StufeWahl from '@/components/StufeWahl/StufeWahl'
 import TeamListen from '@/components/TeamListen/TeamListen'
@@ -28,11 +29,16 @@ const GAST_NAME_MAX = 40
 const TEXT_NICHT_GESPEICHERT =
   'Die Einteilung wird nicht gespeichert, löst keine Einteilung eines Termins ab und ist für niemanden sonst sichtbar. Sie ist weg, sobald du die Seite verlässt.'
 
-/** Ein frei angelegter Gast der Auswahl; `id` ist nur der Schlüssel der Zeile. */
+/** Ein übernommener Gast der Auswahl; `id` ist nur der Schlüssel der Zeile. */
 type GastZeile = { id: number; name: string; stufe: GastStufe }
 
+/** Der Gast, der gerade eingegeben wird: Er zählt erst nach „Übernehmen“ (24.10.2026). */
+type GastEntwurf = { name: string; stufe: GastStufe }
+
+const STUFEN_TEXT: Record<GastStufe, string> = { STARK: 'Stark', MITTEL: 'Mittel', SCHWACH: 'Schwach' }
+
 /** Wohin der Fokus nach dem nächsten Render geht. */
-type FokusZiel = { art: 'neuer-gast'; id: number } | { art: 'hinzufuegen' } | null
+type FokusZiel = { art: 'entwurf' } | { art: 'hinzufuegen' } | null
 
 /**
  * Team-Generator (`/admin/teams`, C8 10.3, A24; bis 24.10.2026 „Teams ohne Termin“): Der Admin wählt Profile und frei angelegte Gäste und lässt Teams
@@ -47,6 +53,10 @@ type FokusZiel = { art: 'neuer-gast'; id: number } | { art: 'hinzufuegen' } | nu
  * Grund als Text – der Server lehnte es sonst mit `409 SKILLWERTE_UNVOLLSTAENDIG` ab. Skillwerte stehen nirgends im DOM;
  * einzig die Zahl „Ungleichgewicht“ (`differenzTeamstaerke`) ist erlaubt und nur hier (A12).
  *
+ * **Gäste in zwei Schritten** (24.10.2026): „Gast hinzufügen“ öffnet eine Eingabe (Name optional, Stufe), die der Admin
+ * **übernimmt** oder **abbricht**. Erst ein übernommener Gast steht in der Liste, zählt mit und geht an den Server; solange
+ * eine Eingabe offen ist, ist „Teams einteilen“ gesperrt (mit Grund), damit kein halb eingegebener Gast verloren geht.
+ *
  * Der Zähler „Ausgewählt: n. Erlaubt: min bis max.“ nutzt die Konfiguration; „Teams berechnen“ ist außerhalb des Bereichs
  * `aria-disabled` mit Grund als Text. Der Server bleibt die Wahrheit. **Verfahren und Regel werden angezeigt, wie der Server
  * sie meldet** – sie können von der Konfiguration abweichen (über 24 Teilnehmer, keine Anmeldereihenfolge).
@@ -58,18 +68,19 @@ export default function AdminTeams() {
   const generieren = useTeamsManuell()
   const [auswahl, setAuswahl] = useState<ReadonlySet<number>>(new Set())
   const [gaeste, setGaeste] = useState<GastZeile[]>([])
+  const [entwurf, setEntwurf] = useState<GastEntwurf | null>(null)
   const naechsteId = useRef(1)
   const [fokus, setFokus] = useState<FokusZiel>(null)
-  const namensfelder = useRef(new Map<number, HTMLInputElement>())
+  const entwurfName = useRef<HTMLInputElement>(null)
   const hinzufuegenKnopf = useRef<HTMLButtonElement>(null)
   const ergebnisKopf = useRef<HTMLHeadingElement>(null)
 
   const einteilung = generieren.data
 
-  // Fokus nach dem Render: neue Gastzeile, „Gast hinzufügen“ nach dem Entfernen, Überschrift des Ergebnisses. Jedes
-  // `setFokus` legt ein neues Objekt an, der Effekt läuft also genau einmal je Auslöser.
+  // Fokus nach dem Render: Namensfeld der neuen Eingabe, „Gast hinzufügen“ nach Übernehmen, Abbrechen oder Entfernen.
+  // Jedes `setFokus` legt ein neues Objekt an, der Effekt läuft also genau einmal je Auslöser.
   useEffect(() => {
-    if (fokus?.art === 'neuer-gast') namensfelder.current.get(fokus.id)?.focus()
+    if (fokus?.art === 'entwurf') entwurfName.current?.focus()
     if (fokus?.art === 'hinzufuegen') hinzufuegenKnopf.current?.focus()
   }, [fokus])
   useEffect(() => {
@@ -99,7 +110,9 @@ export default function AdminTeams() {
   const min = grenzen?.minTeilnehmer
   const max = grenzen?.maxTeilnehmer
   const grund =
-    anzahl === 0
+    entwurf !== null
+      ? 'Bitte übernimm den Gast oder brich die Eingabe ab.'
+      : anzahl === 0
       ? 'Bitte wähle Spieler oder füge Gäste hinzu.'
       : min !== undefined && anzahl < min
         ? `Es braucht mindestens ${String(min)} Teilnehmer.`
@@ -133,17 +146,27 @@ export default function AdminTeams() {
     setAuswahl(new Set())
   }
 
+  /** Öffnet die Eingabe eines Gastes; die Stufe ist sichtbar mit „Mittel“ vorbelegt. */
   function gastHinzufuegen() {
+    setEntwurf({ name: '', stufe: 'MITTEL' })
+    setFokus({ art: 'entwurf' })
+  }
+
+  /** Übernimmt die Eingabe in die Liste: Erst jetzt ändert sich die Auswahl. */
+  function gastUebernehmen() {
+    if (!entwurf) return
     auswahlGeaendert()
     const id = naechsteId.current
     naechsteId.current += 1
-    setGaeste((alt) => [...alt, { id, name: '', stufe: 'MITTEL' }])
-    setFokus({ art: 'neuer-gast', id })
+    setGaeste((alt) => [...alt, { id, ...entwurf }])
+    setEntwurf(null)
+    setFokus({ art: 'hinzufuegen' })
   }
 
-  function gastAendern(id: number, teil: Partial<Omit<GastZeile, 'id'>>) {
-    auswahlGeaendert()
-    setGaeste((alt) => alt.map((g) => (g.id === id ? { ...g, ...teil } : g)))
+  /** Verwirft die Eingabe; die Auswahl bleibt, wie sie war (auch ein vorhandenes Ergebnis). */
+  function gastAbbrechen() {
+    setEntwurf(null)
+    setFokus({ art: 'hinzufuegen' })
   }
 
   function gastEntfernen(id: number) {
@@ -237,58 +260,76 @@ export default function AdminTeams() {
       <fieldset className={style.gruppe}>
         <legend className={style.legende}>Gäste</legend>
         {gaeste.length > 0 && (
-          <>
-            <p className={style.nebentext} data-testid="admin-teams-gast-hinweis">
-              Ohne Namen heißt der Gast Gast 1, Gast 2 …
-            </p>
-            <ul className={style.liste}>
-              {gaeste.map((gast, index) => (
-                <li key={gast.id} className={style.gast} data-testid={`admin-teams-gast-${String(index + 1)}`}>
-                  <Feld
-                    beschriftung={`Name von Gast ${String(index + 1)} (optional)`}
-                    value={gast.name}
-                    maxLength={GAST_NAME_MAX}
-                    autoComplete="off"
-                    ref={(element) => {
-                      if (element) namensfelder.current.set(gast.id, element)
-                      else namensfelder.current.delete(gast.id)
-                    }}
-                    onChange={(e) => {
-                      gastAendern(gast.id, { name: e.target.value })
-                    }}
-                    data-testid={`admin-teams-gast-name-${String(index + 1)}`}
-                  />
-                  <StufeWahl
-                    legende={`Stufe von Gast ${String(index + 1)}`}
-                    wert={gast.stufe}
-                    beiAenderung={(stufe) => {
-                      gastAendern(gast.id, { stufe })
-                    }}
-                    data-testid={`admin-teams-gast-stufe-${String(index + 1)}`}
-                  />
+          <ul className={style.gastListe} data-testid="admin-teams-gaeste">
+            {gaeste.map((gast, index) => {
+              const nummer = String(index + 1)
+              const name = gast.name.trim() !== '' ? gast.name.trim() : `Gast ${nummer}`
+              return (
+                <li key={gast.id} className={style.gastZeile} data-testid={`admin-teams-gast-${nummer}`}>
+                  <span className={style.gastText}>
+                    <span className={style.name}>{name}</span>
+                    <span className={style.nebentext}>Stufe: {STUFEN_TEXT[gast.stufe]}</span>
+                  </span>
                   <CustomButton
-                    art="sekundaer"
-                    aria-label={`Gast ${String(index + 1)} entfernen`}
+                    art="gefahrUmriss"
+                    aria-label={`Entfernen: ${name}`}
                     onClick={() => {
                       gastEntfernen(gast.id)
                     }}
-                    data-testid={`admin-teams-gast-entfernen-${String(index + 1)}`}
+                    data-testid={`admin-teams-gast-entfernen-${nummer}`}
                   >
                     Entfernen
                   </CustomButton>
                 </li>
-              ))}
-            </ul>
-          </>
+              )
+            })}
+          </ul>
         )}
-        <CustomButton 
-          ref={hinzufuegenKnopf} 
-          art="akzent"
-          symbol="add_circle_icon_light"
-          onClick={gastHinzufuegen} 
-          data-testid="admin-teams-gast-hinzufuegen">
+
+        {entwurf ? (
+          <div className={style.gast} data-testid="admin-teams-gast-eingabe">
+            <p className={style.nebentext} data-testid="admin-teams-gast-hinweis">
+              Ohne Namen heißt der Gast z.B. „Gast {String(gaeste.length + 1)}“.
+            </p>
+            <Feld
+              beschriftung={`Name von Gast ${String(gaeste.length + 1)} (optional)`}
+              value={entwurf.name}
+              maxLength={GAST_NAME_MAX}
+              autoComplete="off"
+              ref={entwurfName}
+              onChange={(e) => {
+                setEntwurf({ ...entwurf, name: e.target.value })
+              }}
+              data-testid="admin-teams-gast-name"
+            />
+            <StufeWahl
+              legende={`Stufe von Gast ${String(gaeste.length + 1)}`}
+              wert={entwurf.stufe}
+              beiAenderung={(stufe) => {
+                setEntwurf({ ...entwurf, stufe })
+              }}
+              data-testid="admin-teams-gast-stufe"
+            />
+            <Knopfgruppe>
+              <CustomButton art="sekundaer" onClick={gastAbbrechen} data-testid="admin-teams-gast-abbrechen">
+                Abbrechen
+              </CustomButton>
+              <CustomButton art="akzent" onClick={gastUebernehmen} data-testid="admin-teams-gast-uebernehmen">
+                Übernehmen
+              </CustomButton>
+            </Knopfgruppe>
+          </div>
+        ) : (
+          <CustomButton
+            ref={hinzufuegenKnopf}
+            art="akzent"
+            symbol="add_circle_icon_light"
+            onClick={gastHinzufuegen}
+            data-testid="admin-teams-gast-hinzufuegen"
+          >
             Gast hinzufügen
-        </CustomButton>
+          </CustomButton>
+        )}
       </fieldset>
 
       {einteilung && (
@@ -300,35 +341,18 @@ export default function AdminTeams() {
           <TeamListen teamA={einteilung.teamA} teamB={einteilung.teamB} data-testid="admin-teams-ergebnis-teams" />
 
           <div className={style.angaben}>
-            <p data-testid="admin-teams-verfahren">Gerechnet mit: {verfahrenText(einteilung.algorithmType)}.</p>
+            <p data-testid="admin-teams-verfahren">Algorithmus-Typ: {verfahrenText(einteilung.algorithmType)}</p>
             {grenzen && grenzen.algorithmType !== einteilung.algorithmType && (
               <p className={style.nebentext} data-testid="admin-teams-verfahren-abweichung">
-                Abweichend von der Einstellung, weil die Gruppe für das exakte Verfahren zu groß ist.
+                Abweichend von der Einstellung, weil die Gruppe für das Standard-Verfahren zu groß ist.
               </p>
             )}
-            <p data-testid="admin-teams-regel">Auswechselspieler nach der Regel: {regelText(einteilung.auswechselModus)}.</p>
             {grenzen && grenzen.auswechselModus !== einteilung.auswechselModus && (
               <p className={style.nebentext} data-testid="admin-teams-regel-abweichung">
                 Für diese Berechnung gibt es keine Anmeldereihenfolge; es gilt der schwächste Spieler des größeren Teams.
               </p>
             )}
-            <p data-testid="admin-teams-ungleichgewicht">
-              Ungleichgewicht: {einteilung.differenzTeamstaerke.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
-            </p>
-            <p className={style.nebentext}>
-              0 heißt vollständig ausgeglichen, größer ist schlechter. Es ist die gewichtete Summe der Unterschiede je Kategorie, nicht
-              der Unterschied der Gesamtstärken.
-            </p>
           </div>
-
-          <CustomButton
-            art="sekundaer"
-            laedt={generieren.isPending}
-            onClick={() => void berechnen()}
-            data-testid="admin-teams-erneut"
-          >
-            Erneut berechnen
-          </CustomButton>
         </section>
       )}
 
@@ -354,7 +378,7 @@ export default function AdminTeams() {
             onClick={() => void berechnen()}
             data-testid="admin-teams-berechnen"
           >
-            Teams berechnen
+            Teams einteilen
           </CustomButton>
         </div>
       </Aktionsleiste>

@@ -116,7 +116,12 @@ test.describe('Layout der Admin-Seiten bei 360 Pixel Breite', () => {
       await expect(page.locator('main')).not.toBeEmpty()
       await page.waitForLoadState('networkidle')
       if (pfad === '/admin/teams') {
-        for (let i = 0; i < 4; i += 1) await page.getByTestId('admin-teams-gast-hinzufuegen').click()
+        // Vier uebernommene Gaeste und eine offene Eingabe: die laengste Fassung der Seite.
+        for (let i = 0; i < 4; i += 1) {
+          await page.getByTestId('admin-teams-gast-hinzufuegen').click()
+          await page.getByTestId('admin-teams-gast-uebernehmen').click()
+        }
+        await page.getByTestId('admin-teams-gast-hinzufuegen').click()
       }
       await page.evaluate(() => {
         window.scrollTo(0, 0)

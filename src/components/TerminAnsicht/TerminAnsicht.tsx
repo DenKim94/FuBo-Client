@@ -177,6 +177,7 @@ export default function TerminAnsicht({
             eigenerGast={istGast}
             eingeklappt={eingeklappt}
             beendet={!geplant}
+            nurLesen={nurLesen}
           />
         )}
 

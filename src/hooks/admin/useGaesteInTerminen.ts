@@ -1,14 +1,13 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { TeilnehmerEintragAdmin } from '@/api/admin/adminTermine'
 import { schluessel } from '@/api/common/schluessel'
-import { terminLesen, termineLesen, type TerminDetails } from '@/api/termine/termine'
+import { terminLesen, termineLesen, type TeilnehmerEintrag, type TerminDetails } from '@/api/termine/termine'
 import { heuteIso } from '@/api/termine/terminZeit'
 
 /** Ein kommender Termin mit den Gästen seiner Teilnehmerliste. */
 export type TerminMitGaesten = {
   termin: TerminDetails
-  /** Die Einträge mit `gast: true`, in der Reihenfolge des Servers; `gastStufe` nur, wenn der Server sie liefert. */
-  gaeste: TeilnehmerEintragAdmin[]
+  /** Die Einträge mit `gast: true`, in der Reihenfolge des Servers; für den Admin mit `gastStufe`. */
+  gaeste: TeilnehmerEintrag[]
 }
 
 /** Ergebnis von {@link useGaesteInTerminen}. */
@@ -65,7 +64,7 @@ export function useGaesteInTerminen(): GaesteInTerminen {
         .filter((termin) => termin.status === 'GEPLANT')
         .map((termin) => ({
           termin,
-          gaeste: (termin.teilnehmerliste.teilnehmer as TeilnehmerEintragAdmin[]).filter((eintrag) => eintrag.gast),
+          gaeste: termin.teilnehmerliste.teilnehmer.filter((eintrag) => eintrag.gast),
         }))
         .filter((eintrag) => eintrag.gaeste.length > 0)
     : undefined

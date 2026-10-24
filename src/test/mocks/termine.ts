@@ -1,5 +1,4 @@
 import { HttpResponse, http } from 'msw'
-import type { TeilnehmerEintragAdmin } from '@/api/admin/adminTermine'
 import type { components } from '@/api/common/types/schema'
 import { beginnVon } from '@/api/termine/terminZeit'
 import { problem } from './problem'
@@ -127,8 +126,8 @@ export function detailsVon(modell: TerminModell, gastStufeFuerAdmin = false): Te
       maxTeilnehmer: modell.max,
       mindestzahlErreicht: modell.zusagen.length >= modell.min,
       teilnehmer: modell.zusagen.map((z, i) => {
-        const eintrag: TeilnehmerEintragAdmin = { position: i + 1, anzeigeName: z.name, gast: z.gast, wartet: i + 1 > modell.max }
-        // Vertragsvorschlag vom 24.10.2026: Der Admin sieht die Stufe eines Gastes (ohne Angabe gilt MITTEL wie am Server).
+        const eintrag: components['schemas']['TeilnehmerEintrag'] = { position: i + 1, anzeigeName: z.name, gast: z.gast, wartet: i + 1 > modell.max }
+        // Vertrag seit 24.10.2026: Nur der Admin sieht die Stufe eines Gastes (ohne Angabe MITTEL); sonst fehlt der Schlüssel.
         if (gastStufeFuerAdmin && z.gast) eintrag.gastStufe = z.stufe ?? 'MITTEL'
         return eintrag
       }),
@@ -251,7 +250,7 @@ export type TerminProtokoll = {
 export function terminHandlers(
   modelle: TerminModell[] = [terminModell({ terminId: 102 })],
   optionen: {
-    /** Bildet den Vertragsvorschlag vom 24.10.2026 nach: `gastStufe` je Gast in der Teilnehmerliste (nur Admin). */
+    /** Die Sitzung ist der Admin: `gastStufe` je Gast in der Teilnehmerliste (Vertrag seit 24.10.2026); sonst fehlt der Schlüssel. */
     gastStufeFuerAdmin?: boolean
   } = {},
 ) {

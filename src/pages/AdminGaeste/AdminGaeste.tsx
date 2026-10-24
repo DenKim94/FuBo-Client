@@ -112,7 +112,7 @@ export default function AdminGaeste() {
           Gäste in Terminen
         </h2>
         <p className={style.nebentext}>
-          Die Stufe gilt je Termin. Sie bestimmt, wie ein Gast bei der Teamgenerierung zählt.
+          Die Skill-Stufe gilt je Termin. Sie bestimmt, wie ein Gast bei der Teamgenerierung zählt.
         </p>
         {terminMeldung !== null && <Hinweis data-testid="admin-gaeste-termine-hinweis">{terminMeldung}</Hinweis>}
         {gaeste.fehler && <Fehlermeldung fehler={gaeste.fehler} data-testid="admin-gaeste-termine-fehler" />}
@@ -159,13 +159,13 @@ export default function AdminGaeste() {
               return (
                 <li key={platz.nummer} className={style.karte} data-testid={`admin-gast-${String(platz.nummer)}`}>
                   <div className={style.kopf}>
-                    <h3 className={style.platz}>Platz {String(platz.nummer)}</h3>
+                    <h3 className={style.platz}>Platz {String(platz.nummer)}: </h3>
                     <p className={style.name} data-testid={`admin-gast-name-${String(platz.nummer)}`}>
                       {platz.gastName}
                     </p>
                   </div>
                   <p className={style.angabe}>
-                    {platz.gastStufe ? `Stufe: ${STUFEN_TEXT[platz.gastStufe]}` : ''}
+                    {platz.gastStufe ? `Aktuelle Stufe: ${STUFEN_TEXT[platz.gastStufe]}` : ''}
                     {platz.gastStufe && platz.belegtSeit ? ' · ' : ''}
                     {platz.belegtSeit ? `seit ${zeitpunktKurz(platz.belegtSeit)}` : ''}
                   </p>
@@ -189,7 +189,7 @@ export default function AdminGaeste() {
                     }}
                     data-testid={`admin-gast-freigeben-${String(platz.nummer)}`}
                   >
-                    Freigeben
+                    Gast abmelden
                   </CustomButton>
                 </li>
               )
@@ -210,13 +210,14 @@ export default function AdminGaeste() {
             }}
             data-testid="admin-gaeste-verwaiste"
           >
-            Verwaiste freigeben ({String(verwaiste.length)})
+            Plätze freigeben ({String(verwaiste.length)})
           </CustomButton>
         )}
       </section>
 
       <CustomButton
-        art="sekundaer"
+        art="akzent"
+        symbol="refresh_icon_light"
         laedt={abfrage.isFetching || gaeste.laedt}
         onClick={() => void Promise.all([abfrage.refetch(), gaeste.neuLesen()])}
         data-testid="admin-gaeste-aktualisieren"

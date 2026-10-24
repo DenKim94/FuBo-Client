@@ -17,7 +17,8 @@ afterEach(() => {
 /** Position des Gastes `Beispielgast` im Beispieltermin: sieben Spieler davor. */
 const POSITION = 8
 
-function rendern(modelle: TerminModell[], gastplaetze = beispielGastplaetze(), optionen: { gastStufeFuerAdmin?: boolean } = {}) {
+/** Rendert die Seite als Admin: Der Server liefert `gastStufe` je Gast (Vertrag seit 24.10.2026); `false` prüft die Rückfallebene. */
+function rendern(modelle: TerminModell[], gastplaetze = beispielGastplaetze(), optionen: { gastStufeFuerAdmin?: boolean } = { gastStufeFuerAdmin: true }) {
   const welt = adminWelt({ termine: modelle, gastplaetze })
   const lesen = terminHandlers(welt.termine, optionen)
   // Erst die Admin-Handler, dann die Termine (MSW nimmt den ersten passenden).
@@ -92,8 +93,18 @@ describe('Gäste in Terminen – Anzeige', () => {
 })
 
 describe('Gäste in Terminen – Dialog', () => {
-  test('wählt die Stufe vor, wenn ein belegter Platz gleichen Namens sie nennt', async () => {
+  test('wählt die Stufe der Teilnahme vor, die der Server liefert (auch gegen einen Gastplatz mit anderer Stufe)', async () => {
     rendern([terminModell({ terminId: 101 })])
+
+    await dialogOeffnen()
+
+    // Teilnahme ohne eigene Angabe: MITTEL (wie am Server); Platz 1 meldet STARK und zählt nicht.
+    expect(screen.getByTestId('admin-gast-stufe-wahl-MITTEL')).toBeChecked()
+    expect(screen.queryByText(/liegt nicht vor/)).not.toBeInTheDocument()
+  })
+
+  test('Rückfall ohne Feld vom Server: Vorauswahl aus einem belegten Platz gleichen Namens', async () => {
+    rendern([terminModell({ terminId: 101 })], beispielGastplaetze(), { gastStufeFuerAdmin: false })
 
     await dialogOeffnen()
 
@@ -103,8 +114,8 @@ describe('Gäste in Terminen – Dialog', () => {
     expect(screen.queryByText(/liegt nicht vor/)).not.toBeInTheDocument()
   })
 
-  test('ohne Platz gleichen Namens gibt es keine Vorauswahl und einen erklärenden Text', async () => {
-    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1 }), gastPlatz({ nummer: 2 })])
+  test('Rückfall ohne Feld und ohne Platz gleichen Namens: keine Vorauswahl, erklärender Text', async () => {
+    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1 }), gastPlatz({ nummer: 2 })], { gastStufeFuerAdmin: false })
 
     const dialog = await dialogOeffnen()
 
@@ -114,8 +125,8 @@ describe('Gäste in Terminen – Dialog', () => {
     }
   })
 
-  test('ein Platz gleichen Namens, der nicht belegt ist, liefert keine Vorauswahl', async () => {
-    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1, gastName: 'Beispielgast', gastStufe: 'STARK', belegt: false })])
+  test('Rückfall ohne Feld: ein Platz gleichen Namens, der nicht belegt ist, liefert keine Vorauswahl', async () => {
+    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1, gastName: 'Beispielgast', gastStufe: 'STARK', belegt: false })], { gastStufeFuerAdmin: false })
 
     const dialog = await dialogOeffnen()
 
@@ -123,17 +134,17 @@ describe('Gäste in Terminen – Dialog', () => {
     expect(screen.getByTestId('admin-gast-stufe-wahl-STARK')).not.toBeChecked()
   })
 
-  test('der Dialog nennt Gast, Termin und die Folgen für die Teameinteilung', async () => {
+  test('der Dialog nennt die Folgen für die Teameinteilung (Text des Entwicklers vom 24.10.2026)', async () => {
     rendern([terminModell({ terminId: 101 })])
 
     const dialog = await dialogOeffnen()
 
-    expect(dialog).toHaveTextContent('Eine vorhandene Teameinteilung gilt danach als veraltet')
-    expect(dialog).toHaveTextContent('Beispielgast (Gast) am')
+    expect(dialog).toHaveTextContent('Nach Änderung gilt die vorhandene Teameinteilung als veraltet.')
+    expect(dialog).toHaveTextContent('Die Teams müssen anschließend neu generiert werden.')
   })
 
-  test('„Speichern“ ohne Wahl sendet nichts und meldet es am Feld', async () => {
-    const { welt } = rendern([terminModell({ terminId: 101 })], [])
+  test('„Speichern“ ohne Wahl (Rückfall ohne bekannte Stufe) sendet nichts und meldet es am Feld', async () => {
+    const { welt } = rendern([terminModell({ terminId: 101 })], [], { gastStufeFuerAdmin: false })
     await dialogOeffnen()
 
     fireEvent.click(screen.getByTestId('admin-gast-stufe-dialog-bestaetigen'))
@@ -148,7 +159,7 @@ describe('Gäste in Terminen – Speichern', () => {
     const { welt } = rendern([terminModell({ terminId: 101 })])
     await dialogOeffnen()
     await waitFor(() => {
-      expect(screen.getByTestId('admin-gast-stufe-wahl-STARK')).toBeChecked()
+      expect(screen.getByTestId('admin-gast-stufe-wahl-MITTEL')).toBeChecked()
     })
 
     fireEvent.click(screen.getByTestId('admin-gast-stufe-wahl-SCHWACH'))
@@ -186,12 +197,12 @@ describe('Gäste in Terminen – Speichern', () => {
     const { welt } = rendern([terminModell({ terminId: 101 }), terminModell({ terminId: 102, datum: '2099-01-20' })])
     await dialogOeffnen()
     await waitFor(() => {
-      expect(screen.getByTestId('admin-gast-stufe-wahl-STARK')).toBeChecked()
+      expect(screen.getByTestId('admin-gast-stufe-wahl-MITTEL')).toBeChecked()
     })
     // Der Gast zieht seine Zusage zurück, während der Dialog offen ist.
     welt.termine[0].zusagen = welt.termine[0].zusagen.filter((z) => !z.gast)
 
-    fireEvent.click(screen.getByTestId('admin-gast-stufe-wahl-MITTEL'))
+    fireEvent.click(screen.getByTestId('admin-gast-stufe-wahl-SCHWACH'))
     fireEvent.click(screen.getByTestId('admin-gast-stufe-dialog-bestaetigen'))
 
     expect(await screen.findByTestId('admin-gast-stufe-dialog-fehler')).toHaveTextContent('keine Teilnahme dieses Gastes vor')
@@ -202,7 +213,7 @@ describe('Gäste in Terminen – Speichern', () => {
   })
 })
 
-describe('Gäste in Terminen – Entfernen (Absage für den Gast, Vertragsvorschlag vom 24.10.2026)', () => {
+describe('Gäste in Terminen – Entfernen (Absage für den Gast, Vertrag seit 24.10.2026)', () => {
   async function entfernenOeffnen(terminId = 101, position = POSITION) {
     fireEvent.click(await screen.findByTestId(`admin-gast-entfernen-${String(terminId)}-${String(position)}`))
     return screen.findByTestId('admin-gast-entfernen-dialog')
@@ -220,9 +231,9 @@ describe('Gäste in Terminen – Entfernen (Absage für den Gast, Vertragsvorsch
 
     const dialog = await entfernenOeffnen()
     expect(dialog).toHaveTextContent('Beispielgast (Gast) wird für')
-    expect(dialog).toHaveTextContent('als abgesagt geführt')
+    expect(dialog).toHaveTextContent('aus dem Termin entfernt.')
     expect(dialog).toHaveTextContent('Wer wartet, rückt nach')
-    expect(dialog).toHaveTextContent('kann später erneut zusagen')
+    expect(dialog).toHaveTextContent('gilt danach als veraltet')
 
     fireEvent.click(screen.getByTestId('admin-gast-entfernen-dialog-abbrechen'))
     expect(welt.protokoll.gastAbgesagt).toEqual([])
@@ -302,26 +313,26 @@ describe('Gäste in Terminen – Entfernen (Absage für den Gast, Vertragsvorsch
 describe('Gäste in Terminen – Stufe sichtbar (24.10.2026)', () => {
   const anzeige = (terminId = 101, position = POSITION) => `admin-gast-stufe-anzeige-${String(terminId)}-${String(position)}`
 
-  test('angemeldeter Gast, heutiger Server: die Selbsteinschätzung aus dem belegten Gastplatz, als solche benannt', async () => {
-    rendern([terminModell({ terminId: 101 })])
+  test('Rückfall ohne Feld, angemeldeter Gast: die Stufe aus dem belegten Gastplatz', async () => {
+    rendern([terminModell({ terminId: 101 })], beispielGastplaetze(), { gastStufeFuerAdmin: false })
 
-    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Selbsteinschätzung: Stark (laut Anmeldung)')
+    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Aktuelle Stufe: Stark')
   })
 
-  test('abgemeldeter Gast, heutiger Server: „nicht bekannt“ mit Grund statt einer erfundenen Stufe', async () => {
-    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1 }), gastPlatz({ nummer: 2 })])
+  test('Rückfall ohne Feld, abgemeldeter Gast: „nicht bekannt“ mit Grund statt einer erfundenen Stufe', async () => {
+    rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1 }), gastPlatz({ nummer: 2 })], { gastStufeFuerAdmin: false })
 
     expect(await screen.findByTestId(anzeige())).toHaveTextContent('Stufe: nicht bekannt (der Gast ist nicht angemeldet)')
   })
 
-  test('liefert der Server die Stufe der Teilnahme (Vorschlag), gilt sie – auch gegen einen Gastplatz mit anderer Stufe', async () => {
+  test('die Stufe der Teilnahme vom Server gilt – auch gegen einen Gastplatz mit anderer Stufe', async () => {
     const modell = terminModell({ terminId: 101 })
     const gast = modell.zusagen.find((z) => z.gast)
     if (gast) gast.stufe = 'SCHWACH'
     // Platz 1 meldet „Stark“ (Selbsteinschätzung), die Teilnahme „Schwach“ (vom Admin korrigiert).
     rendern([modell], beispielGastplaetze(), { gastStufeFuerAdmin: true })
 
-    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Stufe: Schwach')
+    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Aktuelle Stufe: Schwach')
     expect(screen.getByTestId(anzeige())).not.toHaveTextContent('Selbsteinschätzung')
 
     // Die Vorauswahl im Dialog folgt derselben Quelle.
@@ -332,7 +343,7 @@ describe('Gäste in Terminen – Stufe sichtbar (24.10.2026)', () => {
   test('mit Server-Feld auch für einen abgemeldeten Gast sichtbar', async () => {
     rendern([terminModell({ terminId: 101 })], [gastPlatz({ nummer: 1 })], { gastStufeFuerAdmin: true })
 
-    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Stufe: Mittel')
+    expect(await screen.findByTestId(anzeige())).toHaveTextContent('Aktuelle Stufe: Mittel')
   })
 
   test('nach „Stufe ändern“ zeigt die Zeile die neue Stufe (Server-Feld)', async () => {
@@ -343,7 +354,7 @@ describe('Gäste in Terminen – Stufe sichtbar (24.10.2026)', () => {
     fireEvent.click(screen.getByTestId('admin-gast-stufe-dialog-bestaetigen'))
 
     await waitFor(() => {
-      expect(screen.getByTestId(anzeige())).toHaveTextContent('Stufe: Schwach')
+      expect(screen.getByTestId(anzeige())).toHaveTextContent('Aktuelle Stufe: Schwach')
     })
   })
 })

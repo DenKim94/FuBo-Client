@@ -81,7 +81,7 @@ function Team({
               </span>
               {eintrag.auswechselspieler && (
                 <span className={style.auswechsel} data-testid={`${testId}-auswechselspieler`}>
-                  <Icon name="person_edit_dark" groesse={1.25} />
+                  <Icon name="sync_icon_dark" groesse={1.35} />
                   <span>Auswechselspieler</span>
                 </span>
               )}

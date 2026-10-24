@@ -76,6 +76,13 @@ describe('AdminTerminDetail – Aufbau', () => {
     expect(screen.queryByTestId('aktionsleiste')).not.toBeInTheDocument()
   })
 
+  test('ein Termin ohne Zusagen fordert den Admin nicht zum Zusagen auf (24.10.2026)', async () => {
+    rendern('/admin/termine/101', [terminModell({ terminId: 101, zusagen: [] })])
+
+    expect(await screen.findByTestId('teilnehmerliste-leer')).toHaveTextContent('Sobald jemand zusagt, erscheint er hier.')
+    expect(screen.queryByText(/Sag zu/)).not.toBeInTheDocument()
+  })
+
   test('belegt das Formular mit dem Stand des Termins vor', async () => {
     rendern()
 

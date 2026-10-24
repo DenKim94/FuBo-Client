@@ -124,7 +124,7 @@ describe('ergebnisKorrigieren', () => {
   })
 })
 
-describe('gastAbsagen (Vertragsvorschlag vom 24.10.2026)', () => {
+describe('gastAbsagen (Vertrag seit 24.10.2026)', () => {
   test('sendet terminId und den Namen unverändert per POST, ohne Hintergrundkopf, und liefert nichts', async () => {
     const sicht = aufzeichnen('/admin/teilnahme/gast-absagen', 204)
 

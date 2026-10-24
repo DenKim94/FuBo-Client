@@ -17,7 +17,7 @@ afterEach(() => {
 function rendern(gastplaetze = beispielGastplaetze()) {
   const welt = adminWelt({ gastplaetze })
   // Erst die Admin-Handler, dann die Termine (MSW nimmt den ersten passenden).
-  mockServer.use(...adminHandler(welt), ...terminHandlers(welt.termine).handlers)
+  mockServer.use(...adminHandler(welt), ...terminHandlers(welt.termine, { gastStufeFuerAdmin: true }).handlers)
   render(
     <QueryUmgebung>
       <MemoryRouter>
@@ -47,13 +47,14 @@ describe('AdminGaeste – Anzeige', () => {
     rendern()
 
     const lebend = await screen.findByTestId('admin-gast-1')
-    expect(within(lebend).getByRole('heading', { level: 3, name: 'Platz 1' })).toBeInTheDocument()
+    expect(within(lebend).getByRole('heading', { level: 3, name: 'Platz 1:' })).toBeInTheDocument()
     expect(within(lebend).getByTestId('admin-gast-name-1')).toHaveTextContent('Beispielgast')
-    expect(lebend).toHaveTextContent('Stufe: Stark')
+    expect(lebend).toHaveTextContent('Aktuelle Stufe: Stark')
+    expect(within(lebend).getByTestId('admin-gast-freigeben-1')).toHaveTextContent('Gast abmelden')
     expect(within(lebend).getByTestId('admin-gast-zustand-1')).toHaveTextContent('angemeldet')
 
     const verwaist = screen.getByTestId('admin-gast-2')
-    expect(verwaist).toHaveTextContent('Stufe: Schwach')
+    expect(verwaist).toHaveTextContent('Aktuelle Stufe: Schwach')
     expect(within(verwaist).getByTestId('admin-gast-zustand-2')).toHaveTextContent('Sitzung abgelaufen')
   })
 
@@ -201,7 +202,7 @@ describe('AdminGaeste – Freigeben', () => {
       gastPlatz({ nummer: 5, belegt: true, gastName: 'Beispielgast Fünf', gastStufe: 'MITTEL', sitzungGueltig: false, belegtSeit: '2099-01-10T18:00:00Z' }),
     ])
 
-    expect(await screen.findByTestId('admin-gaeste-verwaiste')).toHaveTextContent('Verwaiste freigeben (2)')
+    expect(await screen.findByTestId('admin-gaeste-verwaiste')).toHaveTextContent('Plätze freigeben (2)')
   })
 
   test('ohne verwaiste Plätze gibt es die Schaltfläche nicht, und es gibt nie „Alle freigeben“', async () => {

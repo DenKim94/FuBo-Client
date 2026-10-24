@@ -165,6 +165,17 @@ describe('AdminKonfiguration – Speichern', () => {
     })
     expect(welt.protokoll.konfigurationGeaendert[0]).toMatchObject({ algorithmType: 'HEURISTIK' })
   })
+
+  test('das Verfahren EXHAUSTIV heißt „Standard“ (24.10.2026), HEURISTIK „Schnell“', async () => {
+    rendern()
+    await screen.findByTestId('admin-konfig-algorithmType')
+
+    expect(screen.getByTestId('admin-konfig-algorithmType')).toHaveTextContent('Standard')
+    fireEvent.click(screen.getByTestId('admin-konfig-algorithmType'))
+    expect(screen.getByTestId('admin-konfig-algorithmType-option-EXHAUSTIV')).toHaveTextContent('Standard')
+    expect(screen.getByTestId('admin-konfig-algorithmType-option-HEURISTIK')).toHaveTextContent('Schnell')
+    expect(screen.queryByText(/Exakt/)).not.toBeInTheDocument()
+  })
 })
 
 describe('AdminKonfiguration – Prüfung', () => {

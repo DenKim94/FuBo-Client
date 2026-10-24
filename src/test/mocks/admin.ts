@@ -56,7 +56,7 @@ export type AdminProtokoll = {
   gaesteFreigegeben: unknown[]
   /** Eingegangene Körper von `/admin/teilnahme/gast-stufe`. */
   gastStufen: unknown[]
-  /** Eingegangene Körper von `/admin/teilnahme/gast-absagen` (Vertragsvorschlag vom 24.10.2026). */
+  /** Eingegangene Körper von `/admin/teilnahme/gast-absagen` (seit 24.10.2026). */
   gastAbgesagt: unknown[]
   /** Eingegangene Körper von `/admin/halle/absagen`. */
   halleAbgesagt: unknown[]
@@ -395,6 +395,8 @@ export function adminHandler(welt: AdminWelt) {
   const finden = (spielerId: unknown) => welt.profile.find((p) => p.spielerId === spielerId)
   const nichtGefunden = () => problem(404, 'INHALT_NICHT_GEFUNDEN', 'Das Profil wurde nicht gefunden.')
   const geschuetzt = () => problem(409, 'PROFIL_GESCHUETZT', 'Das Adminprofil kann so nicht geändert werden.')
+  /** Abgesagte Gast-Teilnahmen (`terminId:gastName`): Ein zweites Absagen ist am Server ein `204` ohne Änderung. */
+  const gastAbsagen = new Set<string>()
 
   return [
     http.get('*/admin/user/lesen', ({ request }) => {
@@ -677,19 +679,23 @@ export function adminHandler(welt: AdminWelt) {
     }),
 
     // Die einzige Adminaktion an einer Teilnahme: Stufe; der Name wird zeichengenau verglichen.
-    // Vertragsvorschlag vom 24.10.2026 (server/harness/tmp/SERVER_ANFRAGE_GAST_ABSAGEN.md): wirkt wie die Absage des Gastes.
+    // Gast absagen (Vertrag seit 24.10.2026): Prüfreihenfolge wie am Server – Termin, offen, Teilnahme; idempotent.
     http.post('*/admin/teilnahme/gast-absagen', async ({ request }) => {
       const rumpf = (await request.json()) as { terminId?: number; gastName?: string }
       welt.protokoll.gastAbgesagt.push(rumpf)
       const modell = welt.termine.find((t) => t.terminId === rumpf.terminId)
-      const zusage = modell?.zusagen.find((z) => z.gast && z.name === rumpf.gastName)
-      if (!modell || !zusage) {
-        return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
-      }
+      if (!modell) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Es gibt keinen Termin mit dieser Id.')
       if (modell.status !== 'GEPLANT' || vergangen(modell.datum, modell.uhrzeit)) {
         return problem(409, 'TERMIN_GESCHLOSSEN', 'Der Termin nimmt keine Rückmeldungen mehr an.')
       }
+      const name = (rumpf.gastName ?? '').trim()
+      const schluessel = `${String(modell.terminId)}:${name}`
+      // Schon abgesagt: 204 ohne Änderung (kein Zähler).
+      if (gastAbsagen.has(schluessel)) return new HttpResponse(null, { status: 204 })
+      const zusage = modell.zusagen.find((z) => z.gast && z.name === name)
+      if (!zusage) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
       modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+      gastAbsagen.add(schluessel)
       // Eine Absage ändert den Kreis (Einteilung veraltet), öffnet aber kein Kontingent: Der Kontingentstand bleibt.
       modell.kontingentVersion ??= modell.teilnehmerVersion
       modell.teilnehmerVersion += 1

@@ -14,6 +14,11 @@ type TeilnehmerlisteEigenschaften = {
   eingeklappt: boolean
   /** Der Termin ist vorbei: Der Leerzustand nennt dann nur den Grund, keinen nächsten Schritt. */
   beendet?: boolean
+  /**
+   * Nur lesen (Admin, C7 E2): Der Admin sagt nicht zu; der Leerzustand fordert ihn deshalb nicht dazu auf, sondern sagt,
+   * was geschieht (24.10.2026).
+   */
+  nurLesen?: boolean
   /** Test-ID des Behälters. */
   'data-testid'?: string
 }
@@ -42,6 +47,7 @@ export default function Teilnehmerliste({
   eigenerGast,
   eingeklappt,
   beendet = false,
+  nurLesen = false,
   'data-testid': testId = 'teilnehmerliste',
 }: TeilnehmerlisteEigenschaften) {
   const eintraege = liste.teilnehmer
@@ -58,7 +64,13 @@ export default function Teilnehmerliste({
       {eintraege.length === 0 ? (
         <Leerzustand
           titel={beendet ? 'Keine Zusagen' : 'Noch keine Zusagen'}
-          text={beendet ? 'Für diesen Termin gab es keine Zusagen.' : 'Sag zu, wenn du dabei bist.'}
+          text={
+            beendet
+              ? 'Für diesen Termin gab es keine Zusagen.'
+              : nurLesen
+                ? 'Sobald jemand zusagt, erscheint er hier.'
+                : 'Sag zu, wenn du dabei bist.'
+          }
           data-testid={`${testId}-leer`}
         />
       ) : (

@@ -1,6 +1,5 @@
 import { aufrufen } from '@/api/common/httpService'
 import type { components } from '@/api/common/types/schema'
-import type { TeilnehmerEintrag } from '@/api/termine/termine'
 
 /**
  * Schreibaufrufe der Terminverwaltung (C7, Stufe 3; ADMIN).
@@ -120,41 +119,26 @@ export async function gastStufeAendern(anfrage: GastStufeAenderung): Promise<voi
 }
 
 /**
- * Ein Eintrag der Teilnehmerliste, wie ihn der **Admin** sieht: bei Gästen zusätzlich die Stufe der Teilnahme
- * (Selbsteinschätzung, nach einer Korrektur die korrigierte).
+ * Körper von `POST /admin/teilnahme/gast-absagen` (Vertrag seit 24.10.2026).
  *
- * **Vorläufig von Hand** (24.10.2026, Anfrage an den Server-Track, Abschnitt 4 von
- * `server/harness/tmp/SERVER_ANFRAGE_GAST_ABSAGEN.md`): Heute liefert der Server das Feld nicht; es ist deshalb
- * optional. Spieler und Gäste bekommen es nie (A12).
+ * Wie bei `GastStufeRequest`: Termin **und** Gastname, zeichengenau; der Server entfernt nur Leerzeichen am Rand, und der
+ * Name eines Spielers trifft nie.
  */
-export type TeilnehmerEintragAdmin = TeilnehmerEintrag & {
-  gastStufe?: GastStufe | null
-}
+export type GastAbsage = components['schemas']['GastAbsageRequest']
 
 /**
- * Körper von `POST /admin/teilnahme/gast-absagen`.
- *
- * **Vorläufig von Hand** (24.10.2026): Der Endpunkt ist beim Server-Track angefragt
- * (`server/harness/tmp/SERVER_ANFRAGE_GAST_ABSAGEN.md`) und steht noch nicht in `fubo-api.json`. Nach der Übernahme
- * des Vertrags wird der Typ durch `components['schemas']['GastAbsageRequest']` ersetzt.
- */
-export type GastAbsage = {
-  terminId: number
-  /** Name des Gastes, wie er in `teilnehmer[].anzeigeName` steht. */
-  gastName: string
-}
-
-/**
- * Nimmt die Zusage eines Gastes zurück (`204`): Der Admin sagt für einen Gast ohne Konto ab (Entscheidung vom
- * 24.10.2026).
+ * Nimmt die Zusage eines Gastes zurück (`204`, `operationId: gastAbsagen`): Der Admin sagt für einen Gast ohne Konto ab
+ * (Entscheidung vom 24.10.2026, im Vertrag seit demselben Tag).
  *
  * **Wirkt wie eine eigene Absage des Gastes:** Die Teilnahme bleibt als Absage stehen, der Gast kann später erneut
  * zusagen; die `teilnehmerVersion` steigt (eine Einteilung veraltet, die Warteschlange rückt nach), das Kontingent
- * öffnet sich nicht. Nur in Richtung Absage – eine Zusage setzt der Admin nie für andere.
+ * öffnet sich nicht. Sitzung und Gastplatz des Gastes bleiben unberührt; Push an Nachrückende gibt es nicht. Nur in
+ * Richtung Absage – eine Zusage setzt der Admin nie für andere.
  *
- * **`gastName` geht roh hinaus** (ohne „(Gast)“, ohne Trimmen). Fehler: `404 INHALT_NICHT_GEFUNDEN` (keine Zusage
- * dieses Gastes), `409 TERMIN_GESCHLOSSEN` (nicht mehr geplant oder schon begonnen). Ist der Gast schon abgesagt,
- * antwortet der Server mit `204` (wiederholbar).
+ * **`gastName` geht roh hinaus** (ohne „(Gast)“, ohne Trimmen). Fehler in der Prüfreihenfolge des Servers:
+ * `404 INHALT_NICHT_GEFUNDEN` (Termin unbekannt), `409 TERMIN_GESCHLOSSEN` (abgesagt, abgeschlossen oder begonnen),
+ * `404 INHALT_NICHT_GEFUNDEN` (keine Teilnahme dieses Gastes). Hat der Gast schon abgesagt, antwortet der Server mit
+ * `204` und ändert nichts (idempotent).
  *
  * @param anfrage `terminId` und `gastName`.
  */

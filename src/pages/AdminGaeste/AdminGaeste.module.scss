@@ -61,13 +61,15 @@
 .angabe {
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach);
+  margin-bottom: var(--abstand-s);
 }
 
 // Zustand als Text mit Symbol, nie allein ueber die Farbe.
 .zustand {
   display: flex;
   align-items: center;
-  gap: var(--abstand-xs);
+  gap: var(--abstand-s);
+  margin-bottom: var(--abstand-s);
 }
 
 .symbol {
@@ -124,7 +126,7 @@
 .gastListe {
   display: flex;
   flex-direction: column;
-  gap: var(--abstand-s);
+  gap: var(--abstand-m);
   margin: 0;
   margin-block-start: var(--abstand-xs);
   padding: 0;
@@ -136,6 +138,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--abstand-xs);
+}
+
+// Mehrere Gäste eines Termins: durch eine Linie getrennt (24.10.2026), damit Name, Stufe und Aktionen zusammengehören.
+.gastZeile + .gastZeile {
+  padding-block-start: var(--abstand-s);
+  border-block-start: 1px solid var(--farbe-rand);
 }
 
 .gastName {

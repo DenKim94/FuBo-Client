@@ -37,7 +37,7 @@ npm run dev
 | `npm run test:e2e` | End-to-End-Tests (Playwright, baut vorher) |
 | `npm run e2e:browser` | Browser für Playwright nachladen (Chromium und WebKit), vor dem ersten Lauf |
 
-## Technik
+## Techstack
 
 React 19, Vite 8, TypeScript, SCSS mit CSS Modules, TanStack Query für den
 Server-State, React Router, `vite-plugin-pwa` mit eigenem Service Worker

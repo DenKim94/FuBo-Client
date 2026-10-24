@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import type { GastStufe, TeilnehmerEintragAdmin } from '@/api/admin/adminTermine'
-import type { TerminDetails } from '@/api/termine/termine'
+import type { GastStufe } from '@/api/admin/adminTermine'
+import type { TeilnehmerEintrag, TerminDetails } from '@/api/termine/termine'
 import { datumKurz, uhrzeitKurz } from '@/api/termine/terminZeit'
 import Bestaetigung from '@/components/Bestaetigung/Bestaetigung'
 import CustomButton from '@/components/CustomButton/CustomButton'
@@ -23,13 +23,14 @@ type StufenQuelle = { stufe: GastStufe; quelle: 'teilnahme' | 'anmeldung' } | nu
 /**
  * Die Stufe eines Gastes an einem Termin, aus der sichersten verfügbaren Quelle:
  *
- * 1. `gastStufe` der Teilnahme, wenn der Server sie liefert (angefragt, 24.10.2026): die Stufe, mit der der Gast an
- *    **diesem** Termin zählt – die Selbsteinschätzung oder die Korrektur des Admins.
+ * 1. `gastStufe` der Teilnahme (Vertrag seit 24.10.2026; nur für den Admin, nur bei Gästen): die Stufe, mit der der
+ *    Generator an **diesem** Termin rechnet – die Selbsteinschätzung (ohne Angabe `MITTEL`) oder die Korrektur.
  * 2. Sonst ein **belegter** Gastplatz gleichen Namens: die Selbsteinschätzung der laufenden Anmeldung. Sie kann von der
  *    Stufe am Termin abweichen (Korrektur durch den Admin) und heißt deshalb ausdrücklich „Selbsteinschätzung“.
- * 3. Sonst nichts: Ein abgemeldeter Gast hat keinen Platz mehr, und ohne Server-Feld kennt der Client seine Stufe nicht.
+ * 3. Sonst nichts. Der Vertrag nennt das Feld optional („ein Client muss das Fehlen erwarten“); die Stufen 2 und 3 sind
+ *    die Rückfallebene dafür, nicht der Normalfall.
  */
-function stufeVon(eintrag: TeilnehmerEintragAdmin, plaetze: readonly GastPlatzInfo[] | undefined): StufenQuelle {
+function stufeVon(eintrag: TeilnehmerEintrag, plaetze: readonly GastPlatzInfo[] | undefined): StufenQuelle {
   if (eintrag.gastStufe) return { stufe: eintrag.gastStufe, quelle: 'teilnahme' }
   const platz = plaetze?.find((p) => p.belegt && p.gastName === eintrag.anzeigeName)
   return platz?.gastStufe ? { stufe: platz.gastStufe, quelle: 'anmeldung' } : null
@@ -38,9 +39,7 @@ function stufeVon(eintrag: TeilnehmerEintragAdmin, plaetze: readonly GastPlatzIn
 /** Die Stufe als Satz; ohne Quelle sagt er, warum sie fehlt. */
 function stufenText(quelle: StufenQuelle): string {
   if (!quelle) return 'Stufe: nicht bekannt (der Gast ist nicht angemeldet)'
-  return quelle.quelle === 'teilnahme'
-    ? `Stufe: ${STUFEN_TEXT[quelle.stufe]}`
-    : `Selbsteinschätzung: ${STUFEN_TEXT[quelle.stufe]} (laut Anmeldung)`
+  return `Aktuelle Stufe: ${STUFEN_TEXT[quelle.stufe]}`
 }
 
 /** Eigenschaften der Gästeliste je Termin. */
@@ -57,7 +56,7 @@ type GaesteInTerminenEigenschaften = {
 }
 
 /** Der Gast, um den es im Dialog gerade geht. */
-type Ziel = { termin: TerminDetails; eintrag: TeilnehmerEintragAdmin }
+type Ziel = { termin: TerminDetails; eintrag: TeilnehmerEintrag }
 
 /**
  * Die Gäste der kommenden Termine mit „Stufe ändern“ (Gäste-Verwaltung; vorher Abschnitt „Gäste“ der
@@ -75,7 +74,7 @@ type Ziel = { termin: TerminDetails; eintrag: TeilnehmerEintragAdmin }
  *
  * **„Entfernen“ (seit 24.10.2026, Entscheidung des Entwicklers):** Ein Gast ohne Konto kann nach Ablauf seiner Sitzung
  * oft nicht mehr selbst absagen. Der Admin nimmt die Zusage zurück; der Server wertet das **als Absage des Gastes**
- * (`gastAbsagen`; Endpunkt beim Server-Track angefragt, siehe `server/harness/tmp/SERVER_ANFRAGE_GAST_ABSAGEN.md`).
+ * (`gastAbsagen`, im Vertrag seit 24.10.2026; idempotent, Sitzung und Gastplatz des Gastes bleiben).
  * Rot umrandet wie die anderen endgültigen Aktionen, die Bestätigung nennt die Folgen; rot gefüllt ist erst sie.
  */
 export default function GaesteInTerminen({ termine, plaetze, beiEntfernt }: GaesteInTerminenEigenschaften) {
@@ -89,7 +88,7 @@ export default function GaesteInTerminen({ termine, plaetze, beiEntfernt }: Gaes
   const bekannt: GastStufe | null = ziel ? (stufeVon(ziel.eintrag, plaetze)?.stufe ?? null) : null
   const wert = gewaehlt ?? bekannt
 
-  function oeffnen(termin: TerminDetails, eintrag: TeilnehmerEintragAdmin) {
+  function oeffnen(termin: TerminDetails, eintrag: TeilnehmerEintrag) {
     aendern.reset()
     setGewaehlt(null)
     setOhneWahl(false)
@@ -101,7 +100,7 @@ export default function GaesteInTerminen({ termine, plaetze, beiEntfernt }: Gaes
     setZiel(null)
   }
 
-  function entfernenOeffnen(termin: TerminDetails, eintrag: TeilnehmerEintragAdmin) {
+  function entfernenOeffnen(termin: TerminDetails, eintrag: TeilnehmerEintrag) {
     entfernen.reset()
     setEntfernenZiel({ termin, eintrag })
   }
@@ -199,9 +198,7 @@ export default function GaesteInTerminen({ termine, plaetze, beiEntfernt }: Gaes
         data-testid="admin-gast-stufe-dialog"
       >
         <p>
-          Stufe von {ziel?.eintrag.anzeigeName} (Gast) am {ziel ? datumKurz(ziel.termin.datum) : ''}. Die Änderung zählt als
-          Änderung des Teilnehmerkreises: Eine vorhandene Teameinteilung gilt danach als veraltet, das Kontingent steht
-          wieder zur Verfügung.
+          Nach Änderung gilt die vorhandene Teameinteilung als veraltet. Die Teams müssen anschließend neu generiert werden.
         </p>
         {bekannt === null && <p className={style.angabe}>Die aktuelle Stufe liegt nicht vor. Bitte wähle eine.</p>}
         <StufeWahl
@@ -235,9 +232,8 @@ export default function GaesteInTerminen({ termine, plaetze, beiEntfernt }: Gaes
         data-testid="admin-gast-entfernen-dialog"
       >
         <p>
-          {entfernenZiel?.eintrag.anzeigeName} (Gast) wird für {entfernenZiel ? datumKurz(entfernenZiel.termin.datum) : ''} als
-          abgesagt geführt, als hätte er selbst abgesagt. Wer wartet, rückt nach; eine vorhandene Teameinteilung gilt danach
-          als veraltet. Der Gast kann später erneut zusagen.
+          {entfernenZiel?.eintrag.anzeigeName} (Gast) wird für {entfernenZiel ? datumKurz(entfernenZiel.termin.datum) : ''} aus dem Termin entfernt. 
+          Wer wartet, rückt nach; eine vorhandene Teameinteilung gilt danach als veraltet.
         </p>
       </Bestaetigung>
     </>

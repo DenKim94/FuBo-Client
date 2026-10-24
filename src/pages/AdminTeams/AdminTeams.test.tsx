@@ -46,6 +46,14 @@ async function waehlen(...ids: number[]) {
   for (const id of ids) await userEvent.click(screen.getByTestId(`admin-teams-profil-${String(id)}`))
 }
 
+/** Legt einen Gast an und übernimmt ihn (Eingabe öffnen, Name und Stufe setzen, „Übernehmen“). */
+async function gastAnlegen(name = '', stufe?: 'STARK' | 'MITTEL' | 'SCHWACH') {
+  await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+  if (name !== '') await userEvent.type(screen.getByTestId('admin-teams-gast-name'), name)
+  if (stufe) await userEvent.click(screen.getByTestId(`admin-teams-gast-stufe-${stufe}`))
+  await userEvent.click(screen.getByTestId('admin-teams-gast-uebernehmen'))
+}
+
 async function berechnen() {
   await userEvent.click(screen.getByTestId('admin-teams-berechnen'))
   return screen.findByTestId('admin-teams-ergebnis')
@@ -98,7 +106,7 @@ describe('AdminTeams – Auswahl', () => {
     expect(screen.getByTestId('admin-teams-zaehler')).toHaveTextContent('Ausgewählt: 0.')
   })
 
-  test('der Zähler nennt die Grenzen aus der Konfiguration; außerhalb sperrt „Teams berechnen“ mit Grund (aria-disabled)', async () => {
+  test('der Zähler nennt die Grenzen aus der Konfiguration; außerhalb sperrt „Teams einteilen“ mit Grund (aria-disabled)', async () => {
     const welt = rendern()
     await bereit()
     const knopf = screen.getByTestId('admin-teams-berechnen')
@@ -112,8 +120,8 @@ describe('AdminTeams – Auswahl', () => {
     expect(screen.getByTestId('admin-teams-grund')).toHaveTextContent('Es braucht mindestens 2 Teilnehmer.')
 
     await waehlen(3, 5)
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+    await gastAnlegen()
+    await gastAnlegen()
     expect(screen.getByTestId('admin-teams-grund')).toHaveTextContent('Es sind höchstens 4 Teilnehmer erlaubt.')
 
     fireEvent.click(knopf)
@@ -123,70 +131,116 @@ describe('AdminTeams – Auswahl', () => {
     expect(welt.protokoll.teamsManuell).toEqual([])
   })
 
-  test('innerhalb der Grenzen ist „Teams berechnen“ frei und der Grund weg', async () => {
+  test('innerhalb der Grenzen ist „Teams einteilen“ frei und der Grund weg', async () => {
     rendern()
     await bereit()
 
     await waehlen(1, 3)
 
     expect(screen.getByTestId('admin-teams-berechnen')).not.toHaveAttribute('aria-disabled')
+    expect(screen.getByTestId('admin-teams-berechnen')).toHaveTextContent('Teams einteilen')
     expect(screen.queryByTestId('admin-teams-grund')).not.toBeInTheDocument()
   })
 })
 
-describe('AdminTeams – Gäste', () => {
-  test('„Gast hinzufügen“ legt eine Zeile mit Namensfeld (Fokus) und Stufe Mittel an; der Hinweis steht einmal', async () => {
+describe('AdminTeams – Gäste (Eingabe mit „Übernehmen“ und „Abbrechen“, 24.10.2026)', () => {
+  test('„Gast hinzufügen“ öffnet die Eingabe: Fokus im Namensfeld, Stufe Mittel, Hinweis; gezählt wird noch nichts', async () => {
     rendern()
     await bereit()
 
     await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
 
-    expect(screen.getByTestId('admin-teams-gast-1')).toBeInTheDocument()
-    expect(screen.getByTestId('admin-teams-gast-2')).toBeInTheDocument()
-    expect(screen.getAllByTestId('admin-teams-gast-hinweis')).toHaveLength(1)
-    expect(screen.getByTestId('admin-teams-gast-hinweis')).toHaveTextContent('Ohne Namen heißt der Gast Gast 1, Gast 2')
-    expect(screen.getByTestId('admin-teams-gast-stufe-1-MITTEL')).toBeChecked()
-    expect(screen.getByTestId('admin-teams-gast-stufe-2-MITTEL')).toBeChecked()
-    expect(screen.getByTestId('admin-teams-gast-name-2')).toHaveFocus()
+    expect(screen.getByTestId('admin-teams-gast-eingabe')).toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-gast-name')).toHaveFocus()
+    expect(screen.getByTestId('admin-teams-gast-stufe-MITTEL')).toBeChecked()
+    expect(screen.getByTestId('admin-teams-gast-hinweis')).toHaveTextContent('Ohne Namen heißt der Gast z.B. „Gast 1“.')
+    expect(screen.getByTestId('admin-teams-gast-abbrechen')).toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-gast-uebernehmen')).toBeInTheDocument()
+    // Während der Eingabe gibt es keinen zweiten „Gast hinzufügen“.
+    expect(screen.queryByTestId('admin-teams-gast-hinzufuegen')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('admin-teams-gast-1')).not.toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-zaehler')).toHaveTextContent('Ausgewählt: 0.')
   })
 
-  test('„Entfernen“ nimmt die Zeile weg; der Fokus geht auf „Gast hinzufügen“', async () => {
+  test('„Übernehmen“ nimmt den Gast mit Name und Stufe in die Liste, zählt ihn und setzt den Fokus auf „Gast hinzufügen“', async () => {
+    rendern()
+    await bereit()
+
+    await gastAnlegen('Beispielgast', 'STARK')
+    await gastAnlegen()
+
+    expect(screen.queryByTestId('admin-teams-gast-eingabe')).not.toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-gast-1')).toHaveTextContent('Beispielgast')
+    expect(screen.getByTestId('admin-teams-gast-1')).toHaveTextContent('Stufe: Stark')
+    expect(screen.getByTestId('admin-teams-gast-2')).toHaveTextContent('Gast 2')
+    expect(screen.getByTestId('admin-teams-gast-2')).toHaveTextContent('Stufe: Mittel')
+    expect(screen.getByTestId('admin-teams-zaehler')).toHaveTextContent('Ausgewählt: 2.')
+    expect(screen.getByTestId('admin-teams-gast-hinzufuegen')).toHaveFocus()
+  })
+
+  test('„Abbrechen“ verwirft die Eingabe: kein Gast, kein Zähler, Fokus auf „Gast hinzufügen“', async () => {
     rendern()
     await bereit()
     await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+    await userEvent.type(screen.getByTestId('admin-teams-gast-name'), 'Beispielgast')
 
-    await userEvent.click(screen.getByTestId('admin-teams-gast-entfernen-1'))
+    await userEvent.click(screen.getByTestId('admin-teams-gast-abbrechen'))
+
+    expect(screen.queryByTestId('admin-teams-gast-eingabe')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('admin-teams-gast-1')).not.toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-zaehler')).toHaveTextContent('Ausgewählt: 0.')
+    expect(screen.getByTestId('admin-teams-gast-hinzufuegen')).toHaveFocus()
+  })
+
+  test('solange eine Eingabe offen ist, sperrt „Teams einteilen“ mit Grund und sendet nichts', async () => {
+    const welt = rendern()
+    await bereit()
+    await waehlen(1, 3)
+    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+
+    const knopf = screen.getByTestId('admin-teams-berechnen')
+    expect(knopf).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByTestId('admin-teams-grund')).toHaveTextContent('Bitte übernimm den Gast oder brich die Eingabe ab.')
+    fireEvent.click(knopf)
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+    expect(welt.protokoll.teamsManuell).toEqual([])
+  })
+
+  test('„Entfernen“ nimmt einen übernommenen Gast weg; der Fokus geht auf „Gast hinzufügen“', async () => {
+    rendern()
+    await bereit()
+    await gastAnlegen('Beispielgast')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Entfernen: Beispielgast' }))
 
     expect(screen.queryByTestId('admin-teams-gast-1')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('admin-teams-gast-hinweis')).not.toBeInTheDocument()
+    expect(screen.getByTestId('admin-teams-zaehler')).toHaveTextContent('Ausgewählt: 0.')
     expect(screen.getByTestId('admin-teams-gast-hinzufuegen')).toHaveFocus()
   })
 
   test('der Gastname wird getrimmt gesendet, die Stufe mit; ein leerer Name entfällt; fehlende Profilliste entfällt', async () => {
     const welt = rendern()
     await bereit()
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
-    await userEvent.type(screen.getByTestId('admin-teams-gast-name-1'), '  Beispielgast  ')
-    await userEvent.click(screen.getByTestId('admin-teams-gast-stufe-1-STARK'))
-    await userEvent.type(screen.getByTestId('admin-teams-gast-name-2'), '   ')
+    await gastAnlegen('  Beispielgast  ', 'STARK')
+    await gastAnlegen('   ')
 
     await berechnen()
 
     expect(welt.protokoll.teamsManuell).toEqual([{ gaeste: [{ stufe: 'STARK', name: 'Beispielgast' }, { stufe: 'MITTEL' }] }])
-    // Der Server nennt den namenlosen Gast so, wie der Hinweis es sagt.
+    // Der Server nennt den namenlosen Gast so, wie die Liste es zeigt.
     expect(screen.getByTestId('admin-teams-ergebnis')).toHaveTextContent('Gast 2 (Gast)')
   })
 })
 
 describe('AdminTeams – Ergebnis', () => {
-  test('Ergebnis: Überschrift mit Fokus, Hinweis erneut, Teamlisten, Verfahren, Regel und Ungleichgewicht; ohne Skillwerte', async () => {
+  test('Ergebnis: Überschrift mit Fokus, Hinweis erneut, Teamlisten und Algorithmus; ohne Skillwerte und ohne Ungleichgewicht', async () => {
     const welt = rendern()
     await bereit()
     // Drei Teilnehmer: ungerade, also genau ein Auswechselspieler.
     await waehlen(1, 3)
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+    await gastAnlegen()
 
     const ergebnis = await berechnen()
 
@@ -197,11 +251,11 @@ describe('AdminTeams – Ergebnis', () => {
     expect(within(ergebnis).getByTestId('admin-teams-ergebnis-teams-a')).toHaveTextContent('Beispielspieler 01')
     expect(within(ergebnis).getByTestId('admin-teams-ergebnis-teams-b')).toHaveTextContent('Gast 1 (Gast)')
     expect(within(ergebnis).getByTestId('admin-teams-ergebnis-teams-auswechselspieler')).toBeInTheDocument()
-    expect(within(ergebnis).getByTestId('admin-teams-verfahren')).toHaveTextContent('Gerechnet mit: Exakt.')
-    expect(within(ergebnis).getByTestId('admin-teams-regel')).toHaveTextContent('Auswechselspieler nach der Regel: Schwächster Spieler des größeren Teams.')
-    expect(within(ergebnis).getByTestId('admin-teams-ungleichgewicht')).toHaveTextContent('Ungleichgewicht: 1,25')
-    expect(within(ergebnis).getByText(/0 heißt vollständig ausgeglichen/)).toBeInTheDocument()
-    // Nur diese eine Zahl; keine Skillwerte und keine Stufen der Gäste in den Listen.
+    expect(within(ergebnis).getByTestId('admin-teams-verfahren')).toHaveTextContent('Algorithmus-Typ: Standard')
+    // Seit 24.10.2026 ohne Regel-Zeile und ohne „Ungleichgewicht“ (Entscheidung des Entwicklers).
+    expect(within(ergebnis).queryByTestId('admin-teams-regel')).not.toBeInTheDocument()
+    expect(within(ergebnis).queryByText(/Ungleichgewicht/)).not.toBeInTheDocument()
+    // Keine Skillwerte und keine Stufen der Gäste in den Listen.
     expect(within(ergebnis).queryByText(/Angriff|Verteidigung|Torwart|Laufstärke|Spielstärke/i)).not.toBeInTheDocument()
     expect(within(screen.getByTestId('admin-teams-ergebnis-teams-b')).queryByText(/Stark|Mittel|Schwach/)).not.toBeInTheDocument()
   })
@@ -209,9 +263,7 @@ describe('AdminTeams – Ergebnis', () => {
   test.each<[string, () => Promise<unknown>]>([
     ['ein Profil dazuwählen', () => userEvent.click(screen.getByTestId('admin-teams-profil-5'))],
     ['ein Profil abwählen', () => userEvent.click(screen.getByTestId('admin-teams-profil-1'))],
-    ['einen Gast hinzufügen', () => userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))],
-    ['die Stufe eines Gastes ändern', () => userEvent.click(screen.getByTestId('admin-teams-gast-stufe-1-SCHWACH'))],
-    ['den Namen eines Gastes ändern', () => userEvent.type(screen.getByTestId('admin-teams-gast-name-1'), 'X')],
+    ['einen Gast übernehmen', () => gastAnlegen('Beispielgast')],
     ['einen Gast entfernen', () => userEvent.click(screen.getByTestId('admin-teams-gast-entfernen-1'))],
     ['„Alle auswählen“', () => userEvent.click(screen.getByTestId('admin-teams-alle'))],
     ['„Keine“', () => userEvent.click(screen.getByTestId('admin-teams-keine'))],
@@ -219,7 +271,7 @@ describe('AdminTeams – Ergebnis', () => {
     rendern()
     await bereit()
     await waehlen(1, 3)
-    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+    await gastAnlegen()
     await berechnen()
 
     await aendern()
@@ -227,17 +279,29 @@ describe('AdminTeams – Ergebnis', () => {
     await waitFor(() => expect(screen.queryByTestId('admin-teams-ergebnis')).not.toBeInTheDocument())
   })
 
-  test('„Erneut berechnen“ ist derselbe Aufruf mit derselben Auswahl', async () => {
-    const welt = rendern()
+  test('eine Eingabe öffnen und abbrechen ändert die Auswahl nicht: Das Ergebnis bleibt', async () => {
+    rendern()
     await bereit()
     await waehlen(1, 3)
     await berechnen()
 
-    await userEvent.click(screen.getByTestId('admin-teams-erneut'))
+    await userEvent.click(screen.getByTestId('admin-teams-gast-hinzufuegen'))
+    await userEvent.click(screen.getByTestId('admin-teams-gast-abbrechen'))
+
+    expect(screen.getByTestId('admin-teams-ergebnis')).toBeInTheDocument()
+  })
+
+  test('ein zweiter Lauf geht über „Teams einteilen“ mit derselben Auswahl (kein eigener „Erneut berechnen“)', async () => {
+    const welt = rendern()
+    await bereit()
+    await waehlen(1, 3)
+    await berechnen()
+    expect(screen.queryByTestId('admin-teams-erneut')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByTestId('admin-teams-berechnen'))
 
     await waitFor(() => expect(welt.protokoll.teamsManuell).toHaveLength(2))
     expect(welt.protokoll.teamsManuell[1]).toEqual(welt.protokoll.teamsManuell[0])
-    expect(await screen.findByTestId('admin-teams-ergebnis')).toBeInTheDocument()
   })
 
   test('Verfahren und Regel stehen so da, wie der Server sie meldet; Abweichungen von der Konfiguration werden erklärt', async () => {
@@ -259,11 +323,9 @@ describe('AdminTeams – Ergebnis', () => {
 
     await berechnen()
 
-    expect(screen.getByTestId('admin-teams-verfahren')).toHaveTextContent('Gerechnet mit: Schnell.')
+    expect(screen.getByTestId('admin-teams-verfahren')).toHaveTextContent('Algorithmus-Typ: Schnell')
     expect(screen.getByTestId('admin-teams-verfahren-abweichung')).toHaveTextContent('Abweichend von der Einstellung')
-    expect(screen.getByTestId('admin-teams-regel')).toHaveTextContent('Schwächster Spieler des größeren Teams')
     expect(screen.getByTestId('admin-teams-regel-abweichung')).toHaveTextContent('keine Anmeldereihenfolge')
-    expect(screen.getByTestId('admin-teams-ungleichgewicht')).toHaveTextContent('Ungleichgewicht: 0')
   })
 
   test('ohne Abweichung steht kein Erklärsatz da', async () => {

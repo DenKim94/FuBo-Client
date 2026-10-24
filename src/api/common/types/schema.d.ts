@@ -883,13 +883,45 @@ export interface paths {
          * Skill-Stufe eines Gastes ändern
          * @description Korrigiert die Selbsteinschätzung eines Gastes an einer bestehenden Teilnahme (A17). Verlangt die Rolle `ADMIN`.
          *
-         *     **Die einzige Adminaktion an einer Teilnahme.** Eine Rückmeldung ist eine Aussage über die eigene Verfügbarkeit und wird nicht stellvertretend gesetzt – sonst entstünden Zusagen, die niemand gegeben hat, und die Warteschlange verteilte darauf Plätze. A17 gibt dem Admin ausdrücklich die Stufe, und nur sie: Weder Zusage noch Name ändern sich, und `gemeldet_am` bleibt unberührt – die Position in der Warteschlange verschiebt sich nicht.
+         *     **Eine von zwei Adminaktionen an einer Teilnahme** (die andere ist `POST /admin/teilnahme/gast-absagen`, seit dem 24.10.2026). Eine Rückmeldung ist eine Aussage über die eigene Verfügbarkeit; eine **Zusage** wird nicht stellvertretend gesetzt – sonst entstünden Zusagen, die niemand gegeben hat, und die Warteschlange verteilte darauf Plätze. A17 gibt dem Admin ausdrücklich die Stufe, und nur sie: Weder Zusage noch Name ändern sich, und `gemeldet_am` bleibt unberührt – die Position in der Warteschlange verschiebt sich nicht.
          *
          *     **Der Vorgang erhöht die `teilnehmerVersion` des Termins** (A15) und öffnet das Generierungskontingent neu. Der Teilnehmerkreis bleibt, seine Zusammensetzung nach Stärke nicht.
          *
          *     **Auch die Stufe eines abgesagten Gastes lässt sich setzen** – sagt er wieder zu, ohne sich neu anzumelden, gilt sie dann bereits. Meldet er sich dagegen neu an und stuft sich anders ein, überschreibt seine nächste Rückmeldung die Korrektur.
          */
         post: operations["gastStufeAendern"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/teilnahme/gast-absagen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Zusage eines Gastes zurücknehmen
+         * @description Sagt stellvertretend für einen **Gast** ab (Ergänzung vom 24.10.2026). Verlangt die Rolle `ADMIN`.
+         *
+         *     **Nur für Gäste, nie für Spieler.** Ein Gast hat keinen eigenen Kanal, über den er nach dem Ende seiner Sitzung noch absagen könnte; ein Spieler sagt selbst ab (`POST /termine/rueckmeldung`). Der Name wird gegen die Gastteilnahmen des Termins geprüft – der Anzeigename eines Spielers trifft nie, auch wenn er in `teilnehmer[].anzeigeName` steht. Eine stellvertretende **Zusage** gibt es weiterhin nicht: Sie erzeugte Zusagen, die niemand gegeben hat, und die Warteschlange verteilte darauf Plätze.
+         *
+         *     **Wirkung (eine Transaktion):** `zusage` des Gastes wird `false`. Die Stufe bleibt, und `gemeldet_am` bleibt unberührt – wie bei einer eigenen Absage. Alle Nachfolgenden rücken beim nächsten Abruf auf (Warteschlange, A10). Es gibt keine Push-Nachricht für Nachrückende; versandt wird nur zu den beiden Anlässen aus A25.
+         *
+         *     **Zähler:** Der Vorgang erhöht die `teilnehmerVersion` des Termins (A15) – eine vorhandene Einteilung gilt danach als `veraltet`. Das Generierungskontingent (`kontingentVersion`) öffnet er **nicht**: Eine Absage verschafft niemandem einen weiteren Lauf.
+         *
+         *     **Sitzung und Gastplatz bleiben unberührt.** Der Gast bleibt angemeldet, belegt seinen Platz weiter und kann sich selbst wieder zusagen.
+         *
+         *     **Idempotent:** Hat der Gast bereits abgesagt, antwortet der Server ebenfalls mit `204` und ändert nichts – kein Zähler, kein Protokolleintrag. Die Reihenfolge der Prüfungen: unbekannter Termin → `404`, Termin nicht mehr offen → `409`, keine Teilnahme dieses Gastes → `404`.
+         *
+         *     **Protokoll:** `GAST_ABGESAGT` mit `gastName` (Entität: Termin) – die zweite Adminaktion neben `GAST_STUFE_GEAENDERT`, die ins Audit-Log geschrieben wird, obwohl sie eine Teilnahme betrifft.
+         */
+        post: operations["gastAbsagen"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2117,9 +2149,22 @@ export interface components {
             stufe: components["schemas"]["GastStufe"];
         };
         /**
+         * @description Anfragekörper für die Absage eines Gastes durch den Admin (Ergänzung vom 24.10.2026). Verlangt die Rolle `ADMIN`.
+         *
+         *     Die Teilnahme wird wie bei `GastStufeRequest` über Termin **und** Gastname angesprochen, nicht über eine eigene Id. Der Name wird zeichengenau verglichen – er stammt aus `teilnehmer[].anzeigeName`; ihn zu normalisieren träfe im Zweifel eine andere Zeile. Nur Leerzeichen am Rand werden entfernt. Der Name eines Spielers trifft nie.
+         */
+        GastAbsageRequest: {
+            /** Format: int64 */
+            terminId: number;
+            /** @description Name des Gastes, wie er in `teilnehmer[].anzeigeName` steht. */
+            gastName: string;
+        };
+        /**
          * @description Ein Eintrag der Teilnehmerliste.
          *
          *     **Eine Liste mit Kennzeichen, nicht zwei getrennte Listen.** Die Reihenfolge ist die *eine* Information, die Zusagen und Warteschlange verbindet – wer nachrückt, steht schon fest. Zwei Arrays zwängen den Client, sie für die Anzeige wieder zusammenzufügen, und beim Nachrücken wanderte ein Eintrag zwischen ihnen hin und her.
+         *
+         *     **Eine Ausnahme von A12, ausdrücklich beschlossen am 24.10.2026:** `gastStufe` erscheint **nur für eine Sitzung mit der Rolle `ADMIN`** und nur bei Einträgen mit `gast: true`. Der Admin korrigiert die Selbsteinschätzung eines Gastes über `POST /admin/teilnahme/gast-stufe` und muss dafür die geltende Stufe an der Zeile sehen. Für `USER` und `GAST` fehlt der Schlüssel **ganz** (er ist nicht `null`); dasselbe gilt bei Spielern, auch für den Admin. Die übrigen Felder sind rollenunabhängig.
          */
         TeilnehmerEintrag: {
             /**
@@ -2133,6 +2178,8 @@ export interface components {
             gast: boolean;
             /** @description `true`, sobald `position` über `maxTeilnehmer` liegt. Die Grenze ist Konfiguration: Senkt der Admin sie, wandert die Warteschlange sofort mit, ohne dass eine Teilnahme angefasst wird. */
             wartet: boolean;
+            /** @description Nur für `ADMIN` und nur bei `gast: true`; sonst **fehlt der Schlüssel**. Die Stufe, mit der der Generator rechnet: eine Gastteilnahme ohne Stufe zeigt `MITTEL`, eine durch `gast-stufe` korrigierte Teilnahme die korrigierte Stufe. Optional – ein Client muss das Fehlen erwarten. */
+            gastStufe?: components["schemas"]["GastStufe"] | null;
         };
         /**
          * @description Die Zusagen eines Termins samt der Kennzahlen, an denen sie zu messen sind (A10, A11).
@@ -4200,6 +4247,55 @@ export interface operations {
             403: components["responses"]["KeineBerechtigung"];
             /** @description `INHALT_NICHT_GEFUNDEN` – für diesen Termin liegt keine Teilnahme dieses Gastes vor. Der Name wird zeichengenau verglichen. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    gastAbsagen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "terminId": 12,
+                 *       "gastName": "Testgast 1"
+                 *     }
+                 */
+                "application/json": components["schemas"]["GastAbsageRequest"];
+            };
+        };
+        responses: {
+            /** @description Übernommen – oder der Gast hatte bereits abgesagt. Kein Inhalt. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["EingabeUngueltig"];
+            401: components["responses"]["SitzungUngueltig"];
+            403: components["responses"]["KeineBerechtigung"];
+            /** @description `INHALT_NICHT_GEFUNDEN` – entweder gibt es keinen Termin mit dieser Id, oder für diesen Termin liegt keine Teilnahme dieses Gastes vor (`detail`: „Für diesen Termin liegt keine Zusage dieses Gastes vor.“). Der Name wird zeichengenau verglichen. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description `TERMIN_GESCHLOSSEN` – der Termin ist abgesagt, abgeschlossen oder hat bereits begonnen. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -99,4 +99,14 @@ describe('Teilnehmerliste', () => {
     )
     expect(screen.getByText('Keine Zusagen')).toBeInTheDocument()
   })
+
+  test('fordert zum Zusagen auf – aber nicht den Admin, der nur liest (24.10.2026)', () => {
+    const { rerender } = rendern(liste(0))
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Sag zu, wenn du dabei bist.')
+
+    rerender(<Teilnehmerliste liste={liste(0)} eigenerName={EIGENER_NAME} eigenerGast={false} eingeklappt={false} nurLesen />)
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Noch keine Zusagen')
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Sobald jemand zusagt, erscheint er hier.')
+    expect(screen.queryByText(/Sag zu/)).not.toBeInTheDocument()
+  })
 })

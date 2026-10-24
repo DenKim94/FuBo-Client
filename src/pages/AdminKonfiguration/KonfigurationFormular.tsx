@@ -190,7 +190,7 @@ export default function KonfigurationFormular({
             beiAenderung={(wert) => {
               eingabe('algorithmType', wert as KonfigurationForm['algorithmType'])
             }}
-            hinweis="Exakt prüft alle Aufteilungen (bis 24 Teilnehmer), schnell liegt nah am Optimum."
+            hinweis="„Standard“ findet das globale Optimum; „Schnell“ liegt nahe am Optimum und eignet sich für größere Teams (ab 25 Teilnehmern)."
             deaktiviert={aendern.isPending}
             data-testid="admin-konfig-algorithmType"
           />

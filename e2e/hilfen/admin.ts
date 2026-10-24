@@ -436,7 +436,7 @@ export type KonfigurationWelt = {
     geaendert: Record<string, unknown>[]
     freigegeben: Record<string, unknown>[]
     gastStufen: Record<string, unknown>[]
-    /** Koerper von `/admin/teilnahme/gast-absagen` (Vertragsvorschlag vom 24.10.2026). */
+    /** Koerper von `/admin/teilnahme/gast-absagen` (seit 24.10.2026). */
     gastAbgesagt: Record<string, unknown>[]
     halleAbgesagt: Record<string, unknown>[]
     ergebnisKorrigiert: Record<string, unknown>[]
@@ -588,17 +588,20 @@ export async function konfigurationNachbilden(
     return route.fulfill({ status: 204 })
   })
 
-  // Gast absagen (Vertragsvorschlag vom 24.10.2026): wirkt wie die Absage des Gastes, Kontingent bleibt.
+  // Gast absagen (Vertrag seit 24.10.2026): Pruefreihenfolge wie am Server (Termin, offen, Teilnahme), idempotent.
+  const abgesagteGaeste = new Set<string>()
   await page.route('**/api/v1/admin/teilnahme/gast-absagen', (route) => {
     const k = route.request().postDataJSON() as { terminId: number; gastName: string }
     welt.koerper.gastAbgesagt.push(k)
     const modell = termine.modelle.find((t) => t.terminId === k.terminId)
-    const zusage = modell?.zusagen.find((z) => z.gast && z.name === k.gastName)
-    if (!modell || !zusage) {
-      return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
-    }
+    if (!modell) return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Es gibt keinen Termin mit dieser Id.')
     if (modell.status !== 'GEPLANT') return problem(route, 409, 'TERMIN_GESCHLOSSEN', 'Der Termin nimmt keine Rückmeldungen mehr an.')
+    const name = k.gastName.trim()
+    if (abgesagteGaeste.has(`${String(k.terminId)}:${name}`)) return route.fulfill({ status: 204 })
+    const zusage = modell.zusagen.find((z) => z.gast && z.name === name)
+    if (!zusage) return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
     modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+    abgesagteGaeste.add(`${String(k.terminId)}:${name}`)
     modell.kontingentVersion ??= modell.teilnehmerVersion
     modell.teilnehmerVersion += 1
     return route.fulfill({ status: 204 })
@@ -612,6 +615,7 @@ export async function konfigurationNachbilden(
     if (!modell || !zusage) {
       return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Teilnahme dieses Gastes vor.')
     }
+    zusage.stufe = k.stufe
     modell.teilnehmerVersion += 1
     return route.fulfill({ status: 204 })
   })
@@ -727,7 +731,7 @@ export async function adminStart(
   const admin = await adminNachbilden(page)
   // Zusaetzliche Spielerprofile stehen vor dem Adminprofil (Serverreihenfolge).
   if (optionen.zusatzProfile) admin.profile.splice(admin.profile.length - 1, 0, ...optionen.zusatzProfile)
-  const termine = await termineNachbilden(page, optionen.modelle ?? [terminModell({ terminId: 1, datum: '2099-01-13', uhrzeit: '19:00:00' })])
+  const termine = await termineNachbilden(page, optionen.modelle ?? [terminModell({ terminId: 1, datum: '2099-01-13', uhrzeit: '19:00:00' })], { admin: true })
   await terminverwaltungNachbilden(page, termine)
   const welt = await konfigurationNachbilden(page, termine, { konfiguration: optionen.konfiguration, admin })
   await page.goto(pfad)

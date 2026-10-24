@@ -21,7 +21,8 @@ import type { Page, Route } from '@playwright/test'
 export const EIGENER_NAME = 'Beispielspieler 03'
 
 /** Eine Zusage in Meldereihenfolge. */
-export type Zusage = { name: string; gast: boolean }
+/** Eine Zusage; `stufe` nur bei Gaesten (ohne Angabe rechnet der Server mit MITTEL). */
+export type Zusage = { name: string; gast: boolean; stufe?: 'STARK' | 'MITTEL' | 'SCHWACH' }
 
 /** Zustand eines Termins am nachgebildeten Server. */
 export type TerminModell = {
@@ -152,7 +153,8 @@ function uebersicht(m: TerminModell) {
   }
 }
 
-function details(m: TerminModell) {
+/** Die Einzelansicht; `admin`: Die Sitzung ist der Admin und sieht `gastStufe` je Gast (Vertrag seit 24.10.2026). */
+function details(m: TerminModell, admin = false) {
   return {
     ...uebersicht(m),
     version: m.version,
@@ -165,6 +167,8 @@ function details(m: TerminModell) {
         anzeigeName: z.name,
         gast: z.gast,
         wartet: i + 1 > m.max,
+        // Fuer alle anderen fehlt der Schluessel ganz (nicht null).
+        ...(admin && z.gast ? { gastStufe: z.stufe ?? 'MITTEL' } : {}),
       })),
     },
     teams: m.teams
@@ -218,7 +222,7 @@ export function einteilungAus(m: TerminModell): Einteilung {
 }
 
 /** Bildet die Termin-Endpunkte nach und gibt den veraenderbaren Zustand zurueck. */
-export async function termineNachbilden(page: Page, modelle: TerminModell[]): Promise<Termine> {
+export async function termineNachbilden(page: Page, modelle: TerminModell[], optionen: { admin?: boolean } = {}): Promise<Termine> {
   const welt: Termine = {
     modelle,
     listenabrufe: [],
@@ -245,7 +249,7 @@ export async function termineNachbilden(page: Page, modelle: TerminModell[]): Pr
       welt.detailabrufe.push(route.request().headers()['x-fubo-kein-refresh'])
       const id = new URL(route.request().url()).pathname.split('/')[4]
       const modell = welt.modelle.find((m) => String(m.terminId) === id)
-      return modell ? route.fulfill({ json: details(modell) }) : problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
+      return modell ? route.fulfill({ json: details(modell, optionen.admin) }) : problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
     },
   )
 

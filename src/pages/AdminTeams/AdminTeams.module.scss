@@ -114,6 +114,7 @@
   font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach); // 6.40:1 auf Weiss
   line-height: var(--zeilenhoehe);
+  padding-bottom: var(--abstand-s);
 }
 
 .ergebnis {
@@ -153,4 +154,35 @@
 // Die Aktion in Daumenhoehe (64 px); mit dem Elementnamen davor gewinnt die Regel gegen den CustomButton.
 button.aktion {
   min-block-size: var(--tapziel-primaer);
+}
+
+// Übernommene Gäste (24.10.2026): eine Karte, die Zeilen durch Linien getrennt; Name und Stufe links, „Entfernen“ rechts.
+.gastListe {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+}
+
+.gastZeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--abstand-s);
+  padding: var(--abstand-s) var(--abstand-m);
+}
+
+.gastZeile + .gastZeile {
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+.gastText {
+  // Basis 0: „Entfernen“ bleibt rechts in der Zeile, ein langer Name bricht innerhalb seiner Spalte um.
+  flex: 1 1 0;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
 }

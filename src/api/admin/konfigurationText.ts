@@ -8,7 +8,8 @@ import type { AlgorithmType, AuswechselModus } from '@/api/admin/adminKonfigurat
 
 /** Verfahren als Auswahl: Wert des Vertrags, Anzeigetext und eine Zeile Erklärung. */
 export const VERFAHREN: { wert: AlgorithmType; text: string; zusatz: string }[] = [
-  { wert: 'EXHAUSTIV', text: 'Exakt', zusatz: 'prüft alle Aufteilungen' },
+  // „Standard“ statt „Exakt“ (24.10.2026, Vorgabe des Entwicklers): die Voreinstellung, nicht ein Fachbegriff.
+  { wert: 'EXHAUSTIV', text: 'Standard', zusatz: 'prüft alle Aufteilungen' },
   { wert: 'HEURISTIK', text: 'Schnell', zusatz: 'nah am Optimum' },
 ]
 /** Regel für den Auswechselspieler als Auswahl. */
