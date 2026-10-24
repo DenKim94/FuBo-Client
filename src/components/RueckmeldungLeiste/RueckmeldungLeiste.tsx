@@ -87,7 +87,7 @@ export default function RueckmeldungLeiste({ eigeneRueckmeldung, terminId }: Rue
             aria-disabled={laedt && gesendet !== false ? true : undefined}
             onClick={() => senden(false)}
             data-testid="rueckmeldung-absagen"
-            style={{ 'background-color': 'var(--farbe-flaeche)' } as React.CSSProperties}
+            style={{ backgroundColor: 'var(--farbe-flaeche)' }}
           >
             {eigeneRueckmeldung === null ? 'Ich kann nicht' : 'Absagen'}
           </CustomButton>

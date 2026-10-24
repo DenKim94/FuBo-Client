@@ -18,7 +18,15 @@
   text-align: center;
 }
 
+// Der Link umschliesst nur das Bild: Block statt Inline, damit Tap-Fläche und Fokusring genau
+// der Bildfläche folgen (keine Lücke für die Unterlänge einer Textzeile).
+.logoLink {
+  display: block;
+  border-radius: var(--radius-l);
+}
+
 .logo {
+  display: block;
   inline-size: 8rem;
   block-size: 8rem;
   border-radius: var(--radius-l);

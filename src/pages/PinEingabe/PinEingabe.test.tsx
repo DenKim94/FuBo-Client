@@ -182,8 +182,24 @@ describe('PinEingabe', () => {
   test('bietet den Einstieg in die Admin-Anmeldung nicht mehr an', () => {
     // Die Admin-Anmeldung verlangt serverseitig PIN_VERIFIED (Vertrag): Vor der
     // PIN waere sie nicht nutzbar. Der Link steht in der Namensauswahl (C4, E5).
+    // Einziger Link der Ansicht ist das Logo (Quellcode).
     rendern()
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.queryByRole('link', { name: /admin/i })).not.toBeInTheDocument()
     expect(screen.queryByTestId('pin-admin-link')).not.toBeInTheDocument()
+  })
+
+  test('das Logo oeffnet das Repository des Clients in einem neuen Tab', () => {
+    rendern()
+    const link = screen.getByRole('link', { name: 'Quellcode auf GitHub (öffnet in neuem Tab)' })
+    expect(link).toHaveAttribute('href', 'https://github.com/DenKim94/FuBo-Client')
+    expect(link).toHaveAttribute('target', '_blank')
+    // Ohne `noopener` bekaeme die fremde Seite Zugriff auf `window.opener`.
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    // Das Bild steht im Link und ist stumm; der Name kommt aus `aria-label`.
+    const logo = screen.getByTestId('pin-logo')
+    expect(link).toContainElement(logo)
+    expect(logo).toHaveAttribute('alt', '')
   })
 })

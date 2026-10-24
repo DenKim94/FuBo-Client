@@ -268,9 +268,17 @@ test.describe('Abmelden in der Kopfzeile', () => {
 
     const kasten = await abmelden.boundingBox()
     expect(kasten!.height).toBeGreaterThanOrEqual(44)
-    // Am rechten Rand der Kopfzeile, vollstaendig sichtbar.
+    // Am rechten Rand der Kopfzeile, vollstaendig sichtbar. Geprueft wird die rechte Kante gegen den
+    // Innenrand der Kopfzeile, nicht „liegt rechts der Mitte": Die Breite der Schaltflaeche haengt
+    // von der Systemschrift ab. Mit DejaVu Sans (CI, Ubuntu) ist sie rund 165 px breit und beginnt
+    // bei 179 px – knapp links der Mitte eines 360-px-Telefons, obwohl sie richtig rechts steht
+    // (CI-Fehler vom 24.10.2026).
     expect(kasten!.x + kasten!.width).toBeLessThanOrEqual(viewport!.width)
-    expect(kasten!.x).toBeGreaterThan(viewport!.width / 2)
+    const innenRechts = await page.getByTestId('layout-kopf').evaluate((kopf) => {
+      const rahmen = kopf.getBoundingClientRect()
+      return rahmen.right - parseFloat(getComputedStyle(kopf).paddingRight)
+    })
+    expect(Math.abs(kasten!.x + kasten!.width - innenRechts)).toBeLessThanOrEqual(1)
 
     const { scrollbreite, sichtbreite } = await page.evaluate(() => ({
       scrollbreite: document.documentElement.scrollWidth,

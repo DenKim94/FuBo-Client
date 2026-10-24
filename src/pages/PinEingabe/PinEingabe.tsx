@@ -19,6 +19,9 @@ const PIN_LAENGE = 4
 /** Rückfalltext, falls der Fehler weder vom Server stammt noch ein Netzfehler ist. */
 const FEHLER_ERSATZ = 'Die PIN konnte nicht geprüft werden. Bitte versuche es erneut.'
 
+/** Ziel des Logos: das Repository des Clients. */
+const QUELLCODE_URL = 'https://github.com/DenKim94/FuBo-Client'
+
 /**
  * Erste Stufe des Logins: Eingabe der zentralen PIN (A1/A3, Screen 01 der Prototypen).
  *
@@ -82,14 +85,26 @@ export default function PinEingabe() {
   return (
     <form className={style.pinEingabe} onSubmit={absenden} noValidate data-testid="pin-eingabe">
       <div className={style.bereich}>
-        <img
-          className={style.logo}
-          src="/icons/pwa/app-icon-384.png"
-          alt="app-icon"
-          width={120}
-          height={120}
-          data-testid="pin-logo"
-        />
+        {/* Das Logo führt zum Quellcode (Vorgabe des Entwicklers, 24.10.2026). Neuer Tab, damit die
+            PIN-Eingabe offen bleibt; `noopener noreferrer`, damit die fremde Seite keinen Zugriff auf
+            `window.opener` bekommt. Der Linktext steht im `aria-label`, das Bild ist darum stumm. */}
+        <a
+          className={style.logoLink}
+          href={QUELLCODE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Quellcode auf GitHub (öffnet in neuem Tab)"
+          data-testid="pin-logo-link"
+        >
+          <img
+            className={style.logo}
+            src="/icons/pwa/app-icon-384.png"
+            alt=""
+            width={120}
+            height={120}
+            data-testid="pin-logo"
+          />
+        </a>
         <h1 className={style.titel}>MONTAGS-KICKER</h1>
 
         {/* Nach einem erzwungenen Sitzungsende mit Begründung (C4, E4), etwa nach
