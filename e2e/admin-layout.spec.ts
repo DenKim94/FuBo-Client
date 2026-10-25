@@ -6,6 +6,7 @@ import {
   terminverwaltungNachbilden,
   ueberhangHorizontal,
 } from './hilfen/admin.js'
+import { pushGeraetNachbilden, pushNachbilden } from './hilfen/push.js'
 import { einteilungAus, terminModell, termineNachbilden, type TerminModell } from './hilfen/termine.js'
 
 /**
@@ -40,6 +41,8 @@ const PFADE = [
   '/admin/gaeste',
   '/admin/konfiguration',
   '/admin/teams',
+  // Einstellungen mit Probeversand (C9): nicht im Admin-Paket, aber fuer den Admin mit eigenem Abschnitt.
+  '/einstellungen',
 ]
 
 const HOEHEN = [780, 640]
@@ -76,6 +79,9 @@ async function welt(page: Page) {
     admin,
     konfiguration: { hallenModusAktiv: true, halleEmail: 'halle@beispiel.example', minTeilnehmer: 2, maxTeilnehmer: 12 },
   })
+  // Einstellungen (C9): eingerichtetes Geraet, damit der Gerätebereich seine Schaltflaeche zeigt.
+  await pushNachbilden(page)
+  await pushGeraetNachbilden(page, { berechtigung: 'granted', abonnement: 'https://push.example/E2E-Admin' })
 }
 
 test.describe('Layout der Admin-Seiten bei 360 Pixel Breite', () => {
@@ -102,7 +108,9 @@ test.describe('Layout der Admin-Seiten bei 360 Pixel Breite', () => {
             .map(({ element }) => element.getAttribute('data-testid') ?? element.tagName.toLowerCase()),
         )
         // Fliesstext-Links (Zeilenhoehe) zaehlen nicht; benannte Bedienelemente schon.
-        expect(zuNiedrig.filter((id) => id.startsWith('admin-') && !id.endsWith('-link')), pfad).toEqual([])
+        // Seit C9 auch die Bedienelemente der Einstellungen (`push-`, `probe-`, `installation-`).
+        const benannt = (id: string) => ['admin-', 'push-', 'probe-', 'installation-'].some((p) => id.startsWith(p))
+        expect(zuNiedrig.filter((id) => benannt(id) && !id.endsWith('-link')), pfad).toEqual([])
       }
     })
   }

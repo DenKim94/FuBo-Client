@@ -32,8 +32,30 @@ export type Sitzung = {
   verlaengernd: number
 }
 
-/** Bildet die Sitzungs-Endpunkte nach und gibt den veraenderbaren Zustand zurueck. */
-export async function sitzungNachbilden(page: Page, anfang: Partial<Sitzung> = {}): Promise<Sitzung> {
+/** Vermerk des Onboardings im `localStorage` (C9, `src/pwa/hinweisSpeicher.ts`). */
+export const HINWEIS_SCHLUESSEL = 'fubo.hinweise'
+
+/**
+ * Bildet die Sitzungs-Endpunkte nach und gibt den veraenderbaren Zustand zurueck.
+ *
+ * **Das Onboarding (C9, E33) ist hier abgeschaltet:** Die Karte erschiene sonst auf jeder Startseite und verschoebe
+ * Layout- und Fokuspruefungen. Ein Init-Skript setzt den Vermerk „erledigt“ vor jedem Laden; nur
+ * `onboarding.pwa.spec.ts` laesst ihn mit `{ onboarding: true }` weg.
+ */
+export async function sitzungNachbilden(
+  page: Page,
+  anfang: Partial<Sitzung> = {},
+  optionen: { onboarding?: boolean } = {},
+): Promise<Sitzung> {
+  if (!optionen.onboarding) {
+    await page.addInitScript((schluessel) => {
+      try {
+        window.localStorage.setItem(schluessel, JSON.stringify({ installation: true, benachrichtigungen: true }))
+      } catch {
+        // Kein Speicher (about:blank vor dem ersten Laden): Das Init-Skript laeuft beim naechsten Laden erneut.
+      }
+    }, HINWEIS_SCHLUESSEL)
+  }
   const sitzung: Sitzung = {
     leerlaufSek: 90,
     obergrenzeSek: 3600,

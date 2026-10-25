@@ -6,10 +6,10 @@ import AdminRoute from '@/app/schutz/AdminRoute'
 import GeschuetzteRoute from '@/app/schutz/GeschuetzteRoute'
 import LoginSchrittRoute from '@/app/schutz/LoginSchrittRoute'
 import { ADMIN_PFADE, LOGIN_PFADE } from '@/app/schutz/zielpfad'
-import Platzhalter from '@/components/Platzhalter/Platzhalter'
 import StartLader from '@/components/StartLader/StartLader'
 import DashboardLayout from '@/layouts/DashboardLayout/DashboardLayout'
 import Dashboard from '@/pages/Dashboard/Dashboard'
+import Einstellungen from '@/pages/Einstellungen/Einstellungen'
 import ErgebnisSeite from '@/pages/ErgebnisSeite/ErgebnisSeite'
 import Namensauswahl from '@/pages/Namensauswahl/Namensauswahl'
 import NichtGefunden from '@/pages/NichtGefunden/NichtGefunden'
@@ -164,12 +164,10 @@ export const routen = createBrowserRouter([
           { path: 'ergebnisse/:terminId', element: <ErgebnisSeite /> },
           // Die Einstellungen sind fuer jede angemeldete Person erreichbar; den
           // Benachrichtigungsbereich blendet die Ansicht fuer GAST selbst aus
-          // (A25d), weil die zugehoerigen Endpunkte dort mit `403` antworten.
-          {
-            path: 'einstellungen',
-            element: <Platzhalter titel="Einstellungen" paket="C9" />,
-            handle: ZUM_DASHBOARD,
-          },
+          // (A25d), weil die zugehoerigen Endpunkte dort mit `403` antworten (C9).
+          // Nicht im Admin-Paket: Die Seite gehoert allen Angemeldeten. „Zurück“
+          // fuehrt zur Startseite; fuer den Admin leitet `/` nach `/admin` weiter.
+          { path: 'einstellungen', element: <Einstellungen />, handle: ZUM_DASHBOARD },
 
           // --- Zusaetzlich nur fuer die Rolle ADMIN -------------------------
           {

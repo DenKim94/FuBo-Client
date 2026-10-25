@@ -27,7 +27,14 @@ export const schluessel = {
   /** Verlaufsabruf (E14). Eigener Wurzelschlüssel: `invalidateQueries(termine)` trifft ihn nicht. */
   termineVerlauf: ['termineVerlauf'] as const,
   bilanz: ['bilanz'] as const,
+  /**
+   * Push (C9). Alle drei unter der Wurzel `push`: `useSitzungswechsel` entfernt sie beim Personenwechsel mit.
+   * `pushStatus` ist Anlagen- und Personenebene vom Server, `pushSchluessel` der VAPID-Schlüssel (bei `503` ohne
+   * Wiederholung), `pushGeraet` der **lokale** Gerätezustand aus dem Browser (kein Netz).
+   */
   pushStatus: ['push', 'status'] as const,
+  pushSchluessel: ['push', 'schluessel'] as const,
+  pushGeraet: ['push', 'geraet'] as const,
   /** Admin-Abfragen. Wurzel `admin`: hebt sie von den Abfragen der Spieler ab. */
   adminProfile: ['admin', 'profile'] as const,
   adminSkills: ['admin', 'skills'] as const,

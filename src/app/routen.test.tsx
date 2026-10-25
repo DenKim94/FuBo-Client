@@ -5,6 +5,7 @@ import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
 import type { SitzungZustand } from '@/hooks/useSitzung'
 import { adminHandler, adminWelt } from '@/test/mocks/admin'
 import { beispielAdminSitzung } from '@/test/mocks/handlers'
+import { pushHandler, pushWelt } from '@/test/mocks/push'
 import { mockServer } from '@/test/mocks/server'
 import { terminHandlers, terminModell } from '@/test/mocks/termine'
 import { QueryUmgebung } from '@/test/QueryUmgebung'
@@ -230,5 +231,27 @@ describe('Nachladen des Admin-Bereichs', () => {
 
     expect(await screen.findByTestId('admin-profil-formular')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/admin/profile/neu')
+  })
+})
+
+describe('Einstellungen (C9)', () => {
+  test('/einstellungen zeigt die Einstellungsseite statt des Platzhalters', async () => {
+    sitzungMock.mockReturnValue(
+      zustand({ istAdmin: false, sitzung: { ...beispielAdminSitzung, rolle: 'USER', anzeigeName: 'Beispielspieler 03' } }),
+    )
+    mockServer.use(...pushHandler(pushWelt()))
+    oeffnen('/einstellungen')
+
+    expect(await screen.findByTestId('einstellungen')).toBeInTheDocument()
+    expect(screen.queryByTestId('platzhalter-c9')).not.toBeInTheDocument()
+    expect(await screen.findByTestId('push-bereich')).toBeInTheDocument()
+  })
+
+  test('ohne Sitzung führt /einstellungen zur PIN-Eingabe', async () => {
+    sitzungMock.mockReturnValue(zustand({ sitzung: null, angemeldet: false, pinGeprueft: false, istAdmin: false }))
+    const { router } = oeffnen('/einstellungen')
+
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/pin/pruefen'))
+    expect(screen.queryByTestId('einstellungen')).not.toBeInTheDocument()
   })
 })

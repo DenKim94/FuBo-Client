@@ -17,6 +17,12 @@ export const LOGIN_PFADE = {
 } as const
 
 /**
+ * Einstellungen (C9, E23): für USER und ADMIN über das Symbol in der Kopfzeile, für GAST nur über die Adresse.
+ * Steht hier, weil Kopfzeile, Onboarding und Routenbaum ihn kennen.
+ */
+export const EINSTELLUNGEN_PFAD = '/einstellungen'
+
+/**
  * Pfade der Admin-Ansichten (C4), je nach Stufe oder Rolle erreichbar.
  *
  * Die Literale stehen nur hier. **Der Name `/auth/…` oder `/admin/…` am

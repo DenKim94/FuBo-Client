@@ -4,6 +4,7 @@ import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Hinweis from '@/components/Hinweis/Hinweis'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import Leerzustand from '@/components/Leerzustand/Leerzustand'
+import Onboarding from '@/components/Onboarding/Onboarding'
 import TerminAnsicht from '@/components/TerminAnsicht/TerminAnsicht'
 import Textlink from '@/components/Textlink/Textlink'
 import Verwaltungsliste, { type Verwaltungsgruppe } from '@/components/Verwaltungsliste/Verwaltungsliste'
@@ -150,6 +151,9 @@ export default function AdminDashboard() {
       <h1 className={style.titel}>Administration</h1>
 
       {hinweis.hinweis !== null && <Hinweis data-testid="admin-dashboard-hinweis">{hinweis.hinweis}</Hinweis>}
+
+      {/* Für den Admin nur die Installation (C9, E33); Benachrichtigungen bekommt er nicht (P12). */}
+      <Onboarding />
 
       <section className={style.abschnitt} aria-labelledby="admin-naechster-termin">
         <h2 id="admin-naechster-termin" className={style.abschnittTitel}>

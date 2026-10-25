@@ -28,6 +28,27 @@
   margin-inline-start: auto;
 }
 
+// Symbol „Einstellungen" (C9, E23): links neben „Abmelden", am rechten Rand der Kopfzeile. Steht es da, uebernimmt
+// es das `auto`, und „Abmelden" folgt direkt (sonst teilten zwei `auto` den freien Platz). Gleiche Flaeche und
+// gleicher Rand wie die sekundaere Schaltflaeche daneben; 44 x 44 px Tap-Ziel.
+.einstellungen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: var(--tapziel-min);
+  block-size: var(--tapziel-min);
+  margin-inline-start: auto;
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-flaeche);
+  color: var(--farbe-text);
+}
+
+.einstellungen + .abmelden {
+  margin-inline-start: 0;
+}
+
 // Etwas schmaler als die Standardschaltflaeche: Mit dem Symbol waere sie sonst rund
 // 170 px breit und liesse neben „Zurueck" auf kleinen Telefonen kaum Platz. Mit
 // `.kopf` davor gewinnt die Regel gegen `.schaltflaeche` unabhaengig von der

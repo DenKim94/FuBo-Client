@@ -51,6 +51,7 @@ function layoutRendern(...eintraege: string[]) {
             handle: { zurueck: (p: Params) => `/profil/${p.id ?? ''}` },
           },
           { path: 'profil/:id', element: <p>Profilansicht</p> },
+          { path: 'einstellungen', element: <p>Einstellungsseite</p> },
         ],
       },
     ],
@@ -136,6 +137,44 @@ describe('AppLayout', () => {
     fireEvent.click(screen.getByTestId('layout-zurueck'))
 
     expect(await screen.findByText('Profilansicht')).toBeInTheDocument()
+  })
+
+  describe('Einstellungen in der Kopfzeile (C9, E23)', () => {
+    test('USER sieht das Symbol links neben Abmelden, mit Namen fuer den Screenreader', async () => {
+      sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+      layoutRendern('/')
+      const link = screen.getByTestId('layout-einstellungen')
+      expect(link).toHaveAttribute('href', '/einstellungen')
+      expect(link).toHaveAccessibleName('Einstellungen')
+      // Reihenfolge im Dokument = Reihenfolge auf dem Bildschirm (links vor rechts).
+      expect(link.compareDocumentPosition(screen.getByTestId('layout-abmelden')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      fireEvent.click(link)
+      expect(await screen.findByText('Einstellungsseite')).toBeInTheDocument()
+    })
+
+    test('ADMIN sieht das Symbol ebenfalls', () => {
+      sitzungMock.mockReturnValue(zustand({ angemeldet: true, istAdmin: true }))
+      layoutRendern('/')
+      expect(screen.getByTestId('layout-einstellungen')).toBeInTheDocument()
+    })
+
+    test('GAST sieht kein Symbol (G6)', () => {
+      sitzungMock.mockReturnValue(zustand({ angemeldet: true, istGast: true }))
+      layoutRendern('/')
+      expect(screen.queryByTestId('layout-einstellungen')).not.toBeInTheDocument()
+      expect(screen.getByTestId('layout-abmelden')).toBeInTheDocument()
+    })
+
+    test('nicht auf der Einstellungsseite selbst', () => {
+      sitzungMock.mockReturnValue(zustand({ angemeldet: true }))
+      layoutRendern('/', '/einstellungen')
+      expect(screen.queryByTestId('layout-einstellungen')).not.toBeInTheDocument()
+    })
+
+    test('ohne Anmeldung kein Symbol', () => {
+      layoutRendern('/anmelden')
+      expect(screen.queryByTestId('layout-einstellungen')).not.toBeInTheDocument()
+    })
   })
 
   describe('Abmelden', () => {

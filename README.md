@@ -52,9 +52,11 @@ src/api/<domaene>/       fachlicher Datenzugriff je Domäne, z. B. auth/
 src/app/                 Routen, Guards (schutz/), Query-Client
 src/components/<Name>/   Komponente, Stil und Test in einem Ordner
 src/context/             React-Kontexte (noch leer)
-src/hooks/               use<Sache>.ts, flach
+src/hooks/               use<Sache>.ts, flach; admin/ und push/ je Thema
 src/layouts/<Name>Layout/
 src/pages/<Name>/        Routen-Ansichten (ab C3)
+src/pwa/                 Browser-Seite von Push und Installation (ohne React testbar);
+                         die Push-API des Browsers nur in pushGeraet.ts
 src/styles/              _globalVars.scss, _reset.scss, global.scss
 src/test/                Testrahmen und Mock-Schicht
 ```

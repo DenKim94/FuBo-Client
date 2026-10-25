@@ -1,11 +1,14 @@
-import { Outlet, useLocation, useMatches, useNavigate } from 'react-router'
+import { Link, Outlet, useLocation, useMatches, useNavigate } from 'react-router'
+import PushAbgleich from '@/app/PushAbgleich'
 import type { RoutenAngaben } from '@/app/routenAngaben'
-import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
+import { EINSTELLUNGEN_PFAD, LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import SitzungsWaechter from '@/app/SitzungsWaechter'
 import AktualisierungsHinweis from '@/components/AktualisierungsHinweis/AktualisierungsHinweis'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
+import Icon from '@/components/Icon/Icon'
 import OfflineHinweis from '@/components/OfflineHinweis/OfflineHinweis'
+import { useWorkerNavigation } from '@/hooks/push/useWorkerNavigation'
 import { useAbmelden } from '@/hooks/useAbmelden'
 import { useSitzung } from '@/hooks/useSitzung'
 import style from './AppLayout.module.scss'
@@ -52,6 +55,14 @@ function istDirekteinstieg(): boolean {
  * PIN und Name. Schlägt der Aufruf fehl, bleibt die Person angemeldet und sieht
  * den Grund unter der Kopfzeile (`useAbmelden`).
  *
+ * **„Einstellungen" als Symbol links neben „Abmelden"** (C9, E23): für USER und ADMIN, nicht für GAST (für ihn gibt es
+ * keine Push-Benachrichtigungen, A25d) und nicht auf `/einstellungen` selbst. Ein Link, keine Schaltfläche: Er führt zu
+ * einer Ansicht. 44 × 44 px, der Name steht in `aria-label`.
+ *
+ * **`PushAbgleich`** meldet bei jedem Seitenaufruf ein vorhandenes Push-Abonnement erneut an (C9, E29); er rendert
+ * nichts und steht deshalb wie der `SitzungsWaechter` hier. Ebenso `useWorkerNavigation`: Tippt die Person auf eine
+ * Benachrichtigung, während die Anwendung offen ist, navigiert sie hier zum Termin.
+ *
  * Der `OfflineHinweis` legt sich über die Kopfzeile, statt Platz im Fluss zu
  * belegen (Entscheidung vom 04.10.2026).
  *
@@ -71,8 +82,10 @@ export default function AppLayout() {
   const zielAngabe = (zielTreffer?.handle as RoutenAngaben | undefined)?.zurueck
   const ziel = typeof zielAngabe === 'function' ? zielAngabe(zielTreffer?.params ?? {}) : zielAngabe
   const mitZurueck = !istStartseite && !ohneZurueck
-  const { angemeldet } = useSitzung()
+  const { angemeldet, istGast } = useSitzung()
+  const mitEinstellungen = angemeldet && !istGast && pathname !== EINSTELLUNGEN_PFAD
   const abmeldung = useAbmelden()
+  useWorkerNavigation()
   // Ohne beide Schaltflaechen entfaellt die Kopfzeile ganz (siehe unten).
   const mitKopf = mitZurueck || angemeldet
 
@@ -87,6 +100,7 @@ export default function AppLayout() {
     <div className={style.rahmen} data-testid="app-layout">
       {/* Rendert nichts; verbindet die globale 401-Behandlung mit dem Router. */}
       <SitzungsWaechter />
+      <PushAbgleich />
 
       {/* Die Kopfzeile traegt „Zurueck" (links) und „Abmelden" (rechts). Ohne
           beide (Login-Schritte ohne Sitzung) entfaellt sie ganz: Ein leeres Band
@@ -98,6 +112,16 @@ export default function AppLayout() {
             <CustomButton art="sekundaer" onClick={zurueck} data-testid="layout-zurueck">
               Zurück
             </CustomButton>
+          )}
+          {mitEinstellungen && (
+            <Link
+              to={EINSTELLUNGEN_PFAD}
+              className={style.einstellungen}
+              aria-label="Einstellungen"
+              data-testid="layout-einstellungen"
+            >
+              <Icon name="settings_icon_dark" />
+            </Link>
           )}
           {angemeldet && (
             <CustomButton

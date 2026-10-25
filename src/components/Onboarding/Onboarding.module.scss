@@ -1,0 +1,47 @@
+@use '@/styles/globalVars';
+
+// Karte oben auf der Startseite (E33): umrandet wie alle Karten, das Symbol auf einer blauen Plakette (Akzent wie in
+// der Verwaltungsliste, Gruppe „Zugang“). Die Farbe wiederholt nur, was die Überschrift sagt.
+.karte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+  margin-block: var(--abstand-m) 0;
+  padding: var(--abstand-m);
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  background: var(--farbe-hintergrund);
+}
+
+.kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+}
+
+.symbol {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-m);
+  background: var(--farbe-link-flaeche);
+  color: var(--farbe-link);
+}
+
+.titel {
+  font-size: var(--schrift-basis);
+  font-weight: var(--gewicht-halbfett);
+  line-height: 1.25;
+}
+
+.text {
+  font-size: var(--schrift-basis);
+  line-height: var(--zeilenhoehe);
+}
+
+.knoepfe {
+  margin-block-start: var(--abstand-xs);
+}

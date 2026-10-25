@@ -5,6 +5,7 @@ import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Hinweis from '@/components/Hinweis/Hinweis'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import Leerzustand from '@/components/Leerzustand/Leerzustand'
+import Onboarding from '@/components/Onboarding/Onboarding'
 import TerminAnsicht from '@/components/TerminAnsicht/TerminAnsicht'
 import WeitereTermine from '@/components/WeitereTermine/WeitereTermine'
 import { useTermine } from '@/hooks/useTermine'
@@ -44,6 +45,9 @@ export default function Dashboard() {
 
   return (
     <section className={style.dashboard} data-testid="dashboard">
+      {/* Installation und Benachrichtigungen anbieten (C9, E33); rendert für Gäste und nach dem Wegklicken nichts. */}
+      <Onboarding />
+
       {termine.failureReason && !termin && (
         <Fehlermeldung fehler={termine.failureReason} data-testid="dashboard-fehler-meldung" />
       )}
