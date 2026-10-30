@@ -30,9 +30,6 @@ test-results
 *.sln
 *.sw?
 
-# Arbeitsdokumente der Pakete – bewusst nicht versioniert
-harness/tmp/
-
 # Environment Variables
 .env
 .env.*
