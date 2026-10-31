@@ -194,9 +194,19 @@ test.describe('Layout der Einstellungen bei 360 Pixel Breite', () => {
     })
   }
 
-  test('Kopfzeile mit Zurueck, Einstellungen und Abmelden passt bei 360 px', async ({ page }) => {
+  test('Kopfzeile mit Zurueck, Einstellungen und Abmelden passt bei 360 px, auch mit breiter Schrift', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 })
     await start(page)
+    // Die CI (Ubuntu) zeichnet `system-ui` mit DejaVu Sans, deutlich breiter als Inter, Roboto oder SF. Ohne diese Zeile
+    // war der Test lokal gruen und in der CI rot (31.10.2026: „Abmelden“ ragte 0,86 px ueber den Bildschirm). Die Schrift
+    // wird deshalb hier fest eingestellt; fehlt sie, faellt der Browser auf die Systemschrift zurueck.
+    await page.addInitScript(() => {
+      document.addEventListener('DOMContentLoaded', () => {
+        const stil = document.createElement('style')
+        stil.textContent = `* { font-family: 'DejaVu Sans', system-ui, sans-serif !important; }`
+        document.head.append(stil)
+      })
+    })
     // Eine Unterseite mit allen drei Elementen; der Termin fehlt (nicht gefunden), die Kopfzeile ist dieselbe.
     await page.goto('/termine/1')
     const zurueck = await page.getByTestId('layout-zurueck').boundingBox()
@@ -205,6 +215,12 @@ test.describe('Layout der Einstellungen bei 360 Pixel Breite', () => {
     expect(zurueck!.x + zurueck!.width).toBeLessThan(einstellungen!.x)
     expect(einstellungen!.x + einstellungen!.width).toBeLessThan(abmelden!.x)
     expect(Math.abs(einstellungen!.y + einstellungen!.height / 2 - (abmelden!.y + abmelden!.height / 2))).toBeLessThanOrEqual(1)
+    // Strenger als „kein seitliches Scrollen“: Alles liegt innerhalb des Innenrands der Kopfzeile.
+    const innenRechts = await page.getByTestId('layout-kopf').evaluate((kopf) => {
+      const rahmen = kopf.getBoundingClientRect()
+      return rahmen.right - parseFloat(getComputedStyle(kopf).paddingRight)
+    })
+    expect(abmelden!.x + abmelden!.width).toBeLessThanOrEqual(innenRechts + 0.5)
     expect(await ueberhangHorizontal(page)).toBeLessThanOrEqual(0)
   })
 })

@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { TerminUebersicht } from '@/api/termine/termine'
 import AdminTerminZeile from './AdminTerminZeile'
 
@@ -130,5 +130,40 @@ describe('AdminTerminZeile', () => {
     rendern({ ort: null })
 
     expect(screen.getByTestId('admin-termin-zeile-41')).not.toHaveTextContent('Beispielhalle')
+  })
+
+  describe('laufender Termin (31.10.2026)', () => {
+    afterEach(() => vi.useRealTimers())
+
+    test('zeigt „Termin läuft“ statt „Geplant“, sobald der Beginn erreicht ist', () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+      vi.setSystemTime(new Date(2099, 0, 6, 20, 10))
+      rendern()
+      const status = screen.getByTestId('admin-termin-status-41')
+      expect(status).toHaveTextContent('Termin läuft')
+      expect(status).not.toHaveTextContent('Geplant')
+      expect(status.querySelector('[data-testid="icon-football_icon_dark"]')).toBeInTheDocument()
+      // Status und Aktionen folgen weiter dem Server (`GEPLANT`).
+      expect(screen.getByTestId('admin-termin-zusagen-41')).toHaveTextContent('8 Zusagen')
+      expect(screen.getByTestId('admin-termin-bearbeiten-41')).toHaveTextContent('Bearbeiten')
+    })
+
+    test('springt zum Beginn ohne Neuladen um', () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+      vi.setSystemTime(new Date(2099, 0, 6, 19, 59, 50))
+      rendern()
+      expect(screen.getByTestId('admin-termin-status-41')).toHaveTextContent('Geplant')
+      act(() => {
+        vi.advanceTimersByTime(10_000)
+      })
+      expect(screen.getByTestId('admin-termin-status-41')).toHaveTextContent('Termin läuft')
+    })
+
+    test('abgesagte und abgeschlossene Termine bleiben bei ihrem Status', () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+      vi.setSystemTime(new Date(2099, 0, 6, 20, 10))
+      rendern({ status: 'ABGESAGT' })
+      expect(screen.getByTestId('admin-termin-status-41')).toHaveTextContent('Abgesagt')
+    })
   })
 })

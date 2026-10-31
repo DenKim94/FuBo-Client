@@ -62,6 +62,27 @@ test.describe('Tab Ergebnisse', () => {
     await expect(page.getByTestId('aktionsleiste')).toHaveCount(0)
   })
 
+  test('Bilanz: jede Zahl steht mittig ueber ihrer Beschriftung', async ({ page }) => {
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 1 })])
+    const ergebnisse = await ergebnisseNachbilden(page, welt)
+    ergebnisse.bilanz = { siege: 1, niederlagen: 0, unentschieden: 12 }
+    await page.goto('/ergebnisse')
+    await expect(page.getByTestId('bilanz-siege')).toHaveText('1')
+
+    // Die Beschriftung ist das `dt` derselben Spalte. Der Browser rueckt `dd` sonst um 40 px ein (31.10.2026).
+    for (const art of ['siege', 'niederlagen', 'unentschieden']) {
+      const mitten = await page.getByTestId(`bilanz-${art}`).evaluate((zahl) => {
+        const mitte = (e: Element) => {
+          const r = e.getBoundingClientRect()
+          return r.left + r.width / 2
+        }
+        const beschriftung = zahl.parentElement!.querySelector('dt')!
+        return { zahl: mitte(zahl), beschriftung: mitte(beschriftung) }
+      })
+      expect(Math.abs(mitten.zahl - mitten.beschriftung), art).toBeLessThanOrEqual(1)
+    }
+  })
+
   test('wer nicht eingeteilt war, sieht statt des Formulars einen Hinweis', async ({ page }) => {
     // Hoechstzahl 8, die eigene Zusage ist die neunte: Warteschlange, also nicht eingeteilt.
     const zusagen: Zusage[] = [...zusagenMitEigener.slice(1), { name: 'Beispielspieler 30', gast: false }, { name: EIGENER_NAME, gast: false }]
@@ -162,7 +183,9 @@ test.describe('Tab Ergebnisse', () => {
       'Das Ergebnis war bereits erfasst; es gilt der erste Eintrag.',
     )
     await expect(page.getByTestId('ergebnis-anzeige-satz')).toHaveText('Unentschieden.')
-    await expect(page.getByTestId('ergebnis-anzeige-erfasst')).toContainText('Beispielspieler 07')
+    // Ohne den Namen der erfassenden Person (seit 31.10.2026).
+    await expect(page.getByTestId('ergebnis-anzeige-erfasst')).toContainText('Erfasst am')
+    await expect(page.getByTestId('ergebnis-anzeige-erfasst')).not.toContainText('Beispielspieler 07')
     await expect(page.getByTestId('ergebnis-anzeige-titel')).toBeFocused()
     await expect(page.getByTestId('ergebnis-fehler')).toHaveCount(0)
     await expect(page.getByTestId('ergebnis-dialog')).toBeHidden()

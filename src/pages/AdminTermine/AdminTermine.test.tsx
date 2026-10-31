@@ -62,7 +62,7 @@ describe('AdminTermine', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Termine' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Kommende Termine' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: 'Vergangene Termine (letzte 60 Tage)' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Vergangene Termine (letzte 30 Tage)' })).toBeInTheDocument()
 
     const kommende = await screen.findByTestId('admin-termine-kommende-liste')
     expect(within(kommende).getByTestId('admin-termin-zeile-3')).toBeInTheDocument()
@@ -260,7 +260,7 @@ describe('AdminTermine', () => {
     await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
 
     expect(await screen.findByTestId('admin-termine-in-verwendung')).toHaveTextContent(
-      'Am Termin hängen Rückmeldungen oder Teams; er lässt sich nicht entfernen.',
+      'Am Termin hängen Anmeldungen oder Teamseinteilungen; er lässt sich nicht entfernen.',
     )
     expect(screen.getByTestId('admin-termine-entfernen-dialog')).not.toBeVisible()
     expect(screen.getByTestId('admin-termine-in-verwendung-link')).toHaveAttribute('href', '/admin/termine/3')

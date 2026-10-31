@@ -6,6 +6,7 @@ import type { TerminUebersicht } from '@/api/termine/termine'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Icon from '@/components/Icon/Icon'
 import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
+import { useBegonnen } from '@/hooks/useBegonnen'
 import style from './AdminTerminZeile.module.scss'
 
 /** Eigenschaften einer Terminkarte. */
@@ -23,6 +24,12 @@ const STATUS = {
 } as const
 
 /**
+ * Ein geplanter Termin, dessen Beginn erreicht ist (Vorgabe des Entwicklers vom 31.10.2026): Der Server führt ihn noch
+ * als `GEPLANT`, bis er ihn nach Spielende abschließt oder mangels Zusagen absagt; „Geplant“ wäre dazwischen irreführend.
+ */
+const LAUFEND = { symbol: 'football_icon_dark', text: 'Termin läuft' } as const
+
+/**
  * Eine Karte der Terminliste des Admins (C7, 8.2; Prototyp 10): „Di., 20.10. · 20:00 Uhr“ mit der Marke
  * „Serie“ oder „Einzeltermin“, Ort, Status, Zusagen und die Aktionen **in der Karte**.
  *
@@ -36,6 +43,9 @@ const STATUS = {
  * **Die Schaltflächen nennen den Termin für Screenreader** („Bearbeiten: Dienstag, 6. Januar, 20:00 Uhr“), sonst
  * hörte man in einer Liste nur „Bearbeiten, Bearbeiten, …“. Der sichtbare Text steht am Anfang des Namens.
  *
+ * **„Termin läuft“ statt „Geplant“**, sobald der Beginn erreicht ist (`useBegonnen`: Geräteuhr über einen Timer, nie im
+ * Render; springt ohne Neuladen um). Nur Anzeige: Status und Aktionen folgen weiter dem Server-Status `GEPLANT`.
+ *
  * **Die Zahl der Zusagen steht nur bei `GEPLANT` und `ABGESCHLOSSEN`:** Eine Absage leert die Liste
  * nicht, aber „0 Zusagen“ wäre bei einem abgesagten Termin eine falsche Auskunft. Der Screenreader hört die
  * ausgeschriebene Form des Datums.
@@ -43,7 +53,8 @@ const STATUS = {
 export default function AdminTerminZeile({ termin, beiEntfernen }: AdminTerminZeileEigenschaften) {
   const navigate = useNavigate()
   const titelId = useId()
-  const status = STATUS[termin.status]
+  const begonnen = useBegonnen(termin)
+  const status = termin.status === 'GEPLANT' && begonnen ? LAUFEND : STATUS[termin.status]
   const ort = termin.ort?.trim()
   const uhrzeit = uhrzeitKurz(termin.uhrzeit)
   const mitZusagen = termin.status !== 'ABGESAGT'

@@ -47,11 +47,11 @@ export default function ErgebnisAnzeige({
         {ergebnisSatz(ergebnis.sieger, ergebnis.deutlich)}
       </p>
       <p className={style.angabe} data-testid={`${testId}-erfasst`}>
-        Erfasst von {ergebnis.erfasstVon} am {zeitpunktKurz(ergebnis.erfasstAm)}
+        Erfasst am {zeitpunktKurz(ergebnis.erfasstAm)}
       </p>
       {ergebnis.korrigiertAm && (
         <p className={style.angabe} data-testid={`${testId}-korrigiert`}>
-          Zuletzt korrigiert am {zeitpunktKurz(ergebnis.korrigiertAm)}
+          Zuletzt vom Admin korrigiert am {zeitpunktKurz(ergebnis.korrigiertAm)}
         </p>
       )}
     </section>

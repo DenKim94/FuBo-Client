@@ -43,11 +43,12 @@ async function formularOeffnen() {
 }
 
 describe('TerminErgebnis – Anzeige (C8 10.2)', () => {
-  test('mit Ergebnis: Satz, wer es erfasst hat, und „Ergebnis korrigieren“; der Admin erfasst nichts', async () => {
+  test('mit Ergebnis: Satz, wann es erfasst wurde, und „Ergebnis korrigieren“; der Admin erfasst nichts', async () => {
     rendern(abgeschlossen())
 
     expect(await screen.findByTestId('ergebnis-anzeige-satz')).toHaveTextContent('Team A hat deutlich gewonnen.')
-    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Beispielspieler 01')
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Erfasst am')
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).not.toHaveTextContent('Beispielspieler 01')
     expect(screen.getByTestId('admin-ergebnis-korrigieren')).toHaveTextContent('Ergebnis korrigieren')
     expect(screen.queryByTestId('ergebnis-formular')).not.toBeInTheDocument()
     expect(screen.queryByTestId('ergebnis-anzeige-korrigiert')).not.toBeInTheDocument()
@@ -56,7 +57,7 @@ describe('TerminErgebnis – Anzeige (C8 10.2)', () => {
   test('ein bereits korrigiertes Ergebnis nennt, wann zuletzt korrigiert wurde', async () => {
     rendern(abgeschlossen({ ergebnis: { ...beispielErgebnis, korrigiertAm: '2099-01-14T09:30:00Z', version: 2 } }))
 
-    expect(await screen.findByTestId('ergebnis-anzeige-korrigiert')).toHaveTextContent('Zuletzt korrigiert am')
+    expect(await screen.findByTestId('ergebnis-anzeige-korrigiert')).toHaveTextContent('Zuletzt vom Admin korrigiert am')
   })
 
   test('ohne Ergebnis: Hinweis, dass die Spieler es erfassen, und keine Korrektur', async () => {

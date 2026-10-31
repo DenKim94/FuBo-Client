@@ -127,7 +127,7 @@ describe('TerminAnsicht', () => {
     // Ein Termin in der Vergangenheit, aber noch GEPLANT: Der Server schliesst ihn erst spaeter.
     rendern({ datum: '2000-01-01' })
     expect(await screen.findByTestId('termin-begonnen')).toHaveTextContent(
-      'Der Termin hat begonnen. Rückmeldungen sind nicht mehr möglich.',
+      'Der Termin hat begonnen.',
     )
     expect(screen.queryByTestId('aktionsleiste')).not.toBeInTheDocument()
     expect(screen.getByTestId('teilnehmerliste')).toBeInTheDocument()

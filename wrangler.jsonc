@@ -1,0 +1,23 @@
+// Auslieferung des Clients als Cloudflare Worker mit statischen Assets.
+//
+// Der Name muss dem Worker im Dashboard entsprechen (Workers Builds), sonst
+// legt `wrangler deploy` einen zweiten Worker an bzw. der Build schlaegt fehl.
+//
+// SPA-Rueckfall: Ein `_redirects`-Eintrag `/* /index.html 200` ist bei Workers
+// unzulaessig (Code 100324, "Infinite loop detected"), weil die HTML-Behandlung
+// `/index.html` auf `/` kuerzt und die Regel dadurch erneut greifen wuerde.
+// `not_found_handling` uebernimmt diese Aufgabe: Nur Pfade, zu denen es KEINE
+// Datei in `dist/` gibt, erhalten index.html mit Status 200. Vorhandene Dateien
+// wie sw.js, manifest.webmanifest und die Icons werden immer als sie selbst
+// ausgeliefert - die frueheren Ausnahmeregeln fuer sie entfallen damit (A25a).
+//
+// `_headers` in `public/` wird weiterhin ausgewertet.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fubo-client",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}

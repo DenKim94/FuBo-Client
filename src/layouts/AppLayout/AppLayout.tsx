@@ -109,7 +109,7 @@ export default function AppLayout() {
       {mitKopf && (
         <header className={style.kopf} data-testid="layout-kopf">
           {mitZurueck && (
-            <CustomButton art="sekundaer" onClick={zurueck} data-testid="layout-zurueck">
+            <CustomButton art="sekundaer" className={style.zurueck} onClick={zurueck} data-testid="layout-zurueck">
               Zurück
             </CustomButton>
           )}

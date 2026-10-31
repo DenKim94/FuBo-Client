@@ -81,7 +81,7 @@ export default function AdminNameAendern() {
       <div className={style.bereich}>
         <h1 className={style.titel}>Anmeldenamen ändern</h1>
         <p className={style.text}>
-          Wir senden eine fünfstellige PIN an die hinterlegte E-Mail-Adresse. Der neue Name gilt erst nach der
+          Eine fünfstellige PIN wird an die hinterlegte E-Mail-Adresse zur Validierung gesendet. Der neue Name gilt erst nach der
           Bestätigung und ab deiner nächsten Anmeldung.
         </p>
 

@@ -162,7 +162,7 @@ export default function TerminAnsicht({
 
         {geplant && begonnen && (
           <Hinweis data-testid="termin-begonnen">
-            Der Termin hat begonnen. Rückmeldungen sind nicht mehr möglich.
+            Der Termin hat begonnen.
           </Hinweis>
         )}
         {termin.status === 'ABGESAGT' && <Hinweis data-testid="termin-abgesagt">Dieser Termin wurde abgesagt.</Hinweis>}

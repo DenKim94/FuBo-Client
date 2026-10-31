@@ -57,6 +57,18 @@
   padding-inline: var(--abstand-m);
 }
 
+// Kleine Telefone (unter 25rem = 400 px): Auf Unterseiten stehen „Zurück“, „Einstellungen“ und „Abmelden“ zusammen in
+// der Kopfzeile. Mit breiter Systemschrift (DejaVu Sans unter Linux, gemessen 31.10.2026) brauchen sie bei 360 px
+// 344,9 px von 328 px; „Abmelden“ ragte über den Rand und die Seite scrollte seitlich. Mit 8 px Innenabstand bleiben
+// rund 31 px Reserve. Breitere Geräte behalten das bisherige Bild (Entscheidung des Entwicklers vom 31.10.2026).
+// `rem` statt `px`: Bei vergrößerter Grundschrift greift die Regel entsprechend früher.
+@media (max-width: 24.99rem) {
+  .kopf .zurueck,
+  .kopf .abmelden {
+    padding-inline: var(--abstand-s);
+  }
+}
+
 // Fehler des Abmeldens unter der Kopfzeile, im Raster des Inhalts.
 .abmeldefehler {
   width: 100%;

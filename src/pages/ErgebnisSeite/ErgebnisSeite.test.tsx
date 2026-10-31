@@ -224,7 +224,9 @@ describe('ErgebnisSeite: Eintragen', () => {
       'Das Ergebnis war bereits erfasst; es gilt der erste Eintrag.',
     )
     expect(screen.getByTestId('ergebnis-anzeige-satz')).toHaveTextContent(/^Unentschieden\.$/)
-    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Beispielspieler 07')
+    // Das Ergebnis der anderen Person steht da, ihr Name nicht (seit 31.10.2026).
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Erfasst am')
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).not.toHaveTextContent('Beispielspieler 07')
     expect(screen.queryByTestId('ergebnis-fehler')).not.toBeInTheDocument()
     await waitFor(() => expect(screen.getByTestId('ergebnis-anzeige-titel')).toHaveFocus())
     expect(welt.protokoll.erfassungen).toHaveLength(1)

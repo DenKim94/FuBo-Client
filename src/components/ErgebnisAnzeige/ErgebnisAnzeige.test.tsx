@@ -9,7 +9,9 @@ describe('ErgebnisAnzeige', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Ergebnis' })).toBeInTheDocument()
     expect(screen.getByTestId('ergebnis-anzeige-satz')).toHaveTextContent('Team A hat deutlich gewonnen.')
-    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Erfasst von Beispielspieler 01 am ')
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).toHaveTextContent('Erfasst am ')
+    // Seit 31.10.2026 ohne den Namen der erfassenden Person (Entscheidung des Entwicklers).
+    expect(screen.getByTestId('ergebnis-anzeige-erfasst')).not.toHaveTextContent('Beispielspieler 01')
     expect(screen.queryByTestId('ergebnis-anzeige-korrigiert')).not.toBeInTheDocument()
   })
 
@@ -25,7 +27,7 @@ describe('ErgebnisAnzeige', () => {
 
   test('nennt die Korrektur des Admins, wenn es eine gab', () => {
     render(<ErgebnisAnzeige ergebnis={{ ...beispielErgebnis, korrigiertAm: '2099-01-14T08:00:00Z', version: 2 }} />)
-    expect(screen.getByTestId('ergebnis-anzeige-korrigiert')).toHaveTextContent('Zuletzt korrigiert am ')
+    expect(screen.getByTestId('ergebnis-anzeige-korrigiert')).toHaveTextContent('Zuletzt vom Admin korrigiert am ')
   })
 
   test('bietet keine Bearbeitung an', () => {

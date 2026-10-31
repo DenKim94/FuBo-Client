@@ -1,7 +1,7 @@
 import type { TerminUebersicht } from '@/api/termine/termine'
 
 /** Wie viele Tage rückwärts der Verlauf reicht (E14). Die Oberfläche nennt die Zahl aus dieser Konstante. */
-export const VERLAUF_TAGE = 60
+export const VERLAUF_TAGE = 30
 
 /** Teile eines Datums `YYYY-MM-DD` als Zahlen. */
 function datumsteile(datum: string): [jahr: number, monat: number, tag: number] {

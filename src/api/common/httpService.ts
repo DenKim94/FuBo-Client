@@ -5,8 +5,8 @@ import { verbindungMelden } from '@/api/common/verbindungsStatus'
  * Basis aller Aufrufe.
  *
  * In der Entwicklung relativ (`/api/v1`), damit der Dev-Proxy greift und
- * Anwendung und API unter demselben Origin laufen. Produktiv setzt Cloudflare
- * Pages die vollständige Adresse.
+ * Anwendung und API unter demselben Origin laufen. Produktiv kommt die
+ * vollständige Adresse aus der Build-Variable des Cloudflare Workers.
  */
 const BASIS = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 

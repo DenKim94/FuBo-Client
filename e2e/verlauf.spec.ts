@@ -38,7 +38,7 @@ test.describe('Tab Verlauf', () => {
     await expect(zeilen.nth(1).getByTestId('verlauf-zeile-2')).toContainText('Abgesagt')
     await expect(zeilen.nth(2).getByTestId('verlauf-link-1')).toBeVisible()
     await expect(page.getByTestId('verlauf-link-2')).toHaveCount(0)
-    await expect(page.getByTestId('verlauf-hinweis')).toContainText('Angezeigt werden die Termine der letzten 60 Tage.')
+    await expect(page.getByTestId('verlauf-hinweis')).toContainText('Angezeigt werden die Termine der letzten 30 Tage.')
   })
 
   test('liest den Verlauf mit Stichtag und Hintergrundkopf und fragt nicht nach', async ({ page }) => {

@@ -186,7 +186,7 @@ export default function AdminTermine() {
         {meldung?.art === 'inVerwendung' && (
           <>
             <Hinweis data-testid="admin-termine-in-verwendung">
-              Am Termin hängen Rückmeldungen oder Teams; er lässt sich nicht entfernen.
+              Am Termin hängen Anmeldungen oder Teamseinteilungen; er lässt sich nicht entfernen.
             </Hinweis>
             <Textlink to={ADMIN_PFADE.terminVerwaltung(meldung.terminId)} data-testid="admin-termine-in-verwendung-link">
               Termin öffnen, um ihn abzusagen

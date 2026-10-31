@@ -35,6 +35,13 @@ ol {
   list-style: none;
 }
 
+// Beschreibungslisten (BilanzKarte): Der Browser rückt `dd` um 40 px ein. In einer zentrierten Spalte verschob das die
+// Zahl um 20 px nach rechts, weg von ihrer Beschriftung (Befund vom 31.10.2026).
+dl,
+dd {
+  margin: 0;
+}
+
 img,
 svg,
 picture {

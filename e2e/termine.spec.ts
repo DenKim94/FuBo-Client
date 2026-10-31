@@ -128,7 +128,7 @@ test.describe('Beginn und Server-Entscheidung', () => {
     // Die Uhr springt ueber den Beginn; die Ansicht reagiert ohne Neuladen.
     await page.clock.fastForward(5 * 60_000)
 
-    await expect(page.getByTestId('termin-begonnen')).toContainText('Rückmeldungen sind nicht mehr möglich.')
+    await expect(page.getByTestId('termin-begonnen')).toHaveText('Der Termin hat begonnen.')
     await expect(page.getByTestId('aktionsleiste')).toHaveCount(0)
     await expect(page.getByTestId('teilnehmerliste')).toBeVisible()
   })
