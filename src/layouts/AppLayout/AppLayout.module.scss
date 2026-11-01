@@ -56,6 +56,21 @@
     min-block-size: 0;
     overflow-y: auto;
     overscroll-behavior-y: contain;
+    // Ohne Scroll-Anzeige (Rueckmeldung des Entwicklers vom 01.11.2026): iOS zeichnete fuer diesen Bereich einen
+    // eigenen Balken innerhalb der Ansicht statt am Bildschirmrand. Gescrollt wird per Wischen; die Seite im Browser
+    // behaelt ihre Anzeige. Beide Schreibweisen: `scrollbar-width` (Safari ab 18.2), das Pseudo-Element fuer aeltere.
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  // Im Scrollbereich fester Hoehe duerften die Flex-Kinder sonst schrumpfen: Die Kopfzeile fiel auf ihre Mindesthoehe
+  // (44 statt 61 px), die Trennlinie lief durch die Knoepfe (Rueckmeldung des Entwicklers vom 01.11.2026, iPhone).
+  // Gescrollt wird, statt zu stauchen.
+  .verlauf > * {
+    flex-shrink: 0;
   }
 }
 

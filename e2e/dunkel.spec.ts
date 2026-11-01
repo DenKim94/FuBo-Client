@@ -174,6 +174,29 @@ test.describe('Safe-Area oben', () => {
     })
     const seite = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
     expect(rahmen).toEqual({ position: 'fixed', farbe: seite })
+    // Ohne eigene Scroll-Anzeige (sie stand auf dem iPhone mitten im Bild).
+    expect(await verlauf.evaluate((el) => getComputedStyle(el).scrollbarWidth)).toBe('none')
+  })
+
+  test('installierte App auf iOS: die Kopfzeile behält ihre Höhe, die Linie liegt unter den Knöpfen', async ({ page }) => {
+    // Rückmeldung vom 01.11.2026: Im Scrollbereich schrumpfte die Kopfzeile auf 44 px, die Linie lief durch die Knöpfe.
+    const messen = () =>
+      page.evaluate(() => {
+        const kopf = document.querySelector('[data-testid="layout-kopf"]')!.getBoundingClientRect()
+        const knopf = document.querySelector('[data-testid="layout-abmelden"]')!.getBoundingClientRect()
+        return { hoehe: kopf.height, abstandUnten: Math.round(kopf.bottom - knopf.bottom) }
+      })
+    await expect(page.getByTestId('layout-abmelden')).toBeVisible()
+    const browser = await messen()
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-ios-app', '')
+      const hoch = document.createElement('div')
+      hoch.style.blockSize = '3000px'
+      document.querySelector('main')?.append(hoch)
+    })
+    const app = await messen()
+    expect(app).toEqual(browser)
+    expect(app.abstandUnten).toBeGreaterThanOrEqual(8)
   })
 
   test('im Browser scrollt weiter die Seite (kein eigener Scrollbereich)', async ({ page }) => {
