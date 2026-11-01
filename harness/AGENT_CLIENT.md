@@ -148,7 +148,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   Angaben und Schalter ohne Stern; optionale Felder behalten „(optional)“. Den Stern nie als Text in die Beschriftung schreiben (er geriete in den Namen des Feldes).
 - **Safe-Area oben:** Elemente am oberen Rand nutzen `--sicher-oben-kopf`, nicht `--sicher-oben` allein. Im Browser Einzug plus bis zu
   `--abstand-m` (nur mit Einzug); in der installierten App auf iOS (`<html data-ios-app>`, gesetzt von `iosAppKennzeichnen`) fest 2.5rem
-  mehr wegen der Unschärfe von iOS 26 – dort meldet iOS als Einzug oft 0.
+  mehr wegen der Unschärfe von iOS 26 – dort meldet iOS als Einzug oft 0. Ein festes Band (`AppLayout`, `.rahmen::before`) deckt diesen
+  Abstand beim Scrollen ab; Haftendes (Tab-Leiste) haftet bei `top: var(--sicher-oben-kopf)`, nicht bei 0.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art` = `primaer`, `sekundaer`, `gefahr`, `gefahrUmriss` (leiser: weisser Grund, roter Rand, für Listen und „Entfernen“), `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
   `type="button"` vorbelegt, `ref`, `aria-disabled`-Stil; im Ladezustand Spinner allein mittig, Symbol und Text `opacity: 0`), `Ladespinner` (150 ms
   verzögert, `role="status"`, in Schaltflächen `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden Namen; offline nötige

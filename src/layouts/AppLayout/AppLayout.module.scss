@@ -13,6 +13,21 @@
   padding-right: var(--sicher-rechts);
 }
 
+// Deckband ueber dem oberen Rand (01.11.2026, Rueckmeldung des Entwicklers vom iPhone): Der Abstand oben
+// (`--sicher-oben-kopf`, in der installierten iOS-App 40 px) ist zunaechst leer. Beim Scrollen lief der Inhalt
+// durch dieses Band – sichtbar ueber der haftenden Tab-Leiste, nur von der Unschaerfe des Systems verwischt. Das
+// Band liegt deshalb fest am oberen Rand und deckt in der Hintergrundfarbe ab; ungescrollt deckt es genau den leeren
+// Abstand, aendert also nichts. Auf Hoehe der Kopfebene: unter Dialogen, Auswahllisten und Hinweisen.
+.rahmen::before {
+  content: '';
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: var(--ebene-kopf);
+  block-size: var(--sicher-oben-kopf);
+  background: var(--farbe-hintergrund);
+}
+
 .kopf {
   display: flex;
   align-items: center;

@@ -143,6 +143,26 @@ test.describe('Safe-Area oben', () => {
     expect(kopf?.y ?? 0).toBeGreaterThanOrEqual(40)
   })
 
+  test('installierte App auf iOS: beim Scrollen deckt das Band oben den Inhalt ab, die Tab-Leiste haftet darunter', async ({ page }) => {
+    // Rückmeldung vom 01.11.2026 (Abend): Der Inhalt lief durch den Abstand über der Tab-Leiste.
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-ios-app', '')
+      const hoch = document.createElement('div')
+      hoch.style.blockSize = '3000px'
+      document.querySelector('main')?.append(hoch)
+      window.scrollTo(0, 800)
+    })
+    const leiste = page.getByTestId('tab-leiste')
+    await expect.poll(async () => (await leiste.boundingBox())?.y).toBe(40)
+    // Das Band über der Leiste: fest am oberen Rand, so hoch wie der Abstand, in der Hintergrundfarbe der Seite.
+    const band = await page.getByTestId('app-layout').evaluate((el) => {
+      const s = getComputedStyle(el, '::before')
+      return { position: s.position, top: s.top, hoehe: s.height, farbe: s.backgroundColor, ebene: s.zIndex }
+    })
+    const seite = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+    expect(band).toEqual({ position: 'fixed', top: '0px', hoehe: '40px', farbe: seite, ebene: '10' })
+  })
+
   test('installierte App auf iOS quer (niedriges Fenster): keine Zusatzluft', async ({ page }) => {
     await page.setViewportSize({ width: 844, height: 390 })
     await page.evaluate(() => document.documentElement.setAttribute('data-ios-app', ''))
