@@ -27,6 +27,8 @@ type PinFeldEigenschaften = {
   ausrichtung?: 'mitte' | 'start'
   /** Präfix der Test-IDs: `<präfix>-feld` am Eingabeelement, `<präfix>-kasten` an jedem Kästchen. */
   testIdPraefix?: string
+  /** Pflichtfeld: „*“ hinter der Beschriftung und `aria-required` (wie `Feld`). */
+  pflicht?: boolean
   /** React 19 reicht `ref` als gewöhnliche Eigenschaft durch. */
   ref?: Ref<HTMLInputElement>
 }
@@ -65,6 +67,7 @@ export default function PinFeld({
   readOnly,
   ausrichtung = 'mitte',
   testIdPraefix = 'pin',
+  pflicht = false,
   ref,
 }: PinFeldEigenschaften) {
   const id = useId()
@@ -86,7 +89,7 @@ export default function PinFeld({
 
   return (
     <div className={[style.pinFeld, style[ausrichtung]].join(' ')}>
-      <label className={style.beschriftung} htmlFor={id}>
+      <label className={[style.beschriftung, pflicht && 'pflichtMarke'].filter(Boolean).join(' ')} htmlFor={id}>
         {beschriftung}
       </label>
 
@@ -132,6 +135,7 @@ export default function PinFeld({
           readOnly={readOnly}
           aria-invalid={ungueltig || undefined}
           aria-describedby={beschreibung || undefined}
+          aria-required={pflicht || undefined}
           data-testid={`${testIdPraefix}-feld`}
         />
       </div>

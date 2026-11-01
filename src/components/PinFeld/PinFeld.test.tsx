@@ -106,4 +106,10 @@ describe('PinFeld', () => {
     expect(feld).toHaveAttribute('readonly')
     expect(feld).not.toBeDisabled()
   })
+
+  test('Pflichtfeld: Stern an der Beschriftung und aria-required am Eingabefeld', () => {
+    render(<Huelle pflicht />)
+    expect(screen.getByText('Bestätigungs-PIN')).toHaveClass('pflichtMarke')
+    expect(screen.getByTestId('pin-feld')).toHaveAttribute('aria-required', 'true')
+  })
 })

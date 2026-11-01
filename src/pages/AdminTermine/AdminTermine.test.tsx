@@ -253,6 +253,21 @@ describe('AdminTermine', () => {
     expect(screen.queryByTestId('admin-termine-entfernt')).not.toBeInTheDocument()
   })
 
+  test('ein abgesagter Termin mit Rückmeldungen wird entfernt; der Dialog nennt, dass sie mit entfernt werden', async () => {
+    // Vertrag seit 31.10.2026: kein 409 für abgesagte Termine.
+    const { admin } = rendern([terminModell({ terminId: 5, datum: '2099-01-13', status: 'ABGESAGT' })])
+
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen-5'))
+    expect(screen.getByTestId('admin-termine-entfernen-dialog')).toHaveTextContent(
+      'Vorhandene Rückmeldungen und Teams werden mit entfernt. Das lässt sich nicht rückgängig machen.',
+    )
+    await userEvent.click(screen.getByTestId('admin-termine-entfernen-dialog-bestaetigen'))
+
+    expect(await screen.findByTestId('admin-termine-entfernt')).toHaveTextContent('Termin entfernt.')
+    expect(admin.protokoll.terminEntfernt).toEqual([{ terminId: 5 }])
+    expect(screen.queryByTestId('admin-termine-in-verwendung')).not.toBeInTheDocument()
+  })
+
   test('TERMIN_IN_VERWENDUNG schliesst den Dialog, nennt den Grund und verlinkt die Verwaltung', async () => {
     rendern([terminModell({ terminId: 3, datum: '2099-01-06' })])
 

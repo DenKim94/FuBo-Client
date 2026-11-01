@@ -57,4 +57,17 @@ describe('Feld', () => {
     )
     expect(element).toBe(screen.getByLabelText('Name'))
   })
+
+  test('Pflichtfeld: Stern hinter der Beschriftung, aria-required, der Name bleibt die Beschriftung', () => {
+    render(<Feld beschriftung="Titel" pflicht />)
+    const feld = screen.getByRole('textbox', { name: 'Titel' })
+    expect(feld).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByText('Titel')).toHaveClass('pflichtMarke')
+  })
+
+  test('ohne pflicht weder Stern noch aria-required', () => {
+    render(<Feld beschriftung="Ort (optional)" />)
+    expect(screen.getByRole('textbox', { name: 'Ort (optional)' })).not.toHaveAttribute('aria-required')
+    expect(screen.getByText('Ort (optional)')).not.toHaveClass('pflichtMarke')
+  })
 })

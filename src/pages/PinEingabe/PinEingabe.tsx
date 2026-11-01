@@ -120,6 +120,7 @@ export default function PinEingabe() {
             setPin(wert)
           }}
           beschriftung="Eingabe der zentralen PIN"
+          pflicht
           hinweis="Die PIN erhältst du vom Admin."
           fehlerhaft={fehlerhaft}
           beschriebenDurch={fehlerId}

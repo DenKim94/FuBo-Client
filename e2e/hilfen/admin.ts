@@ -385,7 +385,9 @@ export async function terminverwaltungNachbilden(page: Page, termine: Termine): 
     const index = modelle.findIndex((t) => t.terminId === k.terminId)
     if (index === -1) return nichtGefunden(route)
     const modell = modelle[index]
-    if (modell.zusagen.length > 0 || modell.teams || modell.ergebnis || verwaltung.inVerwendung.has(modell.terminId)) {
+    // Vertrag seit 31.10.2026: Ein abgesagter Termin geht immer (der Server loescht Rueckmeldungen und Teams mit).
+    const inVerwendung = modell.zusagen.length > 0 || modell.teams || modell.ergebnis || verwaltung.inVerwendung.has(modell.terminId)
+    if (modell.status !== 'ABGESAGT' && inVerwendung) {
       return problem(route, 409, 'TERMIN_IN_VERWENDUNG', 'Am Termin haengen Rueckmeldungen oder Teams.')
     }
     modelle.splice(index, 1)

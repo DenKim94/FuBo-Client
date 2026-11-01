@@ -115,6 +115,7 @@ export default function AdminNameBestaetigen() {
             setPin(wert)
           }}
           beschriftung="Bestätigungs-PIN"
+          pflicht
           hinweis="Die PIN ist nur kurz gültig und auf fünf Versuche begrenzt."
           fehler={pinFehler}
           fehlerhaft={kastenNoetig}

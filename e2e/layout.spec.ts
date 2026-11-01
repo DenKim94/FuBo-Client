@@ -223,7 +223,9 @@ test.describe('Rahmen und Navigation', () => {
       content: ':root { --sicher-oben: 59px; --sicher-unten: 34px; }',
     })
     const rahmen = page.getByTestId('app-layout')
-    await expect(rahmen).toHaveCSS('padding-top', '59px')
+    // Oben seit 31.10.2026 Einzug plus 16 px (`--sicher-oben-kopf`): Die Statusleiste des iPhones reicht ueber den
+    // gemeldeten Einzug hinaus. Faelle ohne und mit kleinem Einzug: `dunkel.spec.ts`.
+    await expect(rahmen).toHaveCSS('padding-top', '75px')
     await expect(rahmen).toHaveCSS('padding-bottom', '34px')
   })
 

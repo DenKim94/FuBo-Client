@@ -137,4 +137,15 @@ describe('Segmente', () => {
     expect(screen.getByTestId('a-1')).toBeChecked()
     expect(screen.getByTestId('b-2')).toBeChecked()
   })
+
+  test('Pflicht ohne Vorauswahl: radiogroup mit aria-required und Stern an der Legende', () => {
+    rendern({ pflicht: true })
+    expect(screen.getByRole('radiogroup', { name: 'Wochentag' })).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByText('Wochentag')).toHaveClass('pflichtMarke')
+  })
+
+  test('ohne pflicht bleibt die Gruppe eine schlichte Gruppe', () => {
+    rendern()
+    expect(screen.getByRole('group', { name: 'Wochentag' })).not.toHaveAttribute('aria-required')
+  })
 })

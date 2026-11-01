@@ -771,9 +771,9 @@ export interface paths {
          * Termin absagen
          * @description Setzt einen Termin auf `ABGESAGT`. Verlangt die Rolle `ADMIN`.
          *
-         *     **Ein Termin wird nie gelöscht.** Fünf Tabellen hängen mit `ON DELETE CASCADE` an ihm – Teilnahmen, Generierungsläufe, Kontingente, Zuteilungen und ab S6 die Ergebnisse. Ein `DELETE` räumte lautlos den halben Spieltag ab. Dazu kommt: Ohne die Zeile wäre nicht mehr nachvollziehbar, wer zugesagt hatte.
+         *     **Das Absagen löscht nichts.** Fünf Tabellen hängen mit `ON DELETE CASCADE` an ihm – Teilnahmen, Generierungsläufe, Kontingente, Zuteilungen und ab S6 die Ergebnisse. Ein `DELETE` räumte lautlos den halben Spieltag ab. Dazu kommt: Ohne die Zeile wäre nicht mehr nachvollziehbar, wer zugesagt hatte. Erst das anschließende `POST /admin/termin/entfernen` räumt einen abgesagten Termin samt Rückmeldungen ab.
          *
-         *     **Die Absage ist endgültig** – es gibt keinen Weg zurück nach `GEPLANT`. Das gehört in die Bestätigungsabfrage der Oberfläche.
+         *     **Die Absage ist endgültig** – es gibt keinen Weg zurück nach `GEPLANT`. Das gehört in die Bestätigungsabfrage der Oberfläche. Der Zeitpunkt wird erst durch das Entfernen wieder frei.
          *
          *     **Ohne `version`:** Der Vorgang setzt ein Feld auf einen festen Wert und ist wiederholbar in seiner Wirkung, nicht in seinem Ergebnis – ein zweiter Aufruf läuft in `409`. Es gibt hier nichts, was eine gleichzeitige Änderung überschreiben könnte.
          *
@@ -857,11 +857,13 @@ export interface paths {
          * Termin entfernen
          * @description Löscht einen Termin endgültig (A19). Verlangt die Rolle `ADMIN`.
          *
-         *     **Nur, solange nichts darauf verweist.** Liegen Rückmeldungen, ein Generierungslauf, ein Kontingent oder ein Ergebnis vor, antwortet der Server `409 TERMIN_IN_VERWENDUNG` – dann ist das Absagen der richtige Weg. Fünf Tabellen hängen mit `ON DELETE CASCADE` am Termin; ein ungeprüftes Löschen räumte den halben Spieltag ab, einschließlich der Ergebnisse.
+         *     **Abgesagte Termine lassen sich immer entfernen** – unabhängig davon, ob bereits Rückmeldungen eingetragen oder Teams generiert wurden. Rückmeldungen, Generierungsläufe, Kontingente und Zuteilungen werden mit dem Termin gelöscht (`ON DELETE CASCADE`). Ein Ergebnis kann es zu einem abgesagten Termin nicht geben: Es verlangt den Status `ABGESCHLOSSEN`, und der Status geht nur von `GEPLANT` aus weiter.
          *
-         *     **Wofür der Endpunkt gedacht ist:** für den versehentlich angelegten Termin – und als **einziger Weg zurück aus einer versehentlichen Absage**. Ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig; ohne das Entfernen bliebe der Zeitpunkt dauerhaft gesperrt. Entfernen und neu anlegen ist deshalb der vorgesehene Ablauf, und er gelingt genau dann, wenn noch niemand geantwortet hat.
+         *     **Alle anderen Termine nur, solange nichts darauf verweist.** Für `GEPLANT` und `ABGESCHLOSSEN` antwortet der Server `409 TERMIN_IN_VERWENDUNG`, sobald Rückmeldungen, ein Generierungslauf, ein Kontingent oder ein Ergebnis vorliegen – dann ist das Absagen der richtige Weg. Ohne die Prüfung räumte das Löschen den halben Spieltag ab, einschließlich der Ergebnisse.
          *
-         *     **Die Oberfläche sollte nachfragen.** Es gibt kein Zurück, und anders als beim Absagen bleibt keine Zeile stehen – nur der Protokolleintrag.
+         *     **Wofür der Endpunkt gedacht ist:** für den versehentlich angelegten Termin und als **Weg zurück aus einer versehentlichen Absage**. Ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig; ohne das Entfernen bliebe der Zeitpunkt dauerhaft gesperrt. Entfernen und neu anlegen ist deshalb der vorgesehene Ablauf – auch dann, wenn schon geantwortet wurde.
+         *
+         *     **Die Oberfläche sollte nachfragen.** Es gibt kein Zurück, und anders als beim Absagen bleibt keine Zeile stehen. Bei einem abgesagten Termin gehen zusätzlich die Rückmeldungen verloren; im Protokolleintrag `TERMIN_ENTFERNT` bleiben deshalb nur Datum, Uhrzeit, Status und die Anzahl der Rückmeldungen, Zusagen und Generierungsläufe erhalten.
          */
         post: operations["terminEntfernen"];
         delete?: never;
@@ -1867,7 +1869,7 @@ export interface components {
          * @description Zustand eines Termins (`spieltag.termin.status`).
          *
          *     - `GEPLANT` – der Regelfall. Nur in diesem Zustand lässt sich der Termin ändern oder absagen, und nur hier nimmt er Rückmeldungen an.
-         *     - `ABGESAGT` – **endgültig**. Es gibt keinen Weg zurück nach `GEPLANT`: Die Zusagen dazwischen sind unbrauchbar geworden. Wer den Termin doch braucht, **entfernt ihn und legt ihn neu an** – ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig. **Den Wert setzt auch der Server selbst:** Hat ein geplanter Termin 30 Minuten nach Beginn weniger Zusagen als `minTeilnehmer`, wird er `ABGESAGT` statt `ABGESCHLOSSEN` (A18) – ohne dass jemand abgesagt hat und ohne Push-Nachricht. Die Rückmeldungen bleiben stehen; ein Ergebnis lässt sich für ihn nicht erfassen.
+         *     - `ABGESAGT` – **endgültig**. Es gibt keinen Weg zurück nach `GEPLANT`: Die Zusagen dazwischen sind unbrauchbar geworden. Wer den Termin doch braucht, **entfernt ihn und legt ihn neu an** – auch wenn schon Rückmeldungen oder Teams vorliegen; ein abgesagter Termin belegt seinen Zeitpunkt weiter, denn `datum` und `uhrzeit` sind global eindeutig. **Den Wert setzt auch der Server selbst:** Hat ein geplanter Termin 30 Minuten nach Beginn weniger Zusagen als `minTeilnehmer`, wird er `ABGESAGT` statt `ABGESCHLOSSEN` (A18) – ohne dass jemand abgesagt hat und ohne Push-Nachricht. Die Rückmeldungen bleiben stehen; ein Ergebnis lässt sich für ihn nicht erfassen.
          *     - `ABGESCHLOSSEN` – der Termin hat stattgefunden. **Der Server setzt diesen Wert 30 Minuten nach Terminbeginn selbst** (A18), wenn bis dahin nicht abgesagt wurde **und die Mindestzahl an Zusagen erreicht ist** (`minTeilnehmer`, gezählt werden Zusagen, keine Absagen); der Admin kann ihn über `/admin/termin/aendern` auch früher setzen. Der Übergang findet beim nächsten Lauf des Aufräumauftrags statt, also zwischen 30 und 35 Minuten nach Beginn.
          *
          *     **Der Status ist nicht der Torwächter für Rückmeldungen.** Ob noch zu- oder abgesagt werden darf, entscheidet die Uhrzeit des Termins (A7): Zwischen Beginn und Abschluss liegen 30 Minuten, in denen der Status noch `GEPLANT` ist und trotzdem niemand mehr melden kann.
@@ -4204,7 +4206,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description `TERMIN_IN_VERWENDUNG` – es liegen Rückmeldungen, Generierungsläufe, Kontingente oder ein Ergebnis vor. Der Termin lässt sich stattdessen absagen. */
+            /** @description `TERMIN_IN_VERWENDUNG` – der Termin ist **nicht** abgesagt, und es liegen Rückmeldungen, Generierungsläufe, Kontingente oder ein Ergebnis vor. Der Termin lässt sich stattdessen absagen; ein abgesagter Termin löst diesen Fehler nie aus. */
             409: {
                 headers: {
                     [name: string]: unknown;

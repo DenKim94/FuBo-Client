@@ -13,6 +13,8 @@ import style from './AdminTerminDetail.module.scss'
 
 const FEHLER_ERSATZ_ABSAGEN = 'Der Termin konnte nicht abgesagt werden. Bitte versuche es erneut.'
 const FEHLER_ERSATZ_ENTFERNEN = 'Der Termin konnte nicht entfernt werden. Bitte versuche es erneut.'
+/** Folge beim Entfernen eines abgesagten Termins (Vertrag seit 31.10.2026: der Server löscht sie mit). */
+const TEXT_ENTFERNEN_ABGESAGT = 'Vorhandene Rückmeldungen und Teams werden mit entfernt.'
 
 type Dialog = 'absagen' | 'entfernen' | null
 
@@ -33,9 +35,11 @@ type WeitereAktionenEigenschaften = {
  * `terminAendern` kann `status` weiter senden; die Oberfläche nutzt es nicht.
  *
  * - **Absagen** (`GEPLANT`): endgültig; der Zeitpunkt bleibt belegt, bis der Termin entfernt wird.
- * - **Entfernen** (`GEPLANT`, `ABGESAGT`): nur, solange nichts darauf verweist. `409 TERMIN_IN_VERWENDUNG` schliesst den
- *   Dialog und nennt den Grund; bei `GEPLANT` führt „Stattdessen absagen“ zum richtigen Weg. Erfolg: `mutateAsync`, dann
- *   zur Liste (die Seite wird ausgehängt).
+ * - **Entfernen** (`GEPLANT`, `ABGESAGT`): Einen **abgesagten** Termin entfernt der Server immer, samt Rückmeldungen und
+ *   Teams (Vertrag seit 31.10.2026); der Dialog nennt das. Einen geplanten nur, solange nichts darauf verweist:
+ *   `409 TERMIN_IN_VERWENDUNG` schliesst den Dialog und nennt den Grund, „Stattdessen absagen“ führt zum richtigen Weg
+ *   (nur, solange der neu gelesene Stand noch `GEPLANT` sagt). Erfolg: `mutateAsync`, dann zur Liste (die Seite wird
+ *   ausgehängt).
  *
  * **Farben (seit 24.10.2026):** „Absagen“ und „Entfernen“ sind rot **umrandet** (beide endgültig); gefüllt rot ist erst
  * die Bestätigung im Dialog, der Moment der Entscheidung. Vorher standen drei gefüllte Flächen untereinander, zwei davon
@@ -153,7 +157,7 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
       >
         <p>
           Die Absage ist endgültig. Der Zeitpunkt bleibt belegt; einen neuen Termin zu diesem Zeitpunkt gibt es erst,
-          wenn du diesen entfernst – und das geht nur, solange niemand geantwortet hat.
+          wenn du diesen entfernst.
         </p>
       </Bestaetigung>
 
@@ -171,7 +175,10 @@ export default function WeitereAktionen({ termin, fokusAufUeberschrift }: Weiter
         }}
         data-testid="admin-entfernen-dialog"
       >
-        <p>Das lässt sich nicht rückgängig machen.</p>
+        <p>
+          {termin.status === 'ABGESAGT' && `${TEXT_ENTFERNEN_ABGESAGT} `}
+          Das lässt sich nicht rückgängig machen.
+        </p>
       </Bestaetigung>
     </section>
   )

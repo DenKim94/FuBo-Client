@@ -35,6 +35,22 @@ $eingabe-hoehe: 3.5rem;
   font-size: var(--schrift-basis);
 }
 
+// Datum und Uhrzeit auf iOS (Rückmeldung vom 01.11.2026, iPhone 17): Safari zeichnet diese Felder mit nativem
+// Aussehen und übergeht dabei `min-block-size` – sie standen rund 33 statt 56 px hoch neben den Textfeldern und
+// zeigten den Wert mittig. Ohne natives Aussehen gilt die Höhe; Rand, Grund und Schrift setzt `.eingabe` ohnehin
+// selbst, die Auswahl (Rad, Kalender) öffnet iOS weiter. Nur auf iOS (`-webkit-touch-callout` kennt nur iOS-Safari):
+// Chrome auf Android und Desktop behalten ihr Kalender- und Uhrsymbol unverändert.
+@supports (-webkit-touch-callout: none) {
+  .eingabe:is([type='date'], [type='time']) {
+    appearance: none;
+    // Eine Zeile Höhe auch ohne Wert, links wie in den Textfeldern.
+    &::-webkit-date-and-time-value {
+      min-block-size: 1.5em;
+      text-align: start;
+    }
+  }
+}
+
 .ungueltig {
   border: 2px solid var(--farbe-fehler);
 }

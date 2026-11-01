@@ -83,6 +83,24 @@ test.describe('Terminliste', () => {
     expect(verwaltung.koerper.entfernt).toEqual([{ terminId: 2 }])
   })
 
+  test('ein abgesagter Termin mit Rueckmeldungen laesst sich entfernen; der Dialog nennt die Folgen', async ({ page }) => {
+    // Vertrag seit 31.10.2026: Fuer ABGESAGT gibt es kein 409 mehr, der Server loescht Rueckmeldungen und Teams mit.
+    await adminNachbilden(page)
+    const termine = await termineNachbilden(page, [
+      terminModell({ terminId: 5, datum: vorTagen(3), status: 'ABGESAGT' }),
+    ])
+    const verwaltung = await terminverwaltungNachbilden(page, termine)
+    await page.goto('/admin/termine')
+
+    await page.getByTestId('admin-termin-entfernen-5').click()
+    await expect(page.getByTestId('admin-termine-entfernen-dialog')).toContainText('Vorhandene Rückmeldungen und Teams werden mit entfernt.')
+    await page.getByTestId('admin-termine-entfernen-dialog-bestaetigen').click()
+
+    await expect(page.getByTestId('admin-termine-entfernt')).toContainText('Termin entfernt.')
+    await expect(page.getByTestId('admin-termin-zeile-5')).toHaveCount(0)
+    expect(verwaltung.koerper.entfernt).toEqual([{ terminId: 5 }])
+  })
+
   test('ein Termin mit Rueckmeldungen laesst sich in der Liste nicht entfernen und verweist auf die Verwaltung', async ({ page }) => {
     await start(page)
 
@@ -133,7 +151,7 @@ test.describe('Termin anlegen', () => {
     expect(await ueberhangHorizontal(page)).toBe(0)
   })
 
-  test('Serie auf dem Telefon: sieben Wochentage mit mindestens 44 px Hoehe, Start und Ende sowie Uhrzeit und Ort nebeneinander', async ({ page }) => {
+  test('Serie auf dem Telefon: sieben Wochentage mit mindestens 44 px Hoehe, Start und Ende nebeneinander, Ort unter der Uhrzeit', async ({ page }) => {
     await start(page, '/admin/termine/neu')
 
     await page.getByTestId('admin-art-serie').check()
@@ -145,9 +163,14 @@ test.describe('Termin anlegen', () => {
     const start1 = await page.getByTestId('serie-startdatum').boundingBox()
     const ende = await page.getByTestId('serie-enddatum').boundingBox()
     expect(Math.abs((start1?.y ?? 0) - (ende?.y ?? 99))).toBeLessThanOrEqual(2)
+    // Ort unter der Uhrzeit, gleich breit und gleich hoch (Rueckmeldung vom 01.11.2026, iPhone 17: nebeneinander war
+    // der Ort breiter und hoeher). Die Hoehe auf iOS selbst prueft dieser Lauf nicht (WebKit abgeschaltet, 5.4).
     const uhrzeit = await page.getByTestId('serie-uhrzeit').boundingBox()
     const ort = await page.getByTestId('serie-ort').boundingBox()
-    expect(Math.abs((uhrzeit?.y ?? 0) - (ort?.y ?? 99))).toBeLessThanOrEqual(2)
+    expect(ort?.y ?? 0).toBeGreaterThanOrEqual((uhrzeit?.y ?? 0) + (uhrzeit?.height ?? 0))
+    expect(Math.abs((ort?.x ?? 0) - (uhrzeit?.x ?? 99))).toBeLessThanOrEqual(1)
+    expect(Math.abs((ort?.width ?? 0) - (uhrzeit?.width ?? 99))).toBeLessThanOrEqual(1)
+    expect(Math.abs((ort?.height ?? 0) - (uhrzeit?.height ?? 99))).toBeLessThanOrEqual(1)
     expect(await ueberhangHorizontal(page)).toBe(0)
   })
 

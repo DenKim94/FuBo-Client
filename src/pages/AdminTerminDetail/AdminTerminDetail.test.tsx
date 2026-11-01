@@ -384,15 +384,36 @@ describe('AdminTerminDetail – Weitere Aktionen', () => {
     expect(screen.getByTestId('admin-absagen-dialog')).toBeVisible()
   })
 
-  test('bei einem abgesagten Termin in Verwendung fehlt „Stattdessen absagen“', async () => {
-    rendern('/admin/termine/102', [
+  test('ein abgesagter Termin mit Rückmeldungen wird entfernt; der Dialog nennt, dass sie mit entfernt werden', async () => {
+    // Vertrag seit 31.10.2026: kein 409 für abgesagte Termine, der Server löscht Rückmeldungen und Teams mit.
+    const { welt } = rendern('/admin/termine/102', [
       terminModell({ terminId: 102, datum: '2099-01-13', uhrzeit: '19:00:00', status: 'ABGESAGT' }),
     ])
     await userEvent.click(await screen.findByTestId('admin-termin-entfernen'))
+
+    expect(screen.getByTestId('admin-entfernen-dialog')).toHaveTextContent(
+      'Vorhandene Rückmeldungen und Teams werden mit entfernt. Das lässt sich nicht rückgängig machen.',
+    )
     await userEvent.click(screen.getByTestId('admin-entfernen-dialog-bestaetigen'))
 
-    await screen.findByTestId('admin-termin-in-verwendung')
-    expect(screen.queryByTestId('admin-termin-stattdessen-absagen')).not.toBeInTheDocument()
+    expect(await screen.findByTestId('ziel')).toHaveTextContent('/admin/termine')
+    expect(welt.protokoll.terminEntfernt).toEqual([{ terminId: 102 }])
+    expect(screen.queryByTestId('admin-termin-in-verwendung')).not.toBeInTheDocument()
+  })
+
+  test('bei einem geplanten Termin nennt der Dialog keine mitgelöschten Rückmeldungen (dort gilt 409)', async () => {
+    rendern('/admin/termine/102')
+    await userEvent.click(await screen.findByTestId('admin-termin-entfernen'))
+
+    expect(screen.getByTestId('admin-entfernen-dialog')).not.toHaveTextContent('mit entfernt')
+  })
+
+  test('die Absage verspricht kein „nur, solange niemand geantwortet hat“ mehr', async () => {
+    rendern()
+    await userEvent.click(await screen.findByTestId('admin-termin-absagen'))
+
+    expect(screen.getByTestId('admin-absagen-dialog')).toHaveTextContent('wenn du diesen entfernst.')
+    expect(screen.getByTestId('admin-absagen-dialog')).not.toHaveTextContent('niemand geantwortet')
   })
 
   test('404 beim Entfernen führt mit Hinweis zur Liste', async () => {

@@ -17,6 +17,11 @@ export type FeldEigenschaften = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'
   aktion?: ReactNode
   /** Id eines Elements, das das Feld zusätzlich beschreibt (etwa eine Regelliste); folgt auf Hinweis und Fehler. */
   beschriebenDurch?: string
+  /**
+   * Pflichtfeld: „*“ hinter der Beschriftung (als erzeugter Inhalt, der Name bleibt die Beschriftung) und
+   * `aria-required`. Bewusst nicht `required`: Die Prüfung und ihre Texte gehören der Ansicht, nicht dem Browser.
+   */
+  pflicht?: boolean
   /** Test-ID des Eingabeelements. */
   'data-testid'?: string
   /** React 19 reicht `ref` als gewöhnliche Eigenschaft durch (Fokus nach einem Fehler). */
@@ -39,6 +44,7 @@ export default function Feld({
   fehler,
   aktion,
   beschriebenDurch,
+  pflicht = false,
   className,
   'data-testid': testId = 'feld-eingabe',
   ref,
@@ -53,7 +59,7 @@ export default function Feld({
 
   return (
     <div className={[style.feld, className].filter(Boolean).join(' ')}>
-      <label className={style.beschriftung} htmlFor={id}>
+      <label className={[style.beschriftung, pflicht && 'pflichtMarke'].filter(Boolean).join(' ')} htmlFor={id}>
         {beschriftung}
       </label>
       <div className={style.zeile}>
@@ -65,6 +71,7 @@ export default function Feld({
             .join(' ')}
           aria-invalid={fehler ? true : undefined}
           aria-describedby={beschreibung || undefined}
+          aria-required={pflicht || undefined}
           data-testid={testId}
           {...rest}
         />

@@ -16,8 +16,8 @@
 
   // Mindestens so hoch wie die Kopfzeile (Tap-Ziel plus Innenabstand), damit
   // er sie vollstaendig abdeckt; die Safe Area oben liegt innerhalb.
-  min-block-size: calc(var(--tapziel-min) + 2 * var(--abstand-s) + var(--sicher-oben));
-  padding-block: calc(var(--abstand-xs) + var(--sicher-oben)) var(--abstand-xs);
+  min-block-size: calc(var(--tapziel-min) + 2 * var(--abstand-s) + var(--sicher-oben-kopf));
+  padding-block: calc(var(--abstand-xs) + var(--sicher-oben-kopf)) var(--abstand-xs);
   padding-inline: calc(var(--abstand-m) + var(--sicher-links)) calc(var(--abstand-xs) + var(--sicher-rechts));
   border-block-end: 1px solid var(--farbe-fehler);
   background: var(--farbe-fehler-flaeche);

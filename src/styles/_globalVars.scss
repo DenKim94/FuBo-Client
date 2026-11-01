@@ -16,6 +16,12 @@
 // nur Deklarationen und erzeugt daher bei mehrfacher Einbindung keine Duplikate.
 
 :root {
+  /* Die App bringt helle und dunkle Farben mit (Dark-Mode seit 31.10.2026, siehe unten). Ohne diese Angabe rechnete
+     Chrome unter Android ("Dunkles Design fuer Websites") die Farben selbst um und dunkelte dabei die Symbole ab,
+     die als Maske mit `currentColor` gezeichnet sind - dunkel auf dunkel. Mit `light dark` unterlaesst er das, und
+     Formularelemente und Bildlaufleisten des Browsers folgen dem Modus. Spiegel in index.html (`<meta name="color-scheme">`). */
+  color-scheme: light dark;
+
   /* --- Flaechen --- */
   --farbe-hintergrund: #ffffff;
   --farbe-flaeche: #f4f6f4; /* Karten, Listenzeilen */
@@ -119,6 +125,11 @@
   --sicher-unten: env(safe-area-inset-bottom, 0px);
   --sicher-links: env(safe-area-inset-left, 0px);
   --sicher-rechts: env(safe-area-inset-right, 0px);
+  /* Oberer Rand fuer Kopfzeile, haftende Tab-Leiste und Offline-Hinweis (31.10.2026): Auf dem iPhone legt iOS eine
+     Unschaerfezone ueber die Statusleiste, die tiefer reicht als `safe-area-inset-top`, und ueberdeckte die Schaltflaechen
+     der Kopfzeile teilweise. `min(Inset, 16px)` ist 0, wo es keine Statusleiste ueber dem Inhalt gibt (Android,
+     Desktop, Safari im Browser), sonst 16px Luft. */
+  --sicher-oben-kopf: calc(var(--sicher-oben) + min(var(--sicher-oben), var(--abstand-m)));
 
   /* --- Ebenen --- */
   --ebene-kopf: 10;
@@ -136,4 +147,49 @@
 // der `::backdrop` nicht kennt, verwuerfe sonst die ganze Liste samt aller Tokens.
 ::backdrop {
   --farbe-abdunkelung: #11150f73;
+}
+
+// --- Dark-Mode (31.10.2026, Entscheidung des Entwicklers) -----------------------------------------------------------
+//
+// Folgt der Systemeinstellung (`prefers-color-scheme`). Dieselben Tokens mit dunklen Werten; keine Komponente kennt den
+// Modus. Gerechnet nach WCAG 2.1 AA (Text 4.5:1, Raender, Symbole und Fokus 3:1); `src/styles/kontrast.test.ts` prueft die
+// Paare in beiden Modi.
+//
+// **Flaechenfarben werden hell, die Schrift darauf dunkel.** Eine Farbe, die als Schrift auf dunklem Grund 4.5:1
+// erreicht, kann als Knopfflaeche mit weisser Schrift nicht ebenfalls 4.5:1 erreichen (die beiden Bedingungen schliessen
+// sich rechnerisch aus). `--farbe-primaer-kontrast` ist deshalb hier dunkel: Es ist die Farbe *auf* Primaer-, Akzent-
+// und Gefahrflaechen (Schaltflaechen, gewaehlte Segmente, Knopf des Schalters). So behaelt jedes Token seine Bedeutung.
+@media (prefers-color-scheme: dark) {
+  :root {
+    --farbe-hintergrund: #121512;
+    --farbe-flaeche: #1b201b; /* --farbe-text 13.69:1, --farbe-text-schwach 7.42:1 */
+    --farbe-flaeche-kraeftig: #2a312a; /* Spur: Fuellungen darauf >= 5.5:1 */
+
+    --farbe-text: #e6ebe4; /* 15.21:1 auf --farbe-hintergrund */
+    --farbe-text-schwach: #a8b0a5; /* 8.25:1 auf --farbe-hintergrund, 6.39:1 auf --farbe-primaer-flaeche */
+    --farbe-primaer-kontrast: #0c110c; /* dunkel auf hellen Flaechen: 8.33:1 auf --farbe-primaer, 9.07:1 auf --farbe-link, 7.86:1 auf --farbe-fehler */
+
+    --farbe-primaer: #5bbf78; /* 8.03:1 auf --farbe-hintergrund */
+    --farbe-primaer-dunkel: #4aa866; /* gedrueckter Zustand; --farbe-primaer-kontrast darauf 6.43:1, als Schrift auf der Auswahl 5.31:1 */
+
+    --farbe-link: #86b6f2; /* 8.75:1 auf --farbe-hintergrund, 7.87:1 auf --farbe-flaeche */
+
+    --farbe-fehler: #f08a80; /* 7.58:1 auf --farbe-hintergrund, 6.88:1 auf der Fehlerflaeche */
+    --farbe-erfolg: #5bbf78; /* wie --farbe-primaer */
+    --farbe-hinweis: #e2b14f; /* 9.32:1 auf --farbe-hintergrund, 7.80:1 auf der Hinweisflaeche */
+    --farbe-fehler-flaeche: #2e1816;
+    --farbe-hinweis-flaeche: #2b2412;
+
+    --farbe-primaer-flaeche: #1b2f20; /* --farbe-primaer darauf 6.22:1 */
+    --farbe-link-flaeche: #1a2738; /* --farbe-link darauf 7.18:1 */
+
+    --farbe-rand: #363d35; /* dekorativ */
+    --farbe-rand-bedienbar: #858d82; /* 5.37:1 auf --farbe-hintergrund, 4.83:1 auf --farbe-flaeche */
+
+    --farbe-fokus: #a3c8f7; /* 10.65:1 auf --farbe-hintergrund */
+  }
+
+  ::backdrop {
+    --farbe-abdunkelung: #000000a6;
+  }
 }

@@ -70,3 +70,13 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+// Pflichtfeld-Kennzeichen (01.11.2026, Anweisung des Entwicklers): ein „*“ hinter der Beschriftung.
+// Als erzeugter Inhalt, nicht als Text: Die Beschriftung bleibt der Name des Feldes („Titel“, nicht „Titel *“) –
+// für Screenreader, `getByLabel` und Testing Library. Screenreader erfahren „Pflicht“ über `aria-required`.
+// Zwei Deklarationen: Die zweite gibt dem Stern einen leeren Alternativtext (Chrome, Safari ab 17.4, Firefox ab 128);
+// ältere Browser verwerfen sie und behalten die erste.
+.pflichtMarke::after {
+  content: '\00a0*';
+  content: '\00a0*' / '';
+}

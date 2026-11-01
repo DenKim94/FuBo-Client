@@ -148,6 +148,7 @@ export default function PasswortNeu() {
           wert={pin}
           beiAenderung={setPin}
           beschriftung="Bestätigungs-PIN"
+          pflicht
           hinweis="Höchstens fünf Versuche, danach muss eine neue PIN angefordert werden."
           fehler={pinFehler}
           fehlerhaft={kastenNoetig}
@@ -161,6 +162,7 @@ export default function PasswortNeu() {
 
         <PasswortFeld
           beschriftung="Neues Passwort"
+          pflicht
           value={passwort}
           onChange={(e) => setPasswort(e.target.value)}
           fehler={passwortFehler}

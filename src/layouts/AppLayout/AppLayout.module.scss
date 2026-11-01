@@ -7,7 +7,7 @@
   // Ohne diese vier Zeilen liegt der Inhalt im Vollbildmodus unter Notch und
   // Home-Indicator (A25a). Sie wirken nur, wenn index.html `viewport-fit=cover`
   // setzt – sonst liefert env() durchgaengig 0px.
-  padding-top: var(--sicher-oben);
+  padding-top: var(--sicher-oben-kopf);
   padding-bottom: var(--sicher-unten);
   padding-left: var(--sicher-links);
   padding-right: var(--sicher-rechts);

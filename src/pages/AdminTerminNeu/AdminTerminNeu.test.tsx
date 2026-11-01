@@ -212,7 +212,10 @@ describe('AdminTerminNeu – Serie', () => {
     rendern()
     await userEvent.click(screen.getByTestId('admin-art-serie'))
 
-    const wochentage = within(screen.getByRole('group', { name: 'Wochentag' })).getAllByRole('radio')
+    // Pflichtangabe ohne Vorauswahl: `radiogroup` mit `aria-required` (01.11.2026).
+    const gruppe = screen.getByRole('radiogroup', { name: 'Wochentag' })
+    expect(gruppe).toHaveAttribute('aria-required', 'true')
+    const wochentage = within(gruppe).getAllByRole('radio')
     expect(wochentage).toHaveLength(7)
     expect(wochentage.some((radio) => (radio as HTMLInputElement).checked)).toBe(false)
     expect(screen.getByTestId('admin-termin-neu-absenden')).toHaveAttribute('aria-disabled', 'true')

@@ -141,6 +141,7 @@ function AnlegenFormular({ kategorien }: { kategorien: SkillKategorie[] }) {
         <Feld
           ref={nameFeld}
           beschriftung="Name"
+          pflicht
           hinweis="Eindeutig; Groß- und Kleinschreibung zählen nicht als Unterschied."
           value={name}
           onChange={(e) => {

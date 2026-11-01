@@ -82,6 +82,7 @@ export default function ErgebnisFormular({ terminId, beiAbschluss }: ErgebnisFor
     <>
       <div className={style.formular} data-testid="ergebnis-formular">
         <ErgebnisEingabe
+          pflicht
           sieger={sieger}
           deutlich={deutlich}
           beiAenderung={(wahl) => {

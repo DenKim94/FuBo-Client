@@ -4,7 +4,7 @@ import { ApiFehler } from '@/api/common/fehler'
 import { termineNeuLesen } from './termineNeuLesen'
 
 /**
- * Entfernt einen Termin, an dem nichts hängt.
+ * Entfernt einen Termin: einen abgesagten immer (samt Rückmeldungen), einen anderen nur, wenn nichts an ihm hängt.
  *
  * Aufgerufen mit `mutateAsync` im `try`/`catch`: **Der Aufrufer verschwindet** (Weiterleitung zur
  * Liste). Liest nach dem Erfolg die Termine neu. Bei `409 TERMIN_IN_VERWENDUNG` und `404` liest er

@@ -175,6 +175,7 @@ export default function Namensauswahl() {
           <div className={style.liste}>
             <Auswahlliste
               beschriftung="Dein Name"
+              pflicht
               hinweis={
                 listenFehler
                   ? undefined
@@ -222,6 +223,7 @@ export default function Namensauswahl() {
 
             <Feld
               beschriftung="Dein Name für heute"
+              pflicht
               hinweis={`Mindestens ${GASTNAME_MIN} und maximal ${GASTNAME_MAX} Zeichen.`}
               fehler={gastNameFehler}
               value={gastName}

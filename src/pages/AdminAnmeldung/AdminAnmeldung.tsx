@@ -92,6 +92,7 @@ export default function AdminAnmeldung() {
         <Feld
           ref={nameFeld}
           beschriftung="Name"
+          pflicht
           hinweis="Groß- und Kleinschreibung beachten"
           value={name}
           onChange={(e) => {
@@ -112,6 +113,7 @@ export default function AdminAnmeldung() {
         <PasswortFeld
           ref={passwortFeld}
           beschriftung="Passwort"
+          pflicht
           value={passwort}
           onChange={(e) => {
             hinweis.verbergen()

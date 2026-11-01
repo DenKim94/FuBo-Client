@@ -30,6 +30,8 @@ type AuswahllisteEigenschaften = {
   hinweis?: string
   /** Sperrt die ganze Liste, z. B. während eines Aufrufs. */
   deaktiviert?: boolean
+  /** Pflichtfeld: „*“ hinter der Beschriftung und `aria-required` am Auslöser (wie `Feld`). */
+  pflicht?: boolean
   /** Test-ID des Auslösers; Einträge erhalten `<id>-option-<wert>`. */
   'data-testid'?: string
 }
@@ -60,6 +62,7 @@ export default function Auswahlliste({
   platzhalter = 'Bitte wählen',
   hinweis,
   deaktiviert = false,
+  pflicht = false,
   'data-testid': testId = 'auswahlliste',
 }: AuswahllisteEigenschaften) {
   const [offen, setOffen] = useState(false)
@@ -179,7 +182,7 @@ export default function Auswahlliste({
 
   return (
     <div className={style.auswahl} ref={behaelter}>
-      <span className={style.beschriftung} id={beschriftungId}>
+      <span className={[style.beschriftung, pflicht && 'pflichtMarke'].filter(Boolean).join(' ')} id={beschriftungId}>
         {beschriftung}
       </span>
       <div className={style.rahmen}>
@@ -190,6 +193,7 @@ export default function Auswahlliste({
           aria-labelledby={beschriftungId}
           aria-describedby={hinweis ? hinweisId : undefined}
           aria-haspopup="listbox"
+          aria-required={pflicht || undefined}
           aria-expanded={offen}
           aria-controls={listeId}
           aria-activedescendant={offen && aktiv >= 0 ? optionId(aktiv) : undefined}

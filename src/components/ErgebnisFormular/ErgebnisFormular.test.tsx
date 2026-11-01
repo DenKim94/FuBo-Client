@@ -50,7 +50,9 @@ describe('ErgebnisFormular: Eingabe', () => {
 
   test('benennt die Gruppe mit „Wer hat gewonnen?“ und bietet drei Optionen als Radios', () => {
     rendern()
-    const gruppe = screen.getByRole('group', { name: 'Wer hat gewonnen?' })
+    // Beim Eintragen ist der Ausgang Pflicht: `radiogroup` mit `aria-required` (01.11.2026).
+    const gruppe = screen.getByRole('radiogroup', { name: 'Wer hat gewonnen?' })
+    expect(gruppe).toHaveAttribute('aria-required', 'true')
     expect(gruppe).toBeInTheDocument()
     expect(screen.getAllByRole('radio')).toHaveLength(3)
     expect(screen.getByRole('radio', { name: 'Team A' })).not.toBeChecked()

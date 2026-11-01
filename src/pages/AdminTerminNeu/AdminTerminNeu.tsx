@@ -95,7 +95,7 @@ export default function AdminTerminNeu() {
       ? 'Bitte gib Datum und Uhrzeit ein.'
       : null
     : Object.keys(serieFehlerAlle).length > 0
-      ? 'Bitte fülle alle Felder aus und prüfe das Enddatum.'
+      ? 'Bitte fülle alle Pflichtfelder aus.'
       : null
 
   const apiFehler = aktiv.error instanceof ApiFehler ? aktiv.error : null
@@ -196,6 +196,7 @@ export default function AdminTerminNeu() {
             beiAenderung={aendern}
             min={heute}
             fehler={einzelFehler}
+            pflicht
             schreibgeschuetzt={laeuft}
             uhrzeitRef={uhrzeitFeld}
           />

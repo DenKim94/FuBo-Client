@@ -29,6 +29,11 @@ type SegmenteEigenschaften = {
   hinweis?: string
   /** Fehlertext; macht die Gruppe als ungültig kenntlich. */
   fehler?: string | null
+  /**
+   * Pflichtangabe ohne Vorauswahl (Wochentag): „*“ hinter der Legende und `aria-required`. Dafür trägt die Gruppe die
+   * Rolle `radiogroup` (an `fieldset` erlaubt); an einer schlichten Gruppe wäre `aria-required` nicht zulässig.
+   */
+  pflicht?: boolean
   /** Test-ID der Gruppe; das Segment mit dem Wert `x` heisst `<test-id>-x`. */
   'data-testid'?: string
 }
@@ -56,6 +61,7 @@ export default function Segmente({
   schreibgeschuetzt = false,
   hinweis,
   fehler,
+  pflicht = false,
   'data-testid': testId = 'segmente',
 }: SegmenteEigenschaften) {
   const id = useId()
@@ -68,13 +74,17 @@ export default function Segmente({
       className={style.gruppe}
       aria-describedby={beschreibung || undefined}
       aria-invalid={fehler ? true : undefined}
+      role={pflicht ? 'radiogroup' : undefined}
+      aria-required={pflicht || undefined}
       data-testid={testId}
     >
       {/* Versteckt nur die globale Klasse, ohne `style.legende`: Beide setzen die Breite, und welche gewinnt, hinge an
           der Reihenfolge der Stylesheets. Seit dem Nachladen des Admin-Bereichs steht dieses Modul nach `global.scss`;
           die volle Breite der Legende ragte dann 16 px über den Rand (E2E, 18.10.2026). */}
       <legend className={legendeVersteckt ? 'nurFuerScreenreader' : style.legende}>
-        {legende}
+        {/* Der Stern hängt an einem eigenen Element: Die Legende ist ein Flex-Behälter mit `space-between` (Name und
+            Wert in einer Zeile) und schöbe einen Stern direkt an ihr an den rechten Rand. */}
+        {pflicht ? <span className="pflichtMarke">{legende}</span> : legende}
       </legend>
       <div className={style.reihe}>
         {optionen.map((option) => (

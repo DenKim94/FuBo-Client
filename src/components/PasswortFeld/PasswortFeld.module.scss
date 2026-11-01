@@ -21,3 +21,12 @@
   inline-size: 1.5rem;
   block-size: 1.5rem;
 }
+
+// Dark-Mode (31.10.2026): Das Auge ist ein dunkles PNG und folgt keiner Textfarbe (`Icon` maskiert nur SVG). Ohne die
+// Umkehrung stuende es dunkel auf dunklem Grund. Ein Filter statt eines zweiten Bildpaars: Die beiden PNG liegen im
+// Precache (offline noetig), ein weiteres Paar vergroesserte ihn.
+@media (prefers-color-scheme: dark) {
+  .symbol {
+    filter: invert(1);
+  }
+}

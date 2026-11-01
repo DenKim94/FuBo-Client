@@ -87,4 +87,16 @@ describe('TerminFormular', () => {
       expect(screen.getByTestId(id)).toBeEnabled()
     }
   })
+
+  test('pflicht: Datum und Uhrzeit mit Stern, der Ort nicht (er ist optional)', () => {
+    render(<TerminFormular werte={leer} min="2099-01-01" beiAenderung={() => {}} pflicht />)
+    expect(screen.getByLabelText('Datum')).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByLabelText('Uhrzeit')).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByLabelText('Ort (optional)')).not.toHaveAttribute('aria-required')
+  })
+
+  test('ohne pflicht (Ändern, vorbelegt) kein Stern', () => {
+    render(<Huelle />)
+    expect(screen.getByLabelText('Datum')).not.toHaveAttribute('aria-required')
+  })
 })

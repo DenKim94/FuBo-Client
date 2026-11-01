@@ -77,6 +77,7 @@ export default function PasswortAendern() {
         <PasswortFeld
           ref={altFeld}
           beschriftung="Bisheriges Passwort"
+          pflicht
           value={alt}
           onChange={(e) => setAlt(e.target.value)}
           fehler={altFehler}
@@ -88,6 +89,7 @@ export default function PasswortAendern() {
 
         <PasswortFeld
           beschriftung="Neues Passwort"
+          pflicht
           value={neu}
           onChange={(e) => setNeu(e.target.value)}
           fehler={neuFehler}

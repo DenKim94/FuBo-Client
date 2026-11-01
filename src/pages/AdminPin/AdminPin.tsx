@@ -95,6 +95,7 @@ export default function AdminPin() {
             setPin(wert)
           }}
           beschriftung="Neue PIN"
+          pflicht
           hinweis="Bitte gib vier Ziffern ein."
           fehler={feldFehler}
           autoComplete="off"

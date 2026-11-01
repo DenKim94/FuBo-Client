@@ -88,6 +88,7 @@ export default function AdminNameAendern() {
         <Feld
           ref={nameFeld}
           beschriftung="Neuer Anmeldename"
+          pflicht
           hinweis="Groß- und Kleinschreibung zählen."
           value={name}
           onChange={(e) => {

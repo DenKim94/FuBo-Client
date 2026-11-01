@@ -25,6 +25,11 @@ type TerminFormularEigenschaften = {
   datumRef?: Ref<HTMLInputElement>
   /** Test-ID-Vorsatz; Felder heissen `<vorsatz>-datum`, `-uhrzeit`, `-ort`. */
   vorsatz?: string
+  /**
+   * Datum und Uhrzeit als Pflichtfelder kennzeichnen („*“). Nur beim Anlegen: Das Formular startet leer. Beim Ändern
+   * sind beide vorbelegt (Entscheidung des Entwicklers vom 01.11.2026: Stern nur, wo man selbst etwas eintragen muss).
+   */
+  pflicht?: boolean
 }
 
 /**
@@ -50,6 +55,7 @@ export default function TerminFormular({
   uhrzeitRef,
   datumRef,
   vorsatz = 'termin',
+  pflicht = false,
 }: TerminFormularEigenschaften) {
   const ortLaenge = werte.ort.length
   return (
@@ -59,6 +65,7 @@ export default function TerminFormular({
           ref={datumRef}
           type="date"
           beschriftung="Datum"
+          pflicht={pflicht}
           value={werte.datum}
           min={min}
           onChange={(e) => {
@@ -72,6 +79,7 @@ export default function TerminFormular({
           ref={uhrzeitRef}
           type="time"
           beschriftung="Uhrzeit"
+          pflicht={pflicht}
           value={werte.uhrzeit}
           onChange={(e) => {
             beiAenderung('uhrzeit', e.target.value)

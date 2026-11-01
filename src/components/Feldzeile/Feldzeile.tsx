@@ -20,7 +20,7 @@ type FeldzeileEigenschaften = {
 }
 
 /**
- * Setzt zwei Felder nebeneinander (Prototyp 10b/10c): Startdatum und Enddatum, Datum und Uhrzeit, Uhrzeit und Ort.
+ * Setzt zwei Felder nebeneinander (Prototyp 10b/10c): Startdatum und Enddatum, Datum und Uhrzeit.
  *
  * Ein Raster mit fester Spaltenzahl und `min-inline-size: 0` an den Zellen, damit ein breites Feld die Zeile nicht
  * über den Bildschirmrand schiebt (Safari, vgl. `PinFeld`). Die Spalten bleiben auch auf dem schmalen Telefon

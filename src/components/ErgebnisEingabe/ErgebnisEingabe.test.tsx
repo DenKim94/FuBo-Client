@@ -71,4 +71,14 @@ describe('ErgebnisEingabe', () => {
       expect(screen.getByTestId(id)).toBeDisabled()
     }
   })
+
+  test('pflicht (Eintragen): radiogroup mit aria-required und Stern; die Korrektur bleibt ohne', () => {
+    const { unmount } = render(<ErgebnisEingabe sieger={null} deutlich={false} beiAenderung={() => {}} pflicht />)
+    expect(screen.getByRole('radiogroup', { name: 'Wer hat gewonnen?' })).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByText('Wer hat gewonnen?')).toHaveClass('pflichtMarke')
+    unmount()
+
+    render(<ErgebnisEingabe sieger="A" deutlich={false} beiAenderung={() => {}} />)
+    expect(screen.getByRole('group', { name: 'Wer hat gewonnen?' })).not.toHaveAttribute('aria-required')
+  })
 })

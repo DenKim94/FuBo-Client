@@ -8,7 +8,7 @@ $balken: 3px;
 // von Rand zu Rand, damit vier Eintraege bei 360 px je rund 90 px bekommen.
 .leiste {
   position: sticky;
-  top: var(--sicher-oben);
+  top: var(--sicher-oben-kopf);
   z-index: var(--ebene-kopf);
   margin-inline: calc(-1 * var(--abstand-m));
   margin-block-start: calc(-1 * var(--abstand-m));

@@ -90,11 +90,12 @@ export async function terminAbsagen(terminId: number): Promise<void> {
 }
 
 /**
- * Entfernt einen Termin endgültig (`204`); nur, solange nichts darauf verweist.
+ * Entfernt einen Termin endgültig (`204`).
  *
- * Gedacht für den versehentlich angelegten Termin und als einziger Weg zurück aus einer
- * versehentlichen Absage (sie belegt den Zeitpunkt). Fehler: `409 TERMIN_IN_VERWENDUNG`
- * (Rückmeldungen, Teams oder Ergebnis; dann absagen), `404`.
+ * Ein **abgesagter** Termin geht immer, Rückmeldungen und Teams löscht der Server mit (Vertrag seit
+ * 31.10.2026). Andere nur, solange nichts darauf verweist. Gedacht für den versehentlich angelegten
+ * Termin und als Weg zurück aus einer Absage (sie belegt den Zeitpunkt). Fehler:
+ * `409 TERMIN_IN_VERWENDUNG` (nicht abgesagt und Rückmeldungen, Teams oder Ergebnis; dann absagen), `404`.
  *
  * @param terminId Der Termin.
  */

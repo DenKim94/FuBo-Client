@@ -21,6 +21,8 @@ import style from './AdminTermine.module.scss'
 
 /** Rückfalltext, falls der Fehler weder vom Server stammt noch ein Netzfehler ist. */
 const FEHLER_ERSATZ_ENTFERNEN = 'Der Termin konnte nicht entfernt werden. Bitte versuche es erneut.'
+/** Folge beim Entfernen eines abgesagten Termins (Vertrag seit 31.10.2026: der Server löscht sie mit). */
+const TEXT_ENTFERNEN_ABGESAGT = 'Vorhandene Rückmeldungen und Teams werden mit entfernt.'
 
 /** Was nach dem Entfernen auf der Liste steht (ein Hinweis, nie ein Fehler: der Fehler steht im Dialog). */
 type Meldung =
@@ -62,7 +64,8 @@ function Zeilen({
  * nicht in den Render.
  *
  * **Entfernen aus der Liste** (Prototyp 10): Die Karte bietet „Entfernen“ für `GEPLANT` und `ABGESAGT`; die
- * `Bestaetigung` nennt Termin und Folgen und bleibt bei einem Fehler offen. `409 TERMIN_IN_VERWENDUNG` schliesst
+ * `Bestaetigung` nennt Termin und Folgen und bleibt bei einem Fehler offen. Ein abgesagter Termin geht immer, samt
+ * Rückmeldungen und Teams (Vertrag seit 31.10.2026), der Dialog sagt das. `409 TERMIN_IN_VERWENDUNG` (nur geplante) schliesst
  * sie und weist per Hinweis auf die Verwaltung des Termins (dort lässt er sich absagen); `404` meldet, dass es
  * den Termin nicht mehr gibt. Erfolg und Hinweis stehen auf der Liste; der Fokus geht auf die Überschrift, weil
  * die Karte mit der gedrückten Schaltfläche verschwindet. `mutateAsync`, weil die Karte beim Neulesen
@@ -239,6 +242,7 @@ export default function AdminTermine() {
             {zuEntfernen
               ? `Der Termin am ${datumLang(zuEntfernen.datum)}, ${uhrzeitKurz(zuEntfernen.uhrzeit)} Uhr wird entfernt. `
               : ''}
+            {zuEntfernen?.status === 'ABGESAGT' && `${TEXT_ENTFERNEN_ABGESAGT} `}
             Das lässt sich nicht rückgängig machen.
           </p>
         </Bestaetigung>

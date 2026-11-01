@@ -128,4 +128,10 @@ describe('Auswahlliste', () => {
     )
     expect(screen.getByRole('combobox', { name: 'Name' })).toBeDisabled()
   })
+
+  test('Pflichtfeld: Stern an der Beschriftung und aria-required am Auslöser, ohne den Namen zu ändern', () => {
+    render(<Auswahlliste beschriftung="Dein Name" optionen={OPTIONEN} wert="" beiAenderung={() => {}} pflicht />)
+    expect(screen.getByRole('combobox', { name: 'Dein Name' })).toHaveAttribute('aria-required', 'true')
+    expect(screen.getByText('Dein Name')).toHaveClass('pflichtMarke')
+  })
 })

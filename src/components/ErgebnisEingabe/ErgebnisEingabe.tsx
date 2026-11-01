@@ -14,6 +14,8 @@ type ErgebnisEingabeEigenschaften = ErgebnisWahl & {
   beiAenderung: (wahl: ErgebnisWahl) => void
   /** Sperrt beide Eingaben, solange gesendet wird. */
   deaktiviert?: boolean
+  /** Der Ausgang ist Pflicht und noch nicht gewählt (Eintragen, nicht Korrektur): „*“ und `aria-required`. */
+  pflicht?: boolean
 }
 
 /** Die drei Ausgänge in der Reihenfolge der Anzeige. */
@@ -34,7 +36,13 @@ const AUSGAENGE: { wert: Sieger; text: string; testId: string }[] = [
  * Grund steht als Text (`ergebnis-deutlich-grund`) – `true` bei `U` ist am Server unzulässig (`400`). Die Funktion, die
  * sendet, schickt bei `U` ohnehin `false`; die Regel gilt hier **und** dort (zwei Schlösser).
  */
-export default function ErgebnisEingabe({ sieger, deutlich, beiAenderung, deaktiviert = false }: ErgebnisEingabeEigenschaften) {
+export default function ErgebnisEingabe({
+  sieger,
+  deutlich,
+  beiAenderung,
+  deaktiviert = false,
+  pflicht = false,
+}: ErgebnisEingabeEigenschaften) {
   const hinweisId = useId()
   const gruppe = useId()
 
@@ -45,8 +53,12 @@ export default function ErgebnisEingabe({ sieger, deutlich, beiAenderung, deakti
 
   return (
     <div className={style.eingabe} data-testid="ergebnis-eingabe">
-      <fieldset className={style.gruppe}>
-        <legend className={style.legende}>Wer hat gewonnen?</legend>
+      <fieldset
+        className={style.gruppe}
+        role={pflicht ? 'radiogroup' : undefined}
+        aria-required={pflicht || undefined}
+      >
+        <legend className={[style.legende, pflicht && 'pflichtMarke'].filter(Boolean).join(' ')}>Wer hat gewonnen?</legend>
         {AUSGAENGE.map((ausgang) => (
           <label key={ausgang.wert} className={style.option}>
             <input

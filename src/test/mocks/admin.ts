@@ -606,7 +606,9 @@ export function adminHandler(welt: AdminWelt) {
       const index = welt.termine.findIndex((t) => t.terminId === rumpf.terminId)
       if (index === -1) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Der Termin wurde nicht gefunden.')
       const modell = welt.termine[index]
-      if (modell.zusagen.length > 0 || modell.teams || modell.ergebnis || welt.terminInVerwendung.has(modell.terminId)) {
+      // Vertrag seit 31.10.2026: Ein abgesagter Termin geht immer (der Server löscht Rückmeldungen und Teams mit).
+    const inVerwendung = modell.zusagen.length > 0 || modell.teams || modell.ergebnis || welt.terminInVerwendung.has(modell.terminId)
+    if (modell.status !== 'ABGESAGT' && inVerwendung) {
         return problem(409, 'TERMIN_IN_VERWENDUNG', 'Am Termin hängen Rückmeldungen oder Teams.')
       }
       welt.termine.splice(index, 1)
