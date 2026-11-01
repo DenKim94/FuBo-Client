@@ -125,9 +125,9 @@
   --sicher-unten: env(safe-area-inset-bottom, 0px);
   --sicher-links: env(safe-area-inset-left, 0px);
   --sicher-rechts: env(safe-area-inset-right, 0px);
-  /* Oberer Rand fuer Kopfzeile, haftende Tab-Leiste und Offline-Hinweis (31.10.2026): Einzug plus Luft. `min(Inset, x)`
-     ist 0, wo es oben keinen Einzug gibt (Android, Desktop, iPhone quer), sonst x. Im Browser 16px; fuer die
-     installierte App auf iOS siehe unten (Kante von iOS 26). */
+  /* Oberer Rand fuer Kopfzeile, haftende Tab-Leiste und Offline-Hinweis: Einzug plus Luft. Er verschiebt die ganze
+     Ansicht nach unten (Innenabstand des aeusseren Rahmens im AppLayout, wirkt wie ein `margin-top`). Im Browser: bis
+     zu 16px, nur wenn es oben einen Einzug gibt (`min` ist sonst 0). Fuer die installierte App auf iOS siehe unten. */
   --sicher-oben-kopf: calc(var(--sicher-oben) + min(var(--sicher-oben), var(--abstand-m)));
 
   /* --- Ebenen --- */
@@ -193,17 +193,21 @@
   }
 }
 
-/* Installierte App auf iOS (01.11.2026, Rueckmeldung des Entwicklers vom iPhone): Seit iOS 26 legt das System in einer
-   Web-App vom Home-Bildschirm eine weiche Unschaerfe (Liquid Glass, „scroll edge effect“) ueber den oberen Rand. Sie
-   reicht rund 38–40pt unter den Einzug und laesst sich weder per CSS noch per Meta-Angabe abschalten; eine deckende
-   Flaeche darueber hilft nicht (Berichte anderer Projekte, auf Geraeten geprueft). Die 16px von oben reichten nicht,
-   die Kanten der Schaltflaechen verschwammen. Ausweg: Die Bedienelemente liegen unterhalb – 2.5rem Luft statt 16px.
-   Nur im Vollbildmodus (`display-mode: standalone`) und nur auf iOS (`-webkit-touch-callout` kennt nur iOS-Safari);
-   quer ist der Einzug 0 und damit auch die Luft. */
-@media (display-mode: standalone) {
-  @supports (-webkit-touch-callout: none) {
-    :root {
-      --sicher-oben-kopf: calc(var(--sicher-oben) + min(var(--sicher-oben), 2.5rem));
-    }
+/* Installierte App auf iOS (01.11.2026): Seit iOS 26 legt das System in Web-Apps vom Home-Bildschirm
+   eine weiche Unschaerfe (Liquid Glass, „scroll edge effect“) rund 38–40pt hoch ueber den oberen Rand der Ansicht; sie
+   laesst sich weder per CSS noch per Meta-Angabe abschalten, eine deckende Flaeche darueber hilft nicht (Berichte
+   anderer Projekte, auf Geraeten geprueft). Die Bedienelemente muessen darunter liegen: 2.5rem fest.
+   **Fest, nicht `min(Einzug, …)`:** Ohne `apple-mobile-web-app-status-bar-style` beginnt die Ansicht unter der
+   Statusleiste und iOS meldet als Einzug 0 – daran scheiterten der 31.10. (16px) und der erste Versuch am 01.11.
+   (2.5rem unter `display-mode: standalone` mit `min`). Erkannt wird die App per Skript (`iosAppKennzeichnen`,
+   `navigator.standalone`); die hoehere Spezifitaet von `[data-ios-app]` gewinnt unabhaengig von der Reihenfolge.
+   Quer auf dem Telefon blendet iOS die Statusleiste aus; dort keine Zusatzluft. */
+:root[data-ios-app] {
+  --sicher-oben-kopf: calc(var(--sicher-oben) + 2.5rem);
+}
+
+@media (orientation: landscape) and (max-height: 32rem) {
+  :root[data-ios-app] {
+    --sicher-oben-kopf: var(--sicher-oben);
   }
 }

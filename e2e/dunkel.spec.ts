@@ -131,4 +131,21 @@ test.describe('Safe-Area oben', () => {
     // Kleiner Einzug: höchstens noch einmal so viel.
     expect(await rahmenOben(page, 8)).toBe(16)
   })
+
+  test('installierte App auf iOS: feste 40 px Luft, auch wenn iOS als Einzug 0 meldet', async ({ page }) => {
+    // Dritter Anlauf (01.11.2026): Ohne `apple-mobile-web-app-status-bar-style` beginnt die Ansicht unter der
+    // Statusleiste, der Einzug ist 0 – die Unschärfe von iOS 26 liegt trotzdem über den obersten ~40pt.
+    await page.evaluate(() => document.documentElement.setAttribute('data-ios-app', ''))
+    expect(await rahmenOben(page, null)).toBe(40)
+    expect(await rahmenOben(page, 47)).toBe(87)
+    // Die Kopfzeile liegt darunter: ihr oberer Rand mindestens 40 px unter dem Seitenanfang.
+    const kopf = await page.getByTestId('layout-kopf').boundingBox()
+    expect(kopf?.y ?? 0).toBeGreaterThanOrEqual(40)
+  })
+
+  test('installierte App auf iOS quer (niedriges Fenster): keine Zusatzluft', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 })
+    await page.evaluate(() => document.documentElement.setAttribute('data-ios-app', ''))
+    expect(await rahmenOben(page, null)).toBe(0)
+  })
 })

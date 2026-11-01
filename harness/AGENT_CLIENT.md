@@ -146,8 +146,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **Pflichtfelder (seit 01.11.2026):** Ein Feld, das leer startet und ausgefüllt werden muss, bekommt `pflicht` (Stern über `.pflichtMarke`,
   `aria-required`). Kein Erklärsatz „* Pflichtfeld“ (kostete auf kleinen Telefonen die Zeile, die „kein Scrollen“ verlangt). Vorbelegte
   Angaben und Schalter ohne Stern; optionale Felder behalten „(optional)“. Den Stern nie als Text in die Beschriftung schreiben (er geriete in den Namen des Feldes).
-- **Safe-Area oben:** Elemente am oberen Rand nutzen `--sicher-oben-kopf` (Einzug plus Luft, nur wenn es einen Einzug gibt: im Browser bis zu
-  `--abstand-m`, in der installierten App auf iOS 2.5rem wegen der Unschärfe von iOS 26), nicht `--sicher-oben` allein.
+- **Safe-Area oben:** Elemente am oberen Rand nutzen `--sicher-oben-kopf`, nicht `--sicher-oben` allein. Im Browser Einzug plus bis zu
+  `--abstand-m` (nur mit Einzug); in der installierten App auf iOS (`<html data-ios-app>`, gesetzt von `iosAppKennzeichnen`) fest 2.5rem
+  mehr wegen der Unschärfe von iOS 26 – dort meldet iOS als Einzug oft 0.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art` = `primaer`, `sekundaer`, `gefahr`, `gefahrUmriss` (leiser: weisser Grund, roter Rand, für Listen und „Entfernen“), `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
   `type="button"` vorbelegt, `ref`, `aria-disabled`-Stil; im Ladezustand Spinner allein mittig, Symbol und Text `opacity: 0`), `Ladespinner` (150 ms
   verzögert, `role="status"`, in Schaltflächen `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden Namen; offline nötige
