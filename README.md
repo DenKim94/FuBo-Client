@@ -10,7 +10,8 @@ REST-Schnittstelle angesprochen.
 
 ## Voraussetzungen
 
-- Node ab 20 (entwickelt wird mit 22, siehe `.nvmrc`)
+- Node 24 (LTS), mindestens 24.22.1 (Security-Release vom 21.10.2026); `.nvmrc`
+  legt die genaue Fassung fest (24.22.2), `nvm use` übernimmt sie
 - Ein laufender Server unter `http://localhost:8080` für die Entwicklung gegen
   echte Daten. Tests laufen ohne Server gegen die Mock-Schicht (MSW im
   Node-Modus, `src/test/mocks/`).
