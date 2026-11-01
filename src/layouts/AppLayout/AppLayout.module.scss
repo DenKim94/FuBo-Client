@@ -28,6 +28,37 @@
   background: var(--farbe-hintergrund);
 }
 
+// Bereich, der scrollt: Kopfzeile, Meldungen und Inhalt. Im Browser ohne eigenes Kaestchen (`display: contents`) –
+// dort scrollt wie bisher die Seite, und die Kinder bleiben Flex-Elemente des Rahmens.
+.verlauf {
+  display: contents;
+}
+
+// Installierte App auf iOS (01.11.2026 abends, Rueckmeldung des Entwicklers): Auch mit dem Deckband zeigte iOS den
+// gescrollten Inhalt verschwommen unter der Statusleiste – die Unschaerfe von iOS 26 (scroll edge effect) bildet den
+// Inhalt der scrollenden Seite ab, nicht das, was fest darueber liegt. Deshalb scrollt hier nicht die Seite, sondern
+// nur `.verlauf`: Der Rahmen steht fest und deckend im Fenster, sein oberer Innenabstand (`--sicher-oben-kopf`)
+// scrollt nicht mit, und der Scrollbereich beginnt erst darunter. Gescrollter Inhalt kommt so nie an den oberen Rand.
+// Nur hier: Im Browser bliebe sonst das Verhalten der Seite (Adressleiste einklappen, Zurueckscrollen) auf der Strecke.
+:global(:root[data-ios-app]) {
+  .rahmen {
+    position: fixed;
+    inset: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--farbe-hintergrund);
+  }
+
+  .verlauf {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
 .kopf {
   display: flex;
   align-items: center;

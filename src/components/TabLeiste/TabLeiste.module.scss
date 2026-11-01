@@ -16,6 +16,12 @@ $balken: 3px;
   background: var(--farbe-hintergrund);
 }
 
+// In der installierten iOS-App scrollt nur der Bereich unter dem oberen Abstand (`AppLayout`, `.verlauf`); die Leiste
+// haftet dort an dessen oberem Rand, der Abstand liegt schon darueber.
+:global(:root[data-ios-app]) .leiste {
+  top: 0;
+}
+
 .liste {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

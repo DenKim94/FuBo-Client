@@ -143,24 +143,42 @@ test.describe('Safe-Area oben', () => {
     expect(kopf?.y ?? 0).toBeGreaterThanOrEqual(40)
   })
 
-  test('installierte App auf iOS: beim Scrollen deckt das Band oben den Inhalt ab, die Tab-Leiste haftet darunter', async ({ page }) => {
-    // Rückmeldung vom 01.11.2026 (Abend): Der Inhalt lief durch den Abstand über der Tab-Leiste.
+  test('installierte App auf iOS: nur der Bereich unter dem Abstand scrollt, nie die Seite', async ({ page }) => {
+    // Rückmeldung vom 01.11.2026 (Abend): iOS 26 zeigte gescrollten Inhalt verschwommen unter der Statusleiste,
+    // auch mit Deckband. Deshalb scrollt in der iOS-App nur `layout-verlauf`, dessen Oberkante unter dem Abstand liegt.
     await page.evaluate(() => {
       document.documentElement.setAttribute('data-ios-app', '')
       const hoch = document.createElement('div')
       hoch.style.blockSize = '3000px'
       document.querySelector('main')?.append(hoch)
-      window.scrollTo(0, 800)
     })
-    const leiste = page.getByTestId('tab-leiste')
-    await expect.poll(async () => (await leiste.boundingBox())?.y).toBe(40)
-    // Das Band über der Leiste: fest am oberen Rand, so hoch wie der Abstand, in der Hintergrundfarbe der Seite.
-    const band = await page.getByTestId('app-layout').evaluate((el) => {
-      const s = getComputedStyle(el, '::before')
-      return { position: s.position, top: s.top, hoehe: s.height, farbe: s.backgroundColor, ebene: s.zIndex }
+    const verlauf = page.getByTestId('layout-verlauf')
+    await verlauf.evaluate((el) => el.scrollTo(0, 800))
+
+    const lage = await page.evaluate(() => {
+      const bereich = document.querySelector('[data-testid="layout-verlauf"]')!
+      const wurzel = document.scrollingElement!
+      return {
+        seiteScrollt: wurzel.scrollHeight > wurzel.clientHeight,
+        bereichOben: bereich.getBoundingClientRect().top,
+        bereichGescrollt: bereich.scrollTop,
+      }
+    })
+    expect(lage).toEqual({ seiteScrollt: false, bereichOben: 40, bereichGescrollt: 800 })
+    // Die Tab-Leiste haftet am oberen Rand des Scrollbereichs, also direkt unter dem Abstand.
+    await expect.poll(async () => (await page.getByTestId('tab-leiste').boundingBox())?.y).toBe(40)
+    // Der Rahmen steht fest und deckend im Fenster.
+    const rahmen = await page.getByTestId('app-layout').evaluate((el) => {
+      const s = getComputedStyle(el)
+      return { position: s.position, farbe: s.backgroundColor }
     })
     const seite = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
-    expect(band).toEqual({ position: 'fixed', top: '0px', hoehe: '40px', farbe: seite, ebene: '10' })
+    expect(rahmen).toEqual({ position: 'fixed', farbe: seite })
+  })
+
+  test('im Browser scrollt weiter die Seite (kein eigener Scrollbereich)', async ({ page }) => {
+    const anzeige = await page.getByTestId('layout-verlauf').evaluate((el) => getComputedStyle(el).display)
+    expect(anzeige).toBe('contents')
   })
 
   test('installierte App auf iOS quer (niedriges Fenster): keine Zusatzluft', async ({ page }) => {

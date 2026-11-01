@@ -106,50 +106,53 @@ export default function AppLayout() {
           beide (Login-Schritte ohne Sitzung) entfaellt sie ganz: Ein leeres Band
           mit Trennlinie kostete rund 60 px Hoehe, und die Namensauswahl mit
           Gastbereich fuellt ein 360 × 780-Telefon auch so schon vollstaendig. */}
-      {mitKopf && (
-        <header className={style.kopf} data-testid="layout-kopf">
-          {mitZurueck && (
-            <CustomButton art="sekundaer" className={style.zurueck} onClick={zurueck} data-testid="layout-zurueck">
-              Zurück
-            </CustomButton>
-          )}
-          {mitEinstellungen && (
-            <Link
-              to={EINSTELLUNGEN_PFAD}
-              className={style.einstellungen}
-              aria-label="Einstellungen"
-              data-testid="layout-einstellungen"
-            >
-              <Icon name="settings_icon_dark" />
-            </Link>
-          )}
-          {angemeldet && (
-            <CustomButton
-              art="sekundaer"
-              symbol="logout_icon_dark"
-              className={style.abmelden}
-              laedt={abmeldung.isPending}
-              onClick={() => abmeldung.mutate()}
-              data-testid="layout-abmelden"
-              style={{ backgroundColor: 'var(--farbe-flaeche)' }}
-            >
-              Abmelden
-            </CustomButton>
-          )}
-        </header>
-      )}
+      {/* Scrollbereich: im Browser ohne eigenes Kästchen, in der installierten iOS-App der einzige, der scrollt. */}
+      <div className={style.verlauf} data-testid="layout-verlauf">
+        {mitKopf && (
+          <header className={style.kopf} data-testid="layout-kopf">
+            {mitZurueck && (
+              <CustomButton art="sekundaer" className={style.zurueck} onClick={zurueck} data-testid="layout-zurueck">
+                Zurück
+              </CustomButton>
+            )}
+            {mitEinstellungen && (
+              <Link
+                to={EINSTELLUNGEN_PFAD}
+                className={style.einstellungen}
+                aria-label="Einstellungen"
+                data-testid="layout-einstellungen"
+              >
+                <Icon name="settings_icon_dark" />
+              </Link>
+            )}
+            {angemeldet && (
+              <CustomButton
+                art="sekundaer"
+                symbol="logout_icon_dark"
+                className={style.abmelden}
+                laedt={abmeldung.isPending}
+                onClick={() => abmeldung.mutate()}
+                data-testid="layout-abmelden"
+                style={{ backgroundColor: 'var(--farbe-flaeche)' }}
+              >
+                Abmelden
+              </CustomButton>
+            )}
+          </header>
+        )}
 
-      {abmeldung.error && (
-        <div className={style.abmeldefehler}>
-          <Fehlermeldung fehler={abmeldung.error} data-testid="layout-abmelden-fehler" />
-        </div>
-      )}
+        {abmeldung.error && (
+          <div className={style.abmeldefehler}>
+            <Fehlermeldung fehler={abmeldung.error} data-testid="layout-abmelden-fehler" />
+          </div>
+        )}
 
-      <OfflineHinweis />
+        <OfflineHinweis />
 
-      <main className={style.inhalt}>
-        <Outlet />
-      </main>
+        <main className={style.inhalt}>
+          <Outlet />
+        </main>
+      </div>
 
       <AktualisierungsHinweis />
     </div>
