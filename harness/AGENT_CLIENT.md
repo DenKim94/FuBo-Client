@@ -112,7 +112,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 
 ### Techstack und Festlegungen
 - React 19, Vite 8, TypeScript 6 (`strict`), SCSS/CSS Modules, TanStack Query, React Router 7 (Paket `react-router`). PWA: `vite-plugin-pwa` 1.3.0,
-  `injectManifest`, Worker `src/sw.ts`, `registerType: 'prompt'`. Tests: Vitest + RTL (Node-Modus mit MSW), Playwright gegen die gebaute Fassung.
+  `injectManifest`, Worker `src/sw.ts`, `registerType: 'prompt'`. Tests: Vitest 4 + RTL (Node-Modus mit MSW), Playwright gegen die gebaute Fassung.
   Hosting Cloudflare Pages, feste Domain. **Node 24 LTS**, genaue Fassung in `.nvmrc` (CI und Cloudflare lesen sie), `engines` `^24.22.1`
   (Security-Release vom 21.10.2026). Neue Fassungen nur innerhalb der 24er-Reihe und nach den Sicherheitsmeldungen von Node.js.
 - Eigener `tsconfig.worker.json` (`lib: WebWorker`, `src/sw.ts` aus `tsconfig.app.json` ausgeschlossen); Alias `@/*` in `tsconfig` **und**
@@ -146,8 +146,8 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
 - **Pflichtfelder (seit 01.11.2026):** Ein Feld, das leer startet und ausgefüllt werden muss, bekommt `pflicht` (Stern über `.pflichtMarke`,
   `aria-required`). Kein Erklärsatz „* Pflichtfeld“ (kostete auf kleinen Telefonen die Zeile, die „kein Scrollen“ verlangt). Vorbelegte
   Angaben und Schalter ohne Stern; optionale Felder behalten „(optional)“. Den Stern nie als Text in die Beschriftung schreiben (er geriete in den Namen des Feldes).
-- **Safe-Area oben:** Elemente am oberen Rand nutzen `--sicher-oben-kopf` (Einzug plus bis zu `--abstand-m`, nur wenn es einen Einzug gibt), nicht
-  `--sicher-oben` allein – die Statusleiste des iPhones reicht über den Einzug hinaus.
+- **Safe-Area oben:** Elemente am oberen Rand nutzen `--sicher-oben-kopf` (Einzug plus Luft, nur wenn es einen Einzug gibt: im Browser bis zu
+  `--abstand-m`, in der installierten App auf iOS 2.5rem wegen der Unschärfe von iOS 26), nicht `--sicher-oben` allein.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art` = `primaer`, `sekundaer`, `gefahr`, `gefahrUmriss` (leiser: weisser Grund, roter Rand, für Listen und „Entfernen“), `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
   `type="button"` vorbelegt, `ref`, `aria-disabled`-Stil; im Ladezustand Spinner allein mittig, Symbol und Text `opacity: 0`), `Ladespinner` (150 ms
   verzögert, `role="status"`, in Schaltflächen `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden Namen; offline nötige

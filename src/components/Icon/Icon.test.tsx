@@ -1,3 +1,7 @@
+// Dieser Test liest den Quellbaum mit `node:fs`. Die Node-Typen kamen bis Vitest 3 still über dessen Typen mit, seit
+// Vitest 4 (01.11.2026) nicht mehr. Der Verweis gilt wie vorher für das ganze Teilprojekt `app`, macht die Abhängigkeit
+// aber an der einzigen Stelle sichtbar, die sie braucht (statt `types: ["node"]` in `tsconfig.app.json`).
+/// <reference types="node" />
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { render, screen } from '@testing-library/react'
