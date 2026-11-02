@@ -98,6 +98,8 @@ export default function AppLayout() {
 
   return (
     <div className={style.rahmen} data-testid="app-layout">
+      {/* Deckband am oberen Rand; zugleich die Farbvorlage für die Statusleiste der iOS-App. */}
+      <div className={style.band} aria-hidden="true" data-testid="layout-band" />
       {/* Rendert nichts; verbindet die globale 401-Behandlung mit dem Router. */}
       <SitzungsWaechter />
       <PushAbgleich />

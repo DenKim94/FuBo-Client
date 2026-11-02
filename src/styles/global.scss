@@ -10,6 +10,9 @@
 // fokussiertes Feld ueber die Leiste statt darunter (WCAG 2.4.11).
 html {
   scroll-padding-bottom: calc(var(--aktionsleiste-ist, 0px) + var(--abstand-s));
+  // Auch die Wurzel in der Seitenfarbe (01.11.2026): iOS 26 nimmt die Farbe der Statusleiste der installierten App
+  // von der Seite ab; ohne Angabe sah es dort die Leinwand, nicht `body`.
+  background: var(--farbe-hintergrund);
 }
 
 body {

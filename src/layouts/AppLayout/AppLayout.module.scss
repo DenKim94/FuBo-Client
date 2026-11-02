@@ -18,8 +18,10 @@
 // durch dieses Band – sichtbar ueber der haftenden Tab-Leiste, nur von der Unschaerfe des Systems verwischt. Das
 // Band liegt deshalb fest am oberen Rand und deckt in der Hintergrundfarbe ab; ungescrollt deckt es genau den leeren
 // Abstand, aendert also nichts. Auf Hoehe der Kopfebene: unter Dialogen, Auswahllisten und Hinweisen.
-.rahmen::before {
-  content: '';
+// Ein echtes Element statt `::before` (01.11.2026, Statusleiste blieb im hellen Modus schwarz): iOS 26 faerbt die
+// Statusleiste der installierten App nach der Seite – nach einem festen Element am oberen Rand oder dem Hintergrund –
+// und `theme-color` beachtet es dort nicht. Ob Pseudo-Elemente dabei zaehlen, ist nicht belegt; ein Element schon.
+.band {
   position: fixed;
   inset-block-start: 0;
   inset-inline: 0;
@@ -32,6 +34,13 @@
 // dort scrollt wie bisher die Seite, und die Kinder bleiben Flex-Elemente des Rahmens.
 .verlauf {
   display: contents;
+}
+
+// Kurz ausgeblendet, damit iOS die Farbe der Statusleiste nach einem Wechsel von hell zu dunkel neu abnimmt
+// (`statusleisteNachfaerben` in `src/pwa/iosApp.ts`; iOS nimmt sie nur ab, wenn oben ein Element erscheint oder
+// verschwindet, nicht wenn sich nur Farben aendern).
+:global(:root[data-band-neu]) .band {
+  display: none;
 }
 
 // Installierte App auf iOS (01.11.2026 abends, Rueckmeldung des Entwicklers): Auch mit dem Deckband zeigte iOS den

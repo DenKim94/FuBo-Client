@@ -178,6 +178,28 @@ test.describe('Safe-Area oben', () => {
     expect(await verlauf.evaluate((el) => getComputedStyle(el).scrollbarWidth)).toBe('none')
   })
 
+  test('Statusleiste der iOS-App: Wurzel und Deckband in der Seitenfarbe, hell wie dunkel', async ({ page }) => {
+    // Rückmeldung vom 01.11.2026: Im hellen Modus blieb die Statusleiste schwarz. iOS 26 nimmt ihre Farbe von der
+    // Seite (Wurzel oder festes Element oben); beides muss die Seitenfarbe tragen – das echte Band, kein ::before.
+    await page.evaluate(() => document.documentElement.setAttribute('data-ios-app', ''))
+    for (const schema of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: schema })
+      const farben = await page.evaluate(() => {
+        const band = document.querySelector('[data-testid="layout-band"]')!
+        const s = getComputedStyle(band)
+        return {
+          seite: getComputedStyle(document.body).backgroundColor,
+          wurzel: getComputedStyle(document.documentElement).backgroundColor,
+          band: s.backgroundColor,
+          lage: `${s.position} ${s.top} ${s.height}`,
+        }
+      })
+      expect(farben.wurzel, schema).toBe(farben.seite)
+      expect(farben.band, schema).toBe(farben.seite)
+      expect(farben.lage, schema).toBe('fixed 0px 40px')
+    }
+  })
+
   test('installierte App auf iOS: die Kopfzeile behält ihre Höhe, die Linie liegt unter den Knöpfen', async ({ page }) => {
     // Rückmeldung vom 01.11.2026: Im Scrollbereich schrumpfte die Kopfzeile auf 44 px, die Linie lief durch die Knöpfe.
     const messen = () =>
