@@ -27,6 +27,10 @@ test.describe('Admin-Dashboard', () => {
     await expect(page.getByTestId('rueckmeldung-zusagen')).toBeHidden()
     await expect(page.getByTestId('rueckmeldung-absagen')).toBeHidden()
     await expect(page.getByTestId('admin-termin-verwalten-link')).toHaveAttribute('href', '/admin/termine/41')
+    // „Termin öffnen“ steht mittig unter der Teilnehmerliste (03.11.2026).
+    const link = (await page.getByTestId('admin-termin-verwalten-link').boundingBox())!
+    const liste = (await page.getByTestId('teilnehmerliste').boundingBox())!
+    expect(Math.abs(link.x + link.width / 2 - (liste.x + liste.width / 2))).toBeLessThanOrEqual(1)
     // E1: Die Liste ist die Navigation, keine Tab-Leiste.
     await expect(page.getByTestId('tab-leiste')).toBeHidden()
     for (const id of ['profile', 'termine', 'gaeste', 'konfiguration', 'teams', 'pin', 'name', 'passwort']) {

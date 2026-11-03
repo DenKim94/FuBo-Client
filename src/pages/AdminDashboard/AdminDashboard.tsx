@@ -125,9 +125,12 @@ export default function AdminDashboard() {
     naechster = (
       <div className={style.termin}>
         <TerminAnsicht terminId={termin.terminId} eingeklappt nurLesen kartenEbene={3}>
-          <Textlink to={ADMIN_PFADE.terminVerwaltung(termin.terminId)} data-testid="admin-termin-verwalten-link">
-            Termin öffnen
-          </Textlink>
+          {/* Mittig (Vorgabe des Entwicklers, 03.11.2026); `Textlink` nimmt bewusst keine Klasse an, daher die Hülle. */}
+          <div className={style.terminLink}>
+            <Textlink to={ADMIN_PFADE.terminVerwaltung(termin.terminId)} data-testid="admin-termin-verwalten-link">
+              Termin öffnen
+            </Textlink>
+          </div>
         </TerminAnsicht>
       </div>
     )

@@ -31,3 +31,9 @@
 .termin {
   display: block;
 }
+
+// „Termin öffnen“ mittig unter Karte und Teilnehmerliste (03.11.2026); das Tap-Ziel bleibt das des Links.
+.terminLink {
+  display: flex;
+  justify-content: center;
+}
