@@ -26,7 +26,7 @@ Repositoriumsname und erscheint **nirgends** in der Oberfläche.
   mit Name und Passwort, Passwort-Reset (PIN anfordern, eingeben, neues Passwort).
 - **Abläufe:** (A7) Zu-/Absage als große Aktion. (A10) Teilnehmerbalken rot unter der Mindestzahl (Vorgabe 6), sonst grün – nie nur über
   Farbe. (A11) Warteschlange über der Höchstzahl (Vorgabe 22); **die Höchstzahl wird nur bei bestehender Warteschlange genannt** (`termin-wartesatz`), sonst keine Platzzahl neben dem Balken. Balkentext „x von mindestens y Zusagen erreicht“. Karte, Rückmeldung und Balken stehen in einem umrandeten Kopfbereich (`termin-kopf`). (A15) Teamgenerierung mit Kontingent; Einteilung bei Teilnehmeränderung
-  als veraltet kennzeichnen. (A20b) Auswechselspieler anzeigen, optional manuell wählen. (A21) Ergebnis (Sieger A/B, deutlich ja/nein),
+  als veraltet kennzeichnen. (A20b) **Springer** anzeigen (seit 03.11.2026; Vertragsfelder heißen weiter `auswechselspieler`/`auswechselModus`, die Oberfläche sagt „Springer“), Startteam und Wechselregel als Satz – **ohne „schwächeres Team“** für USER/GAST (A12). (A21) Ergebnis (Sieger A/B, deutlich ja/nein),
   Hinweis „erster Eintrag gilt", Admin-Korrektur.
 - **Admin:** (A13/A17) Profile mit Skills, Gäste mit Stufen. (A18) Einzeltermine und befristete Serien. (A3/A10/A11/A17) PIN und
   Konfiguration (Voll-Update, 15 Pflichtfelder). (A23) Hallenabsage bis 48 h vorher.
@@ -105,7 +105,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `minTeilnehmer`, ohne Push): Texte dürfen `ABGESAGT` nicht als Absage durch den Admin darstellen.
 - Teamdaten für USER/GAST: nur Name, Team, Auswechselflag. Namensliste: `id`, `name`, `belegt`; gewählt wird über die `id`. Gastname ohne
   „(Gast)" senden.
-- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (46 Operationen, Stand 24.10.2026). Maßgeblich ist `server/fubo-api.json`: Änderungen zuerst
+- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (46 Operationen, Stand 03.11.2026; `AuswechselModus` = `ZUFAELLIG` | `ZULETZT_ANGEMELDET`). Maßgeblich ist `server/fubo-api.json`: Änderungen zuerst
   dort, dann die Kopie **gegen den Unterschied** auffrischen, Typen (`npm run api:typen`) und Mocks nachziehen. Typen nur aus dem Generat
   (`components['schemas'][…]`, `operations[…]`).
 - **Bekannte Vertragslücke:** In `PIN_VERIFIED` nennt kein Endpunkt die freien Gastplätze; „Gast" lässt sich erst nach `409 KEIN_GAST_SLOT_FREI` sperren.
@@ -151,6 +151,9 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   mehr wegen der Unschärfe von iOS 26 – dort meldet iOS als Einzug oft 0. In der iOS-App scrollt nur `.verlauf` im `AppLayout`
   (Rahmen fest, Abstand darüber scrollt nicht); Haftendes haftet dort bei `top: 0`, im Browser bei `top: var(--sicher-oben-kopf)`.
   Kein `window.scrollTo` – in der iOS-App scrollt nicht die Seite.
+- **Statusleiste der iOS-App (seit 02.11.2026 auf dem iPhone bestätigt):** iOS 26 färbt sie nach der Seite, nicht nach `theme-color`.
+  Das Deckband `layout-band` (echtes Element, fest oben) und `html` tragen deshalb `--farbe-hintergrund`; beim Wechsel hell/dunkel blendet
+  `statusleisteNachfaerben` das Band kurz aus, damit iOS neu abnimmt. Diese Kette nicht durch ein Pseudo-Element oder eine feste Farbe ersetzen.
 - **Basis-Komponenten benutzen statt nachbauen:** `CustomButton` (`art` = `primaer`, `sekundaer`, `gefahr`, `gefahrUmriss` (leiser: weisser Grund, roter Rand, für Listen und „Entfernen“), `breit`, `laedt`, `symbol` = SVG aus `public/icons/` links vom Text,
   `type="button"` vorbelegt, `ref`, `aria-disabled`-Stil; im Ladezustand Spinner allein mittig, Symbol und Text `opacity: 0`), `Ladespinner` (150 ms
   verzögert, `role="status"`, in Schaltflächen `dekorativ`), `Icon` (SVG als CSS-Maske in `currentColor`; ein Test prüft jeden Namen; offline nötige
@@ -283,6 +286,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `webkit` in `playwright install`). Im CI läuft nur Chromium (588 Läufe nach C8, 3 Projekte); iPhone- und iPad-Verhalten bleibt Handprüfung. PWA-Tests (`e2e/*.pwa.spec.ts`, `pwa.spec.ts`) nur Chromium. Tab-Navigation ist in WebKit ohne Systemeinstellung nicht
   möglich (`test.skip` für `webkit`, Handprüfung). API ohne Server über `page.route`. Klick auf `aria-disabled` mit `force: true`. Safe-Area,
   `beforeinstallprompt`, Web Push auf iOS bleiben Handprüfungen.
+- **Versionsnummer:** einzige Quelle `version` in `package.json` (über `define` als `__APP_VERSION__`), im Code nur `APP_VERSION` aus `src/app/version.ts`; angezeigt nur auf der PIN-Seite (seit 03.11.2026).
 - Validierung: `npm run lint`, `typecheck`, `test`, `build`, `test:e2e`; nach Abhängigkeitsänderungen `npm ci` in frischem Baum (`npm install` repariert die
   Sperrdatei still).
 - `.env` nie einchecken; **keine realen Personennamen**; nichts nach `main` ohne ausdrückliche Anweisung; Commits nur auf Aufforderung.
