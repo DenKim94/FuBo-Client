@@ -26,7 +26,7 @@ export function spieltMit(termin: TerminDetails, eigenerName: string | null | un
 }
 
 /**
- * Steht der Aufrufer in der aktuellen Teameinteilung (Team A oder B, auch als Auswechselspieler)?
+ * Steht der Aufrufer in der aktuellen Teameinteilung (Team A oder B, auch als Springer)?
  *
  * Grundlage der Berechtigung, ein Ergebnis zu erfassen (`POST /ergebnis/erfassen`, seit 22.10.2026; der Admin
  * immer): Der Vertrag sichert zu, dass „eingeteilt“ genau „steht in `teams.teamA` oder `teams.teamB`“ heißt und

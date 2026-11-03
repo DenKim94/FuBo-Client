@@ -47,7 +47,7 @@
 
 .eintrag {
   display: flex;
-  // Passen Name und „Auswechselspieler“ nicht in eine Zeile, rutscht das Kennzeichen darunter, statt den Namen
+  // Passen Name und „Springer“ nicht in eine Zeile, rutscht das Kennzeichen darunter, statt den Namen
   // mitten im Wort zu brechen.
   flex-wrap: wrap;
   align-items: center;
@@ -68,12 +68,18 @@
 }
 
 // Text und Symbol: Die Aussage haengt nicht an einer Farbe.
-.auswechsel {
+.springer {
   display: inline-flex;
   align-items: center;
   gap: var(--abstand-xs);
   flex: none;
   font-size: var(--schrift-klein);
   font-weight: var(--gewicht-halbfett);
+  color: var(--farbe-text-schwach);
+}
+
+// Spielregel des Springers unter den Listen: Nebentext, die Aussage steht vollstaendig im Satz.
+.springerRegel {
+  font-size: var(--schrift-klein);
   color: var(--farbe-text-schwach);
 }

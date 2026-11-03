@@ -142,7 +142,7 @@ export function beispielKonfiguration(teil: Partial<AdminWelt['konfiguration']> 
     maxTeilnehmer: 22,
     anzGuests: 4,
     algorithmType: 'EXHAUSTIV',
-    auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+    auswechselModus: 'ZUFAELLIG',
     anzTeamGenerator: 1,
     sessionLeerlaufMinuten: 15,
     sessionMaximalStunden: 1,
@@ -778,7 +778,7 @@ export function adminHandler(welt: AdminWelt) {
     // --- Manuelle Teamgenerierung (C8, Stufe 5) --------------------------------------------------
     // Prüfung wie am Server: unbekannte/gesperrte Id ⇒ 400, Adminprofil ⇒ 409 PROFIL_GESCHUETZT, Zahl gegen die
     // Konfiguration, unvollständige Skillkarte ⇒ 409. Gerechnet wird nur zum Schein: erste Hälfte Team A, Rest Team B.
-    // Mit mehr als 24 Teilnehmern weicht `EXHAUSTIV` auf `HEURISTIK` aus; `ZULETZT_ANGEMELDET` fällt auf den Schwächsten.
+    // Mit mehr als 24 Teilnehmern weicht `EXHAUSTIV` auf `HEURISTIK` aus; `ZULETZT_ANGEMELDET` fällt auf `ZUFAELLIG` zurück.
     http.post('*/admin/teams/generieren', async ({ request }) => {
       const rumpf = (await request.json()) as { spielerIds?: number[]; gaeste?: { name?: string | null; stufe: GastStufe }[] }
       welt.protokoll.teamsManuell.push(rumpf)
@@ -819,7 +819,7 @@ export function adminHandler(welt: AdminWelt) {
       if (ungerade) teamA[teamA.length - 1].auswechselspieler = true
       return HttpResponse.json({
         algorithmType: anzahl > 24 ? 'HEURISTIK' : welt.konfiguration.algorithmType,
-        auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+        auswechselModus: 'ZUFAELLIG',
         auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
         differenzTeamstaerke: 1.25,
         teamA,

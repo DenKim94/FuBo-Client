@@ -44,8 +44,10 @@ test.describe('Tab Teams', () => {
     await expect(page.getByTestId('teams-nicht-generiert')).toHaveCount(0)
     await expect(page.getByTestId('teams-erfolg')).toContainText('Teams wurden generiert.')
     await expect(page.getByTestId('teams-anzeige-kopf')).toBeFocused()
-    // Neun Spieler: ein Auswechselspieler, Team A zaehlt ihn mit.
+    // Neun Spieler: ein Springer, Team A (Startteam) zaehlt ihn mit.
     await expect(page.getByTestId('teams-anzeige-auswechselspieler')).toHaveCount(1)
+    await expect(page.getByTestId('teams-anzeige-auswechselspieler')).toHaveText('Springer')
+    await expect(page.getByTestId('teams-anzeige-springer-regel')).toContainText('beginnt bei Team A')
     await expect(page.getByRole('heading', { name: 'Team A (5)' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Team B (4)' })).toBeVisible()
     await expect(page.getByTestId('teams-anzeige')).toContainText(`${EIGENER_NAME} (du)`)

@@ -200,13 +200,13 @@ export default function KonfigurationFormular({
             'Ändert sich der Teilnehmerkreis, steht das Kontingent wieder zur Verfügung.',
           )}
           <Auswahlliste
-            beschriftung="Modus zum Auswechselspieler"
+            beschriftung="Wahl des Springers"
             optionen={REGELN}
             wert={form.auswechselModus}
             beiAenderung={(wert) => {
               eingabe('auswechselModus', wert as KonfigurationForm['auswechselModus'])
             }}
-            hinweis="Wer bei ungerader Zahl aussetzt: der Schwächste oder der zuletzt angemeldete Spieler des größeren Teams."
+            hinweis="Bei ungerader Zahl spielt ein Springer für beide Teams: Er wird vor der Einteilung bestimmt, beginnt beim schwächeren Team und wechselt zum Gegner, sobald sein Team ein Tor erzielt."
             deaktiviert={aendern.isPending}
             data-testid="admin-konfig-auswechselModus"
           />

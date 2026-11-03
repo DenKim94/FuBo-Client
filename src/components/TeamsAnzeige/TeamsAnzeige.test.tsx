@@ -24,7 +24,7 @@ function rendern(teams: Teameinteilung, eigenerName: string | null = EIGENER_NAM
 }
 
 describe('TeamsAnzeige', () => {
-  test('zeigt zwei Teams mit Zahl, die den Auswechselspieler mitzaehlt', () => {
+  test('zeigt zwei Teams mit Zahl, die den Springer im Startteam mitzaehlt', () => {
     rendern(einteilung())
     expect(screen.getByRole('heading', { level: 3, name: 'Team A (2)' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 3, name: 'Team B (1)' })).toBeInTheDocument()
@@ -41,13 +41,14 @@ describe('TeamsAnzeige', () => {
     expect(kopf).toHaveAttribute('tabindex', '-1')
   })
 
-  test('kennzeichnet genau einen Auswechselspieler mit Text', () => {
+  test('kennzeichnet genau einen Springer mit Text und nennt die Regel', () => {
     rendern(einteilung())
     expect(screen.getAllByTestId('teams-anzeige-auswechselspieler')).toHaveLength(1)
-    expect(screen.getByTestId('teams-anzeige-auswechselspieler')).toHaveTextContent('Auswechselspieler')
+    expect(screen.getByTestId('teams-anzeige-auswechselspieler')).toHaveTextContent('Springer')
+    expect(screen.getByTestId('teams-anzeige-springer-regel')).toHaveTextContent('beginnt bei Team A')
   })
 
-  test('zeigt bei gerader Zahl keinen Auswechselspieler', () => {
+  test('zeigt bei gerader Zahl keinen Springer', () => {
     rendern(
       einteilung({
         auswechselspieler: null,

@@ -158,7 +158,7 @@ export function kontingentVon(modell: TerminModell): TerminDetails['kontingentGe
 
 /**
  * Baut aus den Zusagen eine Einteilung: die ersten Zusagen in Team A, der Rest in Team B,
- * bei ungerader Zahl ist der letzte Eintrag des grösseren Teams Auswechselspieler.
+ * bei ungerader Zahl ist der letzte Eintrag des grösseren Teams Springer (Startteam = Team in Überzahl).
  * Wartende (ab `max`) spielen nicht mit.
  */
 export function teamsAus(modell: TerminModell, erzeugtVon: string = EIGENER_NAME): NonNullable<TerminDetails['teams']> {

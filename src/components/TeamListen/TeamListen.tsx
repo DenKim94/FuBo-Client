@@ -21,8 +21,13 @@ type TeamListenEigenschaften = {
  * manuelle Generierung des Admins dieselben Listen zeigt.
  *
  * **Keine Rangfolge:** Die Reihenfolge in `teamA` und `teamB` bedeutet nichts, sie wird wie geliefert angezeigt. Ein
- * Eintrag trägt Name, „(Gast)“, optional „(du)“ und – genau einmal bei ungerader Zahl – „Auswechselspieler“ als Text mit
- * Symbol. **Keine Skillwerte und keine Gast-Stufe:** Die Listen kennen sie nicht.
+ * Eintrag trägt Name, „(Gast)“, optional „(du)“ und – genau einmal bei ungerader Zahl – „Springer“ als Text mit Symbol.
+ * **Keine Skillwerte und keine Gast-Stufe:** Die Listen kennen sie nicht.
+ *
+ * **Springer (A20b, Vertrag vom 03.11.2026):** Er gehört keinem Team fest an, steht aber in der Liste des Teams, bei
+ * dem er beginnt (Vertragsfeld `auswechselspieler`). Weil das eine Spielregel auf dem Platz ist, nennt ein Satz unter
+ * den Listen Startteam und Wechsel. **Nicht „beim schwächeren Team“:** Das wäre für Spieler eine Aussage über
+ * Skillsummen (A12); die Begründung steht nur in der Konfiguration des Admins.
  *
  * Die Teams sind `h3`; die Überschrift darüber (`h2`) gehört dem Aufrufer.
  */
@@ -33,15 +38,21 @@ export default function TeamListen({
   eigenerGast = false,
   'data-testid': testId = 'team-listen',
 }: TeamListenEigenschaften) {
+  const startteam = teamA.some((e) => e.auswechselspieler) ? 'Team A' : teamB.some((e) => e.auswechselspieler) ? 'Team B' : null
   return (
     <div className={style.listen}>
       <Team name="Team A" kennung="a" eintraege={teamA} eigenerName={eigenerName} eigenerGast={eigenerGast} testId={testId} />
       <Team name="Team B" kennung="b" eintraege={teamB} eigenerName={eigenerName} eigenerGast={eigenerGast} testId={testId} />
+      {startteam && (
+        <p className={style.springerRegel} data-testid={`${testId}-springer-regel`}>
+          Der Springer beginnt bei {startteam} und wechselt zum Gegner, sobald sein Team ein Tor erzielt.
+        </p>
+      )}
     </div>
   )
 }
 
-/** Ein Team als Abschnitt mit Überschrift und Liste; die Zahl zählt den Auswechselspieler mit. */
+/** Ein Team als Abschnitt mit Überschrift und Liste; die Zahl zählt den Springer im Startteam mit. */
 function Team({
   name,
   kennung,
@@ -80,9 +91,9 @@ function Team({
                 {eigen && ' (du)'}
               </span>
               {eintrag.auswechselspieler && (
-                <span className={style.auswechsel} data-testid={`${testId}-auswechselspieler`}>
+                <span className={style.springer} data-testid={`${testId}-auswechselspieler`}>
                   <Icon name="sync_icon_dark" groesse={1.35} />
-                  <span>Auswechselspieler</span>
+                  <span>Springer</span>
                 </span>
               )}
             </li>

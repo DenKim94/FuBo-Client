@@ -26,7 +26,7 @@ type TeamsAnzeigeEigenschaften = {
  *
  * **Keine Rangfolge:** Die Reihenfolge in `teamA` und `teamB` bedeutet nichts,
  * sie wird wie geliefert angezeigt. Ein Eintrag trägt Name, „(Gast)“, „(du)“ und
- * – genau einmal bei ungerader Zahl – „Auswechselspieler“ als Text mit Symbol.
+ * – genau einmal bei ungerader Zahl – „Springer“ als Text mit Symbol.
  * **Keine Skillwerte, keine Teamstärke, keine Gast-Stufe:** Der Server liefert sie
  * nicht (A12), und die Anzeige erfindet nichts.
  *
@@ -34,7 +34,7 @@ type TeamsAnzeigeEigenschaften = {
  * Hinweis sagt, dass sich die Teilnehmerliste seitdem geändert hat. Jemand hat
  * die Aufstellung vielleicht schon vorgelesen.
  *
- * Die beiden Teamspalten stehen seit C8 in `TeamListen` (dort auch die Regeln zu „(Gast)“, „(du)“ und Auswechselspieler);
+ * Die beiden Teamspalten stehen seit C8 in `TeamListen` (dort auch die Regeln zu „(Gast)“, „(du)“ und Springer);
  * hier bleiben Kopf, Hinweis „veraltet“ und das Fokusziel.
  *
  * Überschriften: Die Einteilung ist `h2` (unter dem `h1` der Terminkarte) und

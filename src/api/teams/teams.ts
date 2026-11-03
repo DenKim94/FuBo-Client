@@ -4,7 +4,10 @@ import type { components } from '@/api/common/types/schema'
 /** Die aktuelle Teameinteilung eines Termins (`TerminDetails.teams` und Antwort von {@link teamsGenerieren}). */
 export type Teameinteilung = components['schemas']['Teameinteilung']
 
-/** Ein Spieler in einem Team: Name, Gast-Kennzeichen, Auswechselspieler – keine Skillwerte. */
+/**
+ * Ein Spieler in einem Team: Name, Gast-Kennzeichen, Springer – keine Skillwerte. Das Feld heißt im Vertrag weiter
+ * `auswechselspieler`; gemeint ist seit dem 03.11.2026 der Springer (A20b).
+ */
 export type TeamEintrag = components['schemas']['TeamEintrag']
 
 /**

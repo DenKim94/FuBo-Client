@@ -55,7 +55,7 @@ describe('istEingeteilt', () => {
     }),
   )
 
-  test('steht in Team A oder B (auch als Auswechselspieler): eingeteilt', () => {
+  test('steht in Team A oder B (auch als Springer): eingeteilt', () => {
     expect(istEingeteilt(teams, ICH, false)).toBe(true)
     expect(istEingeteilt(teams, 'Beispielgast', true)).toBe(true)
   })

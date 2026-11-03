@@ -106,7 +106,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
     expect(screen.getByTestId('teams-generieren')).toHaveTextContent('Teams generieren')
   })
 
-  test('zeigt eine vorhandene Einteilung samt „(du)“ und Auswechselspieler', async () => {
+  test('zeigt eine vorhandene Einteilung samt „(du)“ und Springer', async () => {
     rendern(
       '/teams/102',
       mitEinteilung({

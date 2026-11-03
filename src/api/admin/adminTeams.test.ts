@@ -8,7 +8,7 @@ import { mockServer } from '@/test/mocks/server'
 
 const EINTEILUNG = {
   algorithmType: 'HEURISTIK',
-  auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+  auswechselModus: 'ZUFAELLIG',
   auswechselspieler: null,
   differenzTeamstaerke: 0.75,
   teamA: [{ anzeigeName: 'Beispielspieler 01', gast: false, auswechselspieler: false }],

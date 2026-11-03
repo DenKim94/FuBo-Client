@@ -9,8 +9,8 @@ export type Bilanz = components['schemas']['Bilanz']
  *
  * Dreimal `0` heißt „nichts zu zeigen“ – bei einem Spieler ohne gewertete Termine
  * wie bei einem Gast, der grundsätzlich keine Bilanz führt. Beide Fälle sind
- * absichtlich nicht unterscheidbar. **Der Auswechselspieler zählt in allen drei
- * Zählern mit.** Wie ein Gast behandelt wird, ist im Vertrag offen (1.4): Die
+ * absichtlich nicht unterscheidbar. **Der Springer zählt an seinem Termin in keinem
+ * der drei Zähler** (Vertrag vom 03.11.2026; er hat für beide Teams gespielt). Wie ein Gast behandelt wird, ist im Vertrag offen (1.4): Die
  * Oberfläche ruft die Bilanz für GAST nicht ab.
  *
  * @param keinRefresh Beim Hintergrundabruf `true`, damit das Sitzungsfenster nicht verlängert wird.

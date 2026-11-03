@@ -238,7 +238,7 @@ describe('AdminTeams – Ergebnis', () => {
   test('Ergebnis: Überschrift mit Fokus, Hinweis erneut, Teamlisten und Algorithmus; ohne Skillwerte und ohne Ungleichgewicht', async () => {
     const welt = rendern()
     await bereit()
-    // Drei Teilnehmer: ungerade, also genau ein Auswechselspieler.
+    // Drei Teilnehmer: ungerade, also genau ein Springer.
     await waehlen(1, 3)
     await gastAnlegen()
 
@@ -310,7 +310,7 @@ describe('AdminTeams – Ergebnis', () => {
       http.post('*/admin/teams/generieren', () =>
         HttpResponse.json({
           algorithmType: 'HEURISTIK',
-          auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+          auswechselModus: 'ZUFAELLIG',
           auswechselspieler: null,
           differenzTeamstaerke: 0,
           teamA: [{ anzeigeName: 'Beispielspieler 01', gast: false, auswechselspieler: false }],
@@ -325,7 +325,7 @@ describe('AdminTeams – Ergebnis', () => {
 
     expect(screen.getByTestId('admin-teams-verfahren')).toHaveTextContent('Algorithmus-Typ: Schnell')
     expect(screen.getByTestId('admin-teams-verfahren-abweichung')).toHaveTextContent('Abweichend von der Einstellung')
-    expect(screen.getByTestId('admin-teams-regel-abweichung')).toHaveTextContent('keine Anmeldereihenfolge')
+    expect(screen.getByTestId('admin-teams-regel-abweichung')).toHaveTextContent('keine Anmeldereihenfolge; der Springer wurde zufällig gezogen')
   })
 
   test('ohne Abweichung steht kein Erklärsatz da', async () => {

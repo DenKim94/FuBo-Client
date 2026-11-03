@@ -13,8 +13,8 @@ import style from './BilanzKarte.module.scss'
  * nicht) und zeigt „Noch keine Spiele gewertet.“ statt dreier Nullen.
  *
  * Ein Fehler beim Laden ist eine kleine Meldung und blockiert die Seite nicht: Die
- * Bilanz ist Zugabe, das Ergebnis des Termins ist die Hauptsache. Der Auswechselspieler
- * zählt in allen drei Zählern mit (er hat gespielt).
+ * Bilanz ist Zugabe, das Ergebnis des Termins ist die Hauptsache. Der Springer zählt an
+ * seinem Termin in keinem der drei Zähler (er hat für beide Teams gespielt).
  */
 export default function BilanzKarte() {
   const { istGast } = useSitzung()

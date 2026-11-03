@@ -201,7 +201,7 @@ export function problem(route: Route, status: number, code: string, detail: stri
 
 /**
  * Baut eine Einteilung aus den Zusagen: die ersten in Team A, der Rest in Team B, bei
- * ungerader Zahl ist der letzte Eintrag des groesseren Teams Auswechselspieler.
+ * ungerader Zahl ist der letzte Eintrag des groesseren Teams Springer (Startteam).
  * Wartende (ab `max`) spielen nicht mit.
  */
 export function einteilungAus(m: TerminModell): Einteilung {

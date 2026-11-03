@@ -954,6 +954,8 @@ export interface paths {
          *     **`201` und kein `200`:** Es entsteht eine Ressource. Einen `Location`-Header trägt die Antwort trotzdem nicht – die Einteilung hat keine eigene Adresse, sie reist in `GET /termine/{terminId}/lesen` mit.
          *
          *     **Jeder Lauf mischt die Teams neu durch** (Änderung vom 22.10.2026; **verhaltensändernd, aber ohne Änderung an Feldern**): Der Seed wird je Lauf neu gezogen und wählt **zufällig unter allen Aufteilungen, die höchstens einen Skillpunkt der am höchsten gewichteten Kategorie schlechter ausgeglichen sind als das Optimum** – nicht mehr nur unter den exakt gleich guten. **Die aktuelle Einteilung des Termins ist dabei ausgeschlossen:** Dieselben zwei Gruppen mit vertauschten Namen `teamA`/`teamB` zählen als dieselbe Einteilung. Solange der Teilnehmerkreis derselbe ist (auch nach einer Skill-Änderung), liefert ein neuer Lauf also nie die bisherige Aufteilung. Liegt im Band nur die bisherige, gilt die beste Alternative – dann kann die Einteilung etwas schlechter ausgeglichen sein als das Band erlaubt. Wer neu zu- oder abgesagt hat, ändert den Kreis; die Regel entfällt dann von selbst. **Die Auswahl ist klein:** Bei wenigen Spielern liegen oft nur ein bis zwei Aufteilungen im Band, sodass sich zwei bis drei Einteilungen abwechseln können.
+         *
+         *     **Springer statt Auswechselspieler, Ausgleich je Kategorie** (Änderung vom 03.11.2026; **brechend** wegen des Enumwerts `ZUFAELLIG` in `AuswechselModus`, die Felder bleiben): Bei ungerader Zahl wird zuerst der Springer bestimmt (`auswechselModus`), danach werden die übrigen Teilnehmer zu zwei gleich großen Teams ausgeglichen. Er beginnt beim schwächeren Team und steht dort in der Liste, markiert mit `auswechselspieler: true`. Der Ausschluss der bisherigen Einteilung gilt, wenn derselbe Teilnehmer wieder Springer ist; mit einem anderen Springer ist jede Einteilung ohnehin eine neue. Ausgeglichen wird zuerst die am weitesten auseinanderliegende Kategorie, dann die Summe (siehe `AlgorithmType`).
          */
         post: operations["teamsGenerieren"];
         delete?: never;
@@ -975,7 +977,7 @@ export interface paths {
          * Teams manuell und ohne Termin generieren
          * @description Rechnet eine Teameinteilung auf einer frei gewählten Teilnehmermenge (A24). Verlangt die Rolle `ADMIN`.
          *
-         *     **Zweite Eingangstür, kein zweiter Generator.** Zielfunktion, beide Verfahren und der Auswechselspieler sind dieselben wie am Termin; verzweigt wird allein die Herkunft der Aufstellung. Der Pfad unterscheidet sich vom offenen Endpunkt **nur im `/admin/`-Präfix** – der Ort ist die Autorisierungsentscheidung.
+         *     **Zweite Eingangstür, kein zweiter Generator.** Zielfunktion, beide Verfahren und die Wahl des Springers sind dieselben wie am Termin; verzweigt wird allein die Herkunft der Aufstellung. Der Pfad unterscheidet sich vom offenen Endpunkt **nur im `/admin/`-Präfix** – der Ort ist die Autorisierungsentscheidung.
          *
          *     **Das Ergebnis wird nirgends gespeichert.** Es rührt keinen Termin an, löst keine Einteilung ab, erscheint bei keinem anderen Nutzer und ist nach dem Verlassen der Seite weg. **Das gehört sichtbar auf den Bildschirm.**
          *
@@ -1009,7 +1011,7 @@ export interface paths {
          *
          *     **Der erste Eintrag gilt.** Je Termin gibt es genau ein Ergebnis; der zweite Versuch liefert `409 ERGEBNIS_VORHANDEN`. **Das ist kein Bedienfehler** – nach dem Abpfiff tippen mehrere gleichzeitig. Die Oberfläche sollte „hat schon jemand erfasst" melden und danach das vorhandene Ergebnis aus `GET /termine/{terminId}/lesen` zeigen, nicht eine Fehlermeldung.
          *
-         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`, aber nicht jeder Angemeldete darf ihn nutzen** (Änderung vom 22.10.2026, **brechend** für Clients). Eintragen dürfen der `ADMIN` und **die Eingeteilten der aktuellen Teameinteilung dieses Termins** – Team A, Team B und der Auswechselspieler, `USER` wie `GAST`. Wer nur zugesagt hat und nicht eingeteilt wurde (Warteschlange, Zusage nach dem Lauf), wer abgesagt oder sich nie gemeldet hat, erhält `403 NICHT_EINGETEILT`. **Der Grund:** Nach dem Termin ist die Einteilung der einzige verlässliche Nachweis, wer gespielt hat – und die Grundlage der Bilanz. Weil der erste Eintrag gilt und nur der Admin korrigieren kann, dürfte sonst ein Außenstehender das endgültige Ergebnis setzen. Maßgeblich ist die **aktuelle** Einteilung, auch wenn sie `veraltet` ist; wer nur in einer früheren, abgelösten Einteilung stand, ist nicht eingeteilt. Die Regel hängt an den Daten des Termins und steht deshalb im Dienst, nicht im Pfad. Korrigieren darf danach nur der Admin (`POST /admin/ergebnis/korrigieren`, unverändert).
+         *     **Der Endpunkt liegt bewusst nicht unter `/admin/`, aber nicht jeder Angemeldete darf ihn nutzen** (Änderung vom 22.10.2026, **brechend** für Clients). Eintragen dürfen der `ADMIN` und **die Eingeteilten der aktuellen Teameinteilung dieses Termins** – Team A, Team B und der Springer (in seinem Startteam als `auswechselspieler` markiert), `USER` wie `GAST`. Wer nur zugesagt hat und nicht eingeteilt wurde (Warteschlange, Zusage nach dem Lauf), wer abgesagt oder sich nie gemeldet hat, erhält `403 NICHT_EINGETEILT`. **Der Grund:** Nach dem Termin ist die Einteilung der einzige verlässliche Nachweis, wer gespielt hat – und die Grundlage der Bilanz. Weil der erste Eintrag gilt und nur der Admin korrigieren kann, dürfte sonst ein Außenstehender das endgültige Ergebnis setzen. Maßgeblich ist die **aktuelle** Einteilung, auch wenn sie `veraltet` ist; wer nur in einer früheren, abgelösten Einteilung stand, ist nicht eingeteilt. Die Regel hängt an den Daten des Termins und steht deshalb im Dienst, nicht im Pfad. Korrigieren darf danach nur der Admin (`POST /admin/ergebnis/korrigieren`, unverändert).
          *
          *     **Woran der Client die Berechtigung erkennt, ohne neues Feld:** Eingeteilt ist genau, wer in `teams.teamA` oder `teams.teamB` der Einzelansicht (`GET /termine/{terminId}/lesen`) steht – der Auswechselspieler ist dort Teil einer der beiden Listen (`auswechselspieler: true`). Der Client sucht den Eintrag mit dem **eigenen Namen und passendem `gast`-Wert**; die Kombination ist je Termin eindeutig (Profilnamen und Gastnamen sind je für sich eindeutig, und ein Gast kann sich nicht unter einem Profilnamen anmelden). Der Admin braucht keinen Eintrag. Das Ergebnisformular gehört nur diesen Sitzungen; alle anderen sehen stattdessen einen Hinweis. Die Auskunft ist eine Anzeige, keine Sicherung – durchgesetzt wird sie beim Eintrag.
          *
@@ -1613,23 +1615,27 @@ export interface components {
         /**
          * @description Verfahren der Teamgenerierung (A15). Beide nutzen dieselbe Zielfunktion und dieselbe Datengrundlage und sind gegeneinander austauschbar.
          *
-         *     - `EXHAUSTIV` (Vorgabe): vollständige Enumeration, bis 22 Teilnehmer beherrschbar. Bestimmt das globale Optimum und wählt per Seed **zufällig unter allen Aufteilungen, die höchstens einen Skillpunkt der am höchsten gewichteten Kategorie schlechter sind** (seit 22.10.2026; vorher nur unter den exakt gleich guten).
-         *     - `HEURISTIK`: seed-basierte lokale Suche mit Neustarts; wählt unter den besten Ergebnissen der Läufe und ihren Einzeltausch-Nachbarn nach derselben Bandregel.
+         *     **Die Zielfunktion (Änderung vom 03.11.2026):** Zuerst zählt die **größte gewichtete Abweichung einer einzelnen Kategorie** (Angriff, Verteidigung, Spielstärke, Laufstärke, Torwart mit Gewicht 0,30), erst bei Gleichstand die **Summe** der Abweichungen über alle Kategorien. So kann keine Kategorie weit auseinanderliegen, nur weil die anderen gut ausgeglichen sind. Bei ungerader Zahl wird ohne den Springer gerechnet (siehe `AuswechselModus`).
+         *
+         *     - `EXHAUSTIV` (Vorgabe): vollständige Enumeration, bis 24 Teilnehmer. Bestimmt das globale Optimum und wählt per Seed **zufällig unter allen Aufteilungen mit derselben größten Einzelabweichung, deren Summe höchstens einen Skillpunkt der am höchsten gewichteten Kategorie über dem Optimum liegt** (Durchmischung seit 22.10.2026).
+         *     - `HEURISTIK`: seed-basierte lokale Suche mit Neustarts; wählt unter den besten Ergebnissen der Läufe und ihren Einzeltausch-Nachbarn nach derselben Regel.
          *
          *     Beide meiden bei einem Termin-Lauf die aktuelle Einteilung des Termins (siehe `POST /teams/generieren`).
          * @enum {string}
          */
         AlgorithmType: "EXHAUSTIV" | "HEURISTIK";
         /**
-         * @description Wer bei ungerader Teilnehmerzahl als Auswechselspieler geführt wird (A20b).
+         * @description Wer bei ungerader Teilnehmerzahl **Springer** ist (A20b, Änderung vom 03.11.2026, **brechend**: `SCHWAECHSTER_UEBERZAHL` entfällt und wird von bestehenden Installationen zu `ZUFAELLIG` umgeschrieben).
          *
-         *     - `SCHWAECHSTER_UEBERZAHL` (Vorgabe): der schwächste Spieler des größeren Teams, gemessen an der Gesamtstärke aus dem Skill-Snapshot des Laufs.
+         *     - `ZUFAELLIG` (Vorgabe): ein zufällig gezogener Teilnehmer aus der Aufstellung – Spieler wie Gast, nicht aus der Warteschlange. Der Seed des Laufs entscheidet.
          *     - `ZULETZT_ANGEMELDET`: der Teilnehmer mit der spätesten Zusage.
          *
-         *     Die Wahl ändert **nicht** die Einteilung, sondern nur, wer innerhalb des größeren Teams als Auswechselspieler ausgewiesen wird; A20a bleibt unberührt. Ausgewertet wird das Feld erst ab S5 – heute lässt es sich setzen und lesen, hat aber noch keinen Abnehmer.
+         *     **Der Springer gehört keinem Team fest an.** Er wird **vor** der Einteilung bestimmt; die übrigen Teilnehmer werden zu zwei **gleich großen** Teams ausgeglichen. Er beginnt beim schwächeren der beiden Teams (gewichtete Gesamtstärke, bei Gleichstand entscheidet der Seed) und wechselt zum Gegner, sobald sein aktuelles Team ein Tor erzielt; trifft das Team in Unterzahl, bleibt er. Das ist eine Spielregel auf dem Platz – der Server weist nur Springer und Startteam aus.
+         *
+         *     **Die Einstellung verändert damit die Einteilung**, anders als der frühere Auswechselspieler. Ein späterer Wechsel des Modus ändert an gespeicherten Einteilungen nichts: Der Springer wird beim Lauf gespeichert, nicht beim Lesen neu bestimmt.
          * @enum {string}
          */
-        AuswechselModus: "SCHWAECHSTER_UEBERZAHL" | "ZULETZT_ANGEMELDET";
+        AuswechselModus: "ZUFAELLIG" | "ZULETZT_ANGEMELDET";
         /**
          * @description Die anwendungsweite Admin-Konfiguration – genau ein Datensatz.
          *
@@ -1655,7 +1661,7 @@ export interface components {
             anzGuests: number;
             /** @description Gewähltes Verfahren der Teamgenerierung (A15). Vorgabe `EXHAUSTIV`. */
             algorithmType: components["schemas"]["AlgorithmType"];
-            /** @description Auswahl des Auswechselspielers bei ungerader Teilnehmerzahl (A20b). Vorgabe `SCHWAECHSTER_UEBERZAHL`. */
+            /** @description Wahl des Springers bei ungerader Teilnehmerzahl (A20b). Vorgabe `ZUFAELLIG`. */
             auswechselModus: components["schemas"]["AuswechselModus"];
             /**
              * Format: int32
@@ -1762,7 +1768,7 @@ export interface components {
             anzGuests: number;
             /** @description Gewähltes Verfahren der Teamgenerierung (A15). Vorgabe `EXHAUSTIV`. */
             algorithmType: components["schemas"]["AlgorithmType"];
-            /** @description Auswahl des Auswechselspielers bei ungerader Teilnehmerzahl (A20b). Vorgabe `SCHWAECHSTER_UEBERZAHL`. */
+            /** @description Wahl des Springers bei ungerader Teilnehmerzahl (A20b). Vorgabe `ZUFAELLIG`. */
             auswechselModus: components["schemas"]["AuswechselModus"];
             /**
              * Format: int32
@@ -2218,13 +2224,13 @@ export interface components {
             anzeigeName: string;
             /** @description `true` bei einem Gast. Das Frontend kennzeichnet ihn; die Stufe erfährt es nicht. */
             gast: boolean;
-            /** @description `true` für genau einen Teilnehmer des größeren Teams bei ungerader Teilnehmerzahl (A20b), sonst für niemanden. */
+            /** @description `true` für den **Springer** bei ungerader Teilnehmerzahl (A20b), sonst für niemanden. Er steht im Team, bei dem er beginnt, und das ist **das Team in Überzahl**; die übrigen Mitglieder beider Teams sind gleich viele. */
             auswechselspieler: boolean;
         };
         /**
          * @description Die aktuelle Teameinteilung eines Termins (A20a, A20b).
          *
-         *     **Wer in `teamA` oder `teamB` steht, ist eingeteilt** – und nur der (seit dem 22.10.2026 Voraussetzung für `POST /ergebnis/erfassen`). Der Auswechselspieler steht in einer der beiden Listen, nicht daneben; wer nur in der Teilnehmerliste steht (Warteschlange), ist nicht eingeteilt. Das ist zugesichert und ändert sich nicht, ohne dass der Vertrag es nennt.
+         *     **Wer in `teamA` oder `teamB` steht, ist eingeteilt** – und nur der (seit dem 22.10.2026 Voraussetzung für `POST /ergebnis/erfassen`). Der Springer (Feld `auswechselspieler`) steht in der Liste des Teams, bei dem er beginnt, nicht daneben; wer nur in der Teilnehmerliste steht (Warteschlange), ist nicht eingeteilt. Das ist zugesichert und ändert sich nicht, ohne dass der Vertrag es nennt.
          *
          *     Sie erscheint an zwei Stellen in derselben Form: als Feld `teams` in `TerminDetails` und als Antwort von `POST /teams/generieren`. Wer gerade generiert hat, sieht dasselbe wie der, der den Termin öffnet.
          *
@@ -2240,7 +2246,7 @@ export interface components {
             erzeugtVon: string;
             /** @description `true` heißt „noch anzeigen, aber nicht mehr aktuell“ – seit dem Lauf hat sich der Teilnehmerkreis geändert. **Verstecken wäre falsch**: Jemand hat die Aufstellung vielleicht schon vorgelesen. */
             veraltet: boolean;
-            /** @description Anzeigename oder `null` bei gerader Teilnehmerzahl. `null` und kein leerer String. */
+            /** @description Anzeigename des **Springers** oder `null` bei gerader Teilnehmerzahl. `null` und kein leerer String. Der Name bleibt aus Gründen der Verträglichkeit; gemeint ist seit dem 03.11.2026 der Springer nach A20b. **Bei Einteilungen von vor dieser Änderung ist er `null`**, auch bei ungerader Zahl. */
             auswechselspieler?: string | null;
             /** @description Team A. **Die Reihenfolge ist keine Rangfolge** und darf frei sortiert werden – anders als die Teilnehmerliste. */
             teamA: components["schemas"]["TeamEintrag"][];
@@ -2285,13 +2291,13 @@ export interface components {
         ManuelleEinteilung: {
             /** @description Das **tatsächlich gerechnete** Verfahren. Es kann von der Konfiguration abweichen: Oberhalb von 24 Teilnehmern weicht `EXHAUSTIV` auf `HEURISTIK` aus, statt zu scheitern. **Anzeigen, nicht ignorieren.** */
             algorithmType: components["schemas"]["AlgorithmType"];
-            /** @description Die **tatsächlich angewandte** Regel. `ZULETZT_ANGEMELDET` hat im manuellen Lauf keine Datengrundlage – es hat sich niemand gemeldet – und fällt auf `SCHWAECHSTER_UEBERZAHL` zurück. **Anzeigen, nicht ignorieren.** */
+            /** @description Die **tatsächlich angewandte** Regel. `ZULETZT_ANGEMELDET` hat im manuellen Lauf keine Datengrundlage – es hat sich niemand gemeldet – und fällt auf `ZUFAELLIG` zurück. **Anzeigen, nicht ignorieren.** */
             auswechselModus: components["schemas"]["AuswechselModus"];
-            /** @description Anzeigename oder `null` bei gerader Teilnehmerzahl. */
+            /** @description Anzeigename des Springers oder `null` bei gerader Teilnehmerzahl. Er steht zusätzlich in dem Team, bei dem er beginnt. */
             auswechselspieler?: string | null;
             /**
              * Format: double
-             * @description Die **Kosten der Zielfunktion** – die gewichtete Summe der Kategoriedifferenzen, **nicht** die Differenz der Gesamtstärken, die der Name nahelegt. `0` heißt perfekt ausgeglichen, größer heißt schlechter. **Seit dem 22.10.2026 nicht mehr zwingend das Minimum:** Die Einteilung wird aus dem Band bis zu einem Skillpunkt der höchstgewichteten Kategorie über dem Optimum gewählt, der Wert kann also über dem bestmöglichen liegen. Nur im Adminbildschirm (A12).
+             * @description Die **gewichtete Summe der Kategoriedifferenzen** zwischen den beiden Teams – **nicht** die Differenz der Gesamtstärken, die der Name nahelegt. `0` heißt perfekt ausgeglichen, größer heißt schlechter. **Bei ungerader Zahl ohne den Springer gerechnet**, denn er spielt abwechselnd für beide Seiten. **Seit dem 03.11.2026 entscheidet zuerst die größte Einzelabweichung einer Kategorie**, erst danach diese Summe (siehe `AlgorithmType`); der Wert ist damit nicht zwingend die kleinstmögliche Summe. Nur im Adminbildschirm (A12).
              */
             differenzTeamstaerke: number;
             /** @description Team A. */
@@ -2398,7 +2404,7 @@ export interface components {
             siege: number;
             /** @description Verlorene Spiele. */
             niederlagen: number;
-            /** @description Unentschiedene Spiele. **Der Auswechselspieler zählt in allen drei Zählern mit** – er hat gespielt. */
+            /** @description Unentschiedene Spiele. **Der Springer zählt an diesem Termin in keinem der drei Zähler** (Änderung vom 03.11.2026) – er hat für beide Teams gespielt. Wer fest eingeteilt war, zählt wie bisher. */
             unentschieden: number;
         };
         /**
@@ -4463,7 +4469,7 @@ export interface operations {
                     /**
                      * @example {
                      *       "algorithmType": "EXHAUSTIV",
-                     *       "auswechselModus": "SCHWAECHSTER_UEBERZAHL",
+                     *       "auswechselModus": "ZUFAELLIG",
                      *       "auswechselspieler": null,
                      *       "differenzTeamstaerke": 0,
                      *       "teamA": [

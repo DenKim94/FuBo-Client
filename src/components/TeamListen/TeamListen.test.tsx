@@ -10,7 +10,7 @@ const A: TeamEintrag[] = [
 const B: TeamEintrag[] = [{ anzeigeName: 'Beispielgast', gast: true, auswechselspieler: false }]
 
 describe('TeamListen', () => {
-  test('zeigt zwei Teams als h3 mit Zahl, die den Auswechselspieler mitzählt, in der gelieferten Reihenfolge', () => {
+  test('zeigt zwei Teams als h3 mit Zahl, die den Springer im Startteam mitzählt, in der gelieferten Reihenfolge', () => {
     render(<TeamListen teamA={A} teamB={B} />)
 
     expect(screen.getByRole('heading', { level: 3, name: 'Team A (2)' })).toBeInTheDocument()
@@ -20,12 +20,12 @@ describe('TeamListen', () => {
     expect(namen[1]).toHaveTextContent('Beispielspieler 13')
   })
 
-  test('kennzeichnet Gäste mit Text und den Auswechselspieler genau einmal als Text', () => {
+  test('kennzeichnet Gäste mit Text und den Springer genau einmal als Text', () => {
     render(<TeamListen teamA={A} teamB={B} />)
 
     expect(within(screen.getByTestId('team-listen-b')).getByText(/Beispielgast \(Gast\)/)).toBeInTheDocument()
     expect(screen.getAllByTestId('team-listen-auswechselspieler')).toHaveLength(1)
-    expect(screen.getByTestId('team-listen-auswechselspieler')).toHaveTextContent('Auswechselspieler')
+    expect(screen.getByTestId('team-listen-auswechselspieler')).toHaveTextContent('Springer')
   })
 
   test('markiert den eigenen Eintrag nur bei gleichem Namen und gleicher Art; ohne Angabe gibt es kein „(du)“', () => {
@@ -38,6 +38,25 @@ describe('TeamListen', () => {
 
     rerender(<TeamListen teamA={A} teamB={B} />)
     expect(screen.queryByText(/\(du\)/)).not.toBeInTheDocument()
+  })
+
+  test('nennt unter den Listen das Startteam des Springers und den Wechsel nach einem Tor', () => {
+    const { rerender } = render(<TeamListen teamA={A} teamB={B} />)
+    expect(screen.getByTestId('team-listen-springer-regel')).toHaveTextContent(
+      'Der Springer beginnt bei Team A und wechselt zum Gegner, sobald sein Team ein Tor erzielt.',
+    )
+
+    // Startteam ist das Team, in dessen Liste er steht – auch Team B.
+    rerender(<TeamListen teamA={B} teamB={A} />)
+    expect(screen.getByTestId('team-listen-springer-regel')).toHaveTextContent('beginnt bei Team B')
+  })
+
+  test('ohne Springer (gerade Zahl oder Einteilung von vor dem 03.11.2026) kein Kennzeichen und keine Regel', () => {
+    const ohne = A.map((e) => ({ ...e, auswechselspieler: false }))
+    render(<TeamListen teamA={ohne} teamB={B} />)
+
+    expect(screen.queryByTestId('team-listen-auswechselspieler')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('team-listen-springer-regel')).not.toBeInTheDocument()
   })
 
   test('der Präfix der Test-IDs ist wählbar', () => {

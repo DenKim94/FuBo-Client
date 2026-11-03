@@ -167,7 +167,7 @@ test.describe('Manuelle Teamgenerierung', () => {
     await page.getByTestId('admin-teams-profil-3').check()
     await page.getByTestId('admin-teams-berechnen').click()
 
-    await expect(page.getByTestId('admin-teams-regel-abweichung')).toContainText('keine Anmeldereihenfolge')
+    await expect(page.getByTestId('admin-teams-regel-abweichung')).toContainText('keine Anmeldereihenfolge; der Springer wurde zufällig gezogen')
   })
 
   test('jede Aenderung der Auswahl laesst das Ergebnis verschwinden (M12); ein zweiter Lauf sendet dieselbe Auswahl', async ({ page }) => {

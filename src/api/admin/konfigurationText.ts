@@ -12,10 +12,13 @@ export const VERFAHREN: { wert: AlgorithmType; text: string; zusatz: string }[] 
   { wert: 'EXHAUSTIV', text: 'Standard', zusatz: 'prüft alle Aufteilungen' },
   { wert: 'HEURISTIK', text: 'Schnell', zusatz: 'nah am Optimum' },
 ]
-/** Regel für den Auswechselspieler als Auswahl. */
+/**
+ * Wahl des Springers als Auswahl (A20b, Vertrag vom 03.11.2026). Der Springer wird vor der Einteilung bestimmt und
+ * gehört keinem Team fest an; deshalb kein Zusatz „des größeren Teams“ mehr.
+ */
 export const REGELN: { wert: AuswechselModus; text: string; zusatz: string }[] = [
-  { wert: 'SCHWAECHSTER_UEBERZAHL', text: 'Schwächster Spieler', zusatz: 'des größeren Teams' },
-  { wert: 'ZULETZT_ANGEMELDET', text: 'Zuletzt angemeldeter Spieler', zusatz: 'des größeren Teams' },
+  { wert: 'ZUFAELLIG', text: 'Zufällig', zusatz: 'aus allen Teilnehmern' },
+  { wert: 'ZULETZT_ANGEMELDET', text: 'Zuletzt angemeldeter Spieler', zusatz: 'mit der spätesten Zusage' },
 ]
 
 /**
@@ -28,7 +31,7 @@ export function verfahrenText(wert: AlgorithmType): string {
 }
 
 /**
- * Anzeigetext einer Auswechselregel samt Zusatz („Schwächster Spieler des größeren Teams“).
+ * Anzeigetext einer Springer-Regel samt Zusatz („Zufällig aus allen Teilnehmern“).
  *
  * @param wert Die Regel.
  */

@@ -17,7 +17,7 @@ export type KonfigurationAnfrage = components['schemas']['KonfigurationAendernRe
 /** Verfahren der Teamgenerierung (A15). */
 export type AlgorithmType = components['schemas']['AlgorithmType']
 
-/** Regel für den Auswechselspieler bei ungerader Teilnehmerzahl (A20b). */
+/** Wahl des Springers bei ungerader Teilnehmerzahl (A20b); der Vertragsname `AuswechselModus` bleibt. */
 export type AuswechselModus = components['schemas']['AuswechselModus']
 
 /** Ein Gastplatz samt Zustand (`GET /admin/gast/lesen`). */

@@ -403,7 +403,7 @@ export type E2EKonfiguration = {
   maxTeilnehmer: number
   anzGuests: number
   algorithmType: 'EXHAUSTIV' | 'HEURISTIK'
-  auswechselModus: 'SCHWAECHSTER_UEBERZAHL' | 'ZULETZT_ANGEMELDET'
+  auswechselModus: 'ZUFAELLIG' | 'ZULETZT_ANGEMELDET'
   anzTeamGenerator: number
   sessionLeerlaufMinuten: number
   sessionMaximalStunden: number
@@ -464,7 +464,7 @@ export function e2eKonfiguration(teil: Partial<E2EKonfiguration> = {}): E2EKonfi
     maxTeilnehmer: 22,
     anzGuests: 4,
     algorithmType: 'EXHAUSTIV',
-    auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+    auswechselModus: 'ZUFAELLIG',
     anzTeamGenerator: 1,
     sessionLeerlaufMinuten: 15,
     sessionMaximalStunden: 1,
@@ -704,7 +704,7 @@ export async function konfigurationNachbilden(
     return route.fulfill({
       json: {
         algorithmType: welt.konfiguration.algorithmType,
-        auswechselModus: 'SCHWAECHSTER_UEBERZAHL',
+        auswechselModus: 'ZUFAELLIG',
         auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
         differenzTeamstaerke: 1.25,
         teamA,

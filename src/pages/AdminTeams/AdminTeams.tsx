@@ -349,7 +349,7 @@ export default function AdminTeams() {
             )}
             {grenzen && grenzen.auswechselModus !== einteilung.auswechselModus && (
               <p className={style.nebentext} data-testid="admin-teams-regel-abweichung">
-                Für diese Berechnung gibt es keine Anmeldereihenfolge; es gilt der schwächste Spieler des größeren Teams.
+                Für diese Berechnung gibt es keine Anmeldereihenfolge; der Springer wurde zufällig gezogen.
               </p>
             )}
           </div>
