@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
@@ -13,7 +14,17 @@ import { VitePWA } from 'vite-plugin-pwa'
  * eigene Formulierung baut. Ein von Workbox erzeugter Worker nimmt keinen
  * eigenen Code auf. Der Worker liegt deshalb als `src/sw.ts` im Quellbaum.
  */
+/**
+ * Versionsnummer der Anwendung, einzige Quelle ist `package.json` (Anzeige auf der PIN-Seite, seit 03.11.2026).
+ * Gelesen statt importiert, damit `tsconfig.node.json` kein `resolveJsonModule` braucht.
+ */
+const APP_VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version
+
 export default defineConfig({
+  // Beim Bau als Textkonstante eingesetzt; gilt über `mergeConfig` auch in Vitest.
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),

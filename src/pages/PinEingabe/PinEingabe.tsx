@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type SubmitEvent } from 'react'
 import { ApiFehler } from '@/api/common/fehler'
+import { APP_VERSION } from '@/app/version'
 import Aktionsleiste from '@/components/Aktionsleiste/Aktionsleiste'
 import CustomButton from '@/components/CustomButton/CustomButton'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
@@ -139,6 +140,12 @@ export default function PinEingabe() {
           <Fehlermeldung id={fehlerId} fehler={pruefung.error} ersatz={FEHLER_ERSATZ} data-testid="pin-fehler" />
         )}
       </div>
+
+      {/* Versionsnummer (Vorgabe des Entwicklers, 03.11.2026): nur hier, direkt über der Aktion, als
+          Nebentext. Kein Bedienelement; Farbe über ein Token mit hellem und dunklem Wert. */}
+      <p className={style.version} data-testid="pin-version">
+        Version {APP_VERSION}
+      </p>
 
       <Aktionsleiste>
         <CustomButton

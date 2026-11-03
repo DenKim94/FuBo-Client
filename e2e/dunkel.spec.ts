@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import { adminStart } from './hilfen/admin.js'
 import { sitzungNachbilden } from './hilfen/sitzung.js'
@@ -101,6 +102,31 @@ test.describe('Dark-Mode', () => {
     const seite = rgb(await page.evaluate(() => getComputedStyle(document.body).backgroundColor))
     expect(leuchtdichte(seite)).toBeGreaterThan(0.8)
   })
+})
+
+/** Versionsnummer aus `package.json` – dieselbe Quelle, die Vite beim Bau einsetzt. */
+const VERSION = (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }).version
+
+test.describe('Versionsnummer auf der PIN-Seite (03.11.2026)', () => {
+  for (const schema of ['light', 'dark'] as const) {
+    test(`steht über „Absenden“ und ist lesbar (${schema})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: schema })
+      await page.route('**/api/v1/auth/session/lesen', (route) =>
+        route.fulfill({ status: 401, json: { code: 'SESSION_UNGUELTIG', detail: 'Keine Sitzung.' } }),
+      )
+      await page.goto('/pin/pruefen')
+
+      const version = page.getByTestId('pin-version')
+      await expect(version).toHaveText(`Version ${VERSION}`)
+      await mindestens(version, 'text')
+
+      // Direkt über der Schaltfläche, ohne sie zu überdecken.
+      const text = (await version.boundingBox())!
+      const knopf = (await page.getByTestId('pin-absenden').boundingBox())!
+      expect(text.y + text.height).toBeLessThanOrEqual(knopf.y)
+      expect(knopf.y - (text.y + text.height)).toBeLessThan(64)
+    })
+  }
 })
 
 test.describe('Safe-Area oben', () => {

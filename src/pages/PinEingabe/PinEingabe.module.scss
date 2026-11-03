@@ -38,3 +38,12 @@
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
+
+// Versionsnummer zwischen Inhalt und Aktionsleiste: klein und zurueckgenommen, aber lesbar
+// (`--farbe-text-schwach` hat einen hellen und einen dunklen Wert, Kontrast in `kontrast.test.ts`).
+.version {
+  text-align: center;
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+  padding-bottom: var(--abstand-s);
+}

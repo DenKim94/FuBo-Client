@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, test } from 'vitest'
 import { queryClient, sitzungsendeBehandeln } from '@/app/queryClient'
+import { APP_VERSION } from '@/app/version'
 import { problem } from '@/test/mocks/handlers'
 import { mockServer } from '@/test/mocks/server'
 import PinEingabe from './PinEingabe'
@@ -44,6 +45,17 @@ afterEach(() => {
 })
 
 describe('PinEingabe', () => {
+  test('zeigt die Versionsnummer aus dem Bau als Nebentext, nicht als Bedienelement', () => {
+    rendern()
+
+    expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+/)
+    const version = screen.getByTestId('pin-version')
+    expect(version).toHaveTextContent(`Version ${APP_VERSION}`)
+    expect(version.tagName).toBe('P')
+    // Steht vor der Aktionsleiste, die das letzte Kind der Seite bleibt.
+    expect(version.nextElementSibling).toContainElement(screen.getByTestId('pin-absenden'))
+  })
+
   test('bietet ein beschriftetes natives Feld mit Zifferntastatur an', () => {
     rendern()
     const feld = screen.getByLabelText('Eingabe der zentralen PIN')

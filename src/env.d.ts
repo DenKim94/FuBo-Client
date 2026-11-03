@@ -12,3 +12,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+/** Versionsnummer aus `package.json`, beim Bau von Vite eingesetzt (`define` in `vite.config.ts`). Nur über `@/app/version` lesen. */
+declare const __APP_VERSION__: string
