@@ -222,7 +222,7 @@ export default function Namensauswahl() {
             </div>
 
             <Feld
-              beschriftung="Dein Name für heute"
+              beschriftung="Dein Name"
               pflicht
               hinweis={`Mindestens ${GASTNAME_MIN} und maximal ${GASTNAME_MAX} Zeichen.`}
               fehler={gastNameFehler}
