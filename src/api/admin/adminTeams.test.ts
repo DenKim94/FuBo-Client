@@ -10,7 +10,8 @@ const EINTEILUNG = {
   algorithmType: 'HEURISTIK',
   auswechselModus: 'ZUFAELLIG',
   auswechselspieler: null,
-  differenzTeamstaerke: 0.75,
+  gesamtpunkteTeamA: { ANGRIFF: 3, TORWART: 2 },
+  gesamtpunkteTeamB: { ANGRIFF: 2, TORWART: 0 },
   teamA: [{ anzeigeName: 'Beispielspieler 01', gast: false, auswechselspieler: false }],
   teamB: [{ anzeigeName: 'Gast 1', gast: true, auswechselspieler: false }],
 }

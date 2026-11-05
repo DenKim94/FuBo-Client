@@ -1,0 +1,128 @@
+@use '@/styles/globalVars';
+
+.teamstaerken {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+}
+
+.bereich {
+  display: flex;
+  flex-direction: column;
+  gap: var(--abstand-s);
+}
+
+// `hidden` gewinnt sonst gegen `display: flex` der Klasse.
+.bereich[hidden] {
+  display: none;
+}
+
+// Umrandung wie Karten und Listen (19.10.2026); die Zeilen trennt der dekorative Rand.
+.tabelle {
+  inline-size: 100%;
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+
+  th,
+  td {
+    padding: var(--abstand-s);
+    text-align: start;
+    vertical-align: middle;
+  }
+
+  // Aussen der volle Einzug, innen nur der halbe: Bei 360 px braucht die Kategorie den Platz.
+  th:first-child {
+    padding-inline-start: var(--abstand-m);
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-inline-end: var(--abstand-m);
+  }
+
+  tbody tr th,
+  tbody tr td {
+    border-block-start: 1px solid var(--farbe-rand);
+  }
+}
+
+.titel {
+  padding-block-end: var(--abstand-s);
+  font-weight: var(--gewicht-halbfett);
+  text-align: start;
+}
+
+// Kopf in kleiner Schrift: „Team A“ mit Marke bestimmt die Breite der Zahlenspalten; in Grundschrift passte die Tabelle
+// bei 360 px nicht ohne Umbruch mitten im Wort (05.11.2026, gemessen).
+thead th {
+  background: var(--farbe-flaeche);
+  font-size: var(--schrift-klein);
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Die Kopffläche folgt der Rundung der Karte selbst (05.11.2026, Rückmeldung vom iPhone): `overflow: hidden` an einer
+// `<table>` beschneidet in Safari nicht, die eckigen Kopfzellen ragten dort über den runden Rahmen. Innenradius =
+// Radius der Karte minus Randbreite, sonst bleibt ein heller Keil zwischen Rand und Fläche.
+thead th:first-child {
+  border-start-start-radius: calc(var(--radius-m) - 1px);
+}
+
+thead th:last-child {
+  border-start-end-radius: calc(var(--radius-m) - 1px);
+}
+
+// Ohne feste Breite: Das Tabellenlayout gibt jeder Spalte ihre volle Breite, solange sie passt. Die Kategorie bricht nur
+// an Wortgrenzen um (vorher „Kateg-orie“ bei 360 px, 05.11.2026).
+.kategorie {
+  overflow-wrap: normal;
+  font-weight: var(--gewicht-normal);
+}
+
+thead .kategorie {
+  font-weight: var(--gewicht-halbfett);
+}
+
+// Leibchenfarben wie in `TeamListen`: Marke vor dem Namen, die Aussage steht im Text.
+.teamA {
+  --team-farbe: var(--farbe-team-a);
+}
+
+.teamB {
+  --team-farbe: var(--farbe-team-b);
+}
+
+// Darf notfalls umbrechen („Team“ / „A“, etwa mit breiterer Systemschrift), statt die Tabelle zu verbreitern.
+.team {
+  .tabelle & {
+    text-align: end;
+  }
+}
+
+.marke {
+  display: inline-block;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  margin-inline-end: var(--abstand-xs);
+  border-radius: var(--radius-s);
+  background: var(--team-farbe);
+  vertical-align: -0.0625rem;
+}
+
+// Zahlen untereinander buendig; rechts stehen sie unter dem Teamnamen.
+.zahl {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--gewicht-halbfett);
+  white-space: nowrap;
+
+  .tabelle & {
+    text-align: end;
+  }
+}
+
+.nebentext {
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}

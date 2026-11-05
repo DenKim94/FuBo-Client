@@ -117,12 +117,20 @@
   padding-bottom: var(--abstand-s);
 }
 
+// `scroll-margin-top`: Nach dem Einteilen rollt der Abschnitt an den oberen Rand; im Browser mit Einzug nicht unter die
+// Statusleiste, sonst mit etwas Luft über der Trennlinie.
 .ergebnis {
+  scroll-margin-block-start: calc(var(--sicher-oben-kopf) + var(--abstand-s));
   display: flex;
   flex-direction: column;
   gap: var(--abstand-m);
   padding-block-start: var(--abstand-m);
   border-block-start: 1px solid var(--farbe-rand);
+}
+
+// In der iOS-App scrollt `.verlauf`, dessen Oberkante schon unter dem Abstand liegt (wie `TabLeiste`): nur Luft.
+:global(:root[data-ios-app]) .ergebnis {
+  scroll-margin-block-start: var(--abstand-s);
 }
 
 .ergebnisTitel {

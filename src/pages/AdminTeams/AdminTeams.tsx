@@ -15,6 +15,7 @@ import Knopfgruppe from '@/components/Knopfgruppe/Knopfgruppe'
 import Ladespinner from '@/components/Ladespinner/Ladespinner'
 import StufeWahl from '@/components/StufeWahl/StufeWahl'
 import TeamListen from '@/components/TeamListen/TeamListen'
+import Teamstaerken from '@/components/Teamstaerken/Teamstaerken'
 import Textlink from '@/components/Textlink/Textlink'
 import { useKonfiguration } from '@/hooks/admin/useKonfiguration'
 import { useProfile } from '@/hooks/admin/useProfile'
@@ -37,6 +38,13 @@ type GastEntwurf = { name: string; stufe: GastStufe }
 
 const STUFEN_TEXT: Record<GastStufe, string> = { STARK: 'Stark', MITTEL: 'Mittel', SCHWACH: 'Schwach' }
 
+/**
+ * Sanft scrollen, außer die Person hat reduzierte Bewegung eingestellt (WCAG 2.3.3). Wird im Effekt gelesen, nie im Render.
+ */
+function sanftScrollen(): boolean {
+  return typeof window.matchMedia !== 'function' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 /** Wohin der Fokus nach dem nächsten Render geht. */
 type FokusZiel = { art: 'entwurf' } | { art: 'hinzufuegen' } | null
 
@@ -50,8 +58,15 @@ type FokusZiel = { art: 'entwurf' } | { art: 'hinzufuegen' } | null
  *
  * **Ändert sich die Auswahl, verschwindet das Ergebnis** (`reset()`): Es zeigt nie eine andere Gruppe als die gewählte.
  * Auswählbar sind aktive Profile mit Rolle `USER`; eines mit **unvollständiger Skillkarte** (E7) ist deaktiviert mit dem
- * Grund als Text – der Server lehnte es sonst mit `409 SKILLWERTE_UNVOLLSTAENDIG` ab. Skillwerte stehen nirgends im DOM;
- * einzig die Zahl „Ungleichgewicht“ (`differenzTeamstaerke`) ist erlaubt und nur hier (A12).
+ * Grund als Text – der Server lehnte es sonst mit `409 SKILLWERTE_UNVOLLSTAENDIG` ab. Skillwerte einzelner Spieler stehen
+ * nirgends im DOM; erlaubt sind nur die **Punktsummen je Team und Kategorie** (`Teamstaerken`, seit 05.11.2026, ohne den
+ * Springer), und nur hier (A12). Sie sind eingeklappt, bis der Admin „Teamstärken anzeigen“ wählt.
+ *
+ * **Nach dem Einteilen steht das Ergebnis oben im Bild** (05.11.2026): Der Fokus geht ohne eigenes Scrollen auf die
+ * Überschrift (`preventScroll`), dann rollt der Abschnitt an den oberen Rand (`scrollIntoView` mit `block: 'start'`). Ein
+ * Fokus allein scrollte nur so weit, dass die Überschrift knapp über der Aktionsleiste stand – die Teams blieben
+ * verdeckt. `scrollIntoView` wirkt auf den nächsten scrollenden Vorfahren und damit auch im eigenen Scrollbereich der
+ * iOS-App (`.verlauf`); `window.scrollTo` wäre dort wirkungslos.
  *
  * **Gäste in zwei Schritten** (24.10.2026): „Gast hinzufügen“ öffnet eine Eingabe (Name optional, Stufe), die der Admin
  * **übernimmt** oder **abbricht**. Erst ein übernommener Gast steht in der Liste, zählt mit und geht an den Server; solange
@@ -74,6 +89,7 @@ export default function AdminTeams() {
   const entwurfName = useRef<HTMLInputElement>(null)
   const hinzufuegenKnopf = useRef<HTMLButtonElement>(null)
   const ergebnisKopf = useRef<HTMLHeadingElement>(null)
+  const ergebnisBereich = useRef<HTMLElement>(null)
 
   const einteilung = generieren.data
 
@@ -84,7 +100,10 @@ export default function AdminTeams() {
     if (fokus?.art === 'hinzufuegen') hinzufuegenKnopf.current?.focus()
   }, [fokus])
   useEffect(() => {
-    if (einteilung) ergebnisKopf.current?.focus()
+    if (!einteilung) return
+    ergebnisKopf.current?.focus({ preventScroll: true })
+    // jsdom kennt `scrollIntoView` nicht; der Aufruf entfällt dort (wie in `Auswahlliste`).
+    ergebnisBereich.current?.scrollIntoView?.({ block: 'start', behavior: sanftScrollen() ? 'smooth' : 'auto' })
   }, [einteilung])
 
   const alleProfile = profile.data
@@ -333,11 +352,23 @@ export default function AdminTeams() {
       </fieldset>
 
       {einteilung && (
-        <section className={style.ergebnis} aria-labelledby="admin-teams-ergebnis-titel" data-testid="admin-teams-ergebnis">
+        <section
+          ref={ergebnisBereich}
+          className={style.ergebnis}
+          aria-labelledby="admin-teams-ergebnis-titel"
+          data-testid="admin-teams-ergebnis"
+        >
           <h2 id="admin-teams-ergebnis-titel" tabIndex={-1} ref={ergebnisKopf} className={style.ergebnisTitel}>
             Ergebnis
           </h2>
           <Hinweis data-testid="teams-manuell-hinweis-ergebnis">{TEXT_NICHT_GESPEICHERT}</Hinweis>
+          <Teamstaerken
+            teamA={einteilung.gesamtpunkteTeamA}
+            teamB={einteilung.gesamtpunkteTeamB}
+            kategorien={vorhandeneKategorien}
+            springer={einteilung.auswechselspieler}
+            data-testid="admin-teams-staerken"
+          />
           <TeamListen teamA={einteilung.teamA} teamB={einteilung.teamB} data-testid="admin-teams-ergebnis-teams" />
 
           <div className={style.angaben}>

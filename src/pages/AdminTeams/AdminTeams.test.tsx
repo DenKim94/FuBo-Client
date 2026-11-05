@@ -235,6 +235,66 @@ describe('AdminTeams – Gäste (Eingabe mit „Übernehmen“ und „Abbrechen�
 })
 
 describe('AdminTeams – Ergebnis', () => {
+  test('Teamstärken (05.11.2026): Schaltfläche zwischen Hinweis und Team A, eingeklappt; Tabelle mit Summen ohne Springer', async () => {
+    rendern()
+    await bereit()
+    // Drei Teilnehmer: Team A = 01 und 03 (03 ist Springer), Team B = Gast 1. Gäste zählen in der Nachbildung 0.
+    await waehlen(1, 3)
+    await gastAnlegen()
+
+    const ergebnis = await berechnen()
+
+    const schalter = within(ergebnis).getByRole('button', { name: 'Teamstärken anzeigen' })
+    const hinweis = within(ergebnis).getByTestId('teams-manuell-hinweis-ergebnis')
+    const teamA = within(ergebnis).getByTestId('admin-teams-ergebnis-teams-a')
+    expect(hinweis.compareDocumentPosition(schalter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(schalter.compareDocumentPosition(teamA) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(within(ergebnis).getByTestId('admin-teams-staerken-bereich')).not.toBeVisible()
+
+    await userEvent.click(schalter)
+
+    const tabelle = within(ergebnis).getByRole('table', { name: 'Gesamtpunkte je Team und Kategorie' })
+    expect(tabelle).toBeVisible()
+    // Beschriftung und Reihenfolge aus `GET /admin/skills/lesen`; Team A nur mit Beispielspieler 01 (der Springer zählt nicht).
+    const zeilen = within(tabelle).getAllByRole('row').slice(1)
+    expect(zeilen.map((z) => [...z.querySelectorAll('th, td')].map((c) => c.textContent))).toEqual([
+      ['Angriff', '3', '0'],
+      ['Verteidigung', '3', '0'],
+      ['Spielstärke', '3', '0'],
+      ['Laufstärke', '3', '0'],
+      ['Torwart', '2', '0'],
+    ])
+    expect(within(ergebnis).getByTestId('admin-teams-staerken-springer')).toHaveTextContent(
+      'Der Springer (Beispielspieler 03) ist in den Gesamtpunkten nicht berücksichtigt',
+    )
+  })
+
+  test('nach dem Einteilen rollt das Ergebnis an den oberen Rand; der Fokus steht ohne eigenes Scrollen auf der Überschrift', async () => {
+    const aufrufe: { element: Element; optionen: unknown }[] = []
+    const vorher = Element.prototype.scrollIntoView
+    Element.prototype.scrollIntoView = function (this: Element, optionen?: unknown) {
+      aufrufe.push({ element: this, optionen })
+    }
+    try {
+      rendern()
+      await bereit()
+      await waehlen(1, 3)
+
+      const ergebnis = await berechnen()
+
+      await waitFor(() => expect(within(ergebnis).getByRole('heading', { level: 2, name: 'Ergebnis' })).toHaveFocus())
+      expect(aufrufe).toHaveLength(1)
+      expect(aufrufe[0].element).toBe(ergebnis)
+      expect(aufrufe[0].optionen).toMatchObject({ block: 'start' })
+
+      // Ein zweiter Lauf mit derselben Auswahl rollt erneut dorthin.
+      await userEvent.click(screen.getByTestId('admin-teams-berechnen'))
+      await waitFor(() => expect(aufrufe).toHaveLength(2))
+    } finally {
+      Element.prototype.scrollIntoView = vorher
+    }
+  })
+
   test('Ergebnis: Überschrift mit Fokus, Hinweis erneut, Teamlisten und Algorithmus; ohne Skillwerte und ohne Ungleichgewicht', async () => {
     const welt = rendern()
     await bereit()
@@ -255,8 +315,11 @@ describe('AdminTeams – Ergebnis', () => {
     // Seit 24.10.2026 ohne Regel-Zeile und ohne „Ungleichgewicht“ (Entscheidung des Entwicklers).
     expect(within(ergebnis).queryByTestId('admin-teams-regel')).not.toBeInTheDocument()
     expect(within(ergebnis).queryByText(/Ungleichgewicht/)).not.toBeInTheDocument()
-    // Keine Skillwerte und keine Stufen der Gäste in den Listen.
-    expect(within(ergebnis).queryByText(/Angriff|Verteidigung|Torwart|Laufstärke|Spielstärke/i)).not.toBeInTheDocument()
+    // Keine Skillwerte und keine Stufen der Gäste in den Listen; Kategorien stehen nur in den Teamstärken (05.11.2026).
+    for (const team of ['a', 'b']) {
+      const liste = within(ergebnis).getByTestId(`admin-teams-ergebnis-teams-${team}`)
+      expect(within(liste).queryByText(/Angriff|Verteidigung|Torwart|Laufstärke|Spielstärke/i)).not.toBeInTheDocument()
+    }
     expect(within(screen.getByTestId('admin-teams-ergebnis-teams-b')).queryByText(/Stark|Mittel|Schwach/)).not.toBeInTheDocument()
   })
 
@@ -312,7 +375,8 @@ describe('AdminTeams – Ergebnis', () => {
           algorithmType: 'HEURISTIK',
           auswechselModus: 'ZUFAELLIG',
           auswechselspieler: null,
-          differenzTeamstaerke: 0,
+          gesamtpunkteTeamA: { ANGRIFF: 3 },
+          gesamtpunkteTeamB: { ANGRIFF: 3 },
           teamA: [{ anzeigeName: 'Beispielspieler 01', gast: false, auswechselspieler: false }],
           teamB: [{ anzeigeName: 'Beispielspieler 03', gast: false, auswechselspieler: false }],
         }),

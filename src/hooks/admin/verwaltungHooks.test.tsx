@@ -381,7 +381,9 @@ describe('useTeamsManuell', () => {
     })
 
     await waitFor(() => expect(result.current.data?.teamA.length).toBe(1))
-    expect(result.current.data?.differenzTeamstaerke).toBe(1.25)
+    // Punktsummen je Kategorie statt `differenzTeamstaerke` (Vertrag vom 05.11.2026).
+    expect(result.current.data?.gesamtpunkteTeamA).toEqual({ ANGRIFF: 3, VERTEIDIGUNG: 3, SPIELSTAERKE: 3, LAUFSTAERKE: 3, TORWART: 2 })
+    expect(result.current.data).not.toHaveProperty('differenzTeamstaerke')
     expect(queryClient.getQueryCache().getAll().some((q) => q.state.data === result.current.data)).toBe(false)
 
     act(() => {

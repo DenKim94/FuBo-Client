@@ -16,10 +16,17 @@ export type ManuelleGenerierung = components['schemas']['ManuelleGenerierungRequ
 export type GastAuswahl = components['schemas']['GastAuswahl']
 
 /**
- * Das Ergebnis des manuellen Laufs, **mit** `differenzTeamstaerke` (nur im Adminbereich erlaubt, A12).
+ * Das Ergebnis des manuellen Laufs, **mit** den Punktsummen je Team und Kategorie (`gesamtpunkteTeamA`/`gesamtpunkteTeamB`,
+ * seit 05.11.2026 statt `differenzTeamstaerke`; nur im Adminbereich erlaubt, A12).
  * `algorithmType` und `auswechselModus` sind die **tatsächlich verwendeten** Werte und können von der Konfiguration abweichen.
  */
 export type ManuelleEinteilung = components['schemas']['ManuelleEinteilung']
+
+/**
+ * Ungewichtete Punktsumme eines Teams je aktiver Kategorie, **ohne den Springer** (Vertrag vom 05.11.2026). Schlüssel sind
+ * die Kategorieschlüssel aus `GET /admin/skills/lesen`; beschriftet und sortiert wird über diese Kategorien.
+ */
+export type Kategoriepunkte = components['schemas']['Kategoriepunkte']
 
 /**
  * Berechnet Teams für eine frei gewählte Gruppe (`POST /admin/teams/generieren`, `200` mit Rumpf).

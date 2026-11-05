@@ -988,6 +988,8 @@ export interface paths {
          *     **Keine Vorschau des Spieltags.** Wer den Lauf dafür benutzt, sieht das Ergebnis für eine Gruppe, die er selbst zusammengestellt hat – nicht die des Termins.
          *
          *     **`maxTeilnehmer` begrenzt hier, es schneidet nicht ab** (`409 ZU_VIELE_TEILNEHMER`). Am Termin ist es die Grenze zur Warteschlange; hier gibt es keine, in die jemand rutschen könnte.
+         *
+         *     **Punktsummen je Team (Änderung vom 05.11.2026, brechend):** Die Antwort zeigt in `gesamtpunkteTeamA` und `gesamtpunkteTeamB` je aktiver Kategorie die Punkte jedes Teams, ohne den Springer; `differenzTeamstaerke` entfällt.
          */
         post: operations["teamsManuellGenerieren"];
         delete?: never;
@@ -2234,7 +2236,7 @@ export interface components {
          *
          *     Sie erscheint an zwei Stellen in derselben Form: als Feld `teams` in `TerminDetails` und als Antwort von `POST /teams/generieren`. Wer gerade generiert hat, sieht dasselbe wie der, der den Termin öffnet.
          *
-         *     **Ohne `differenzTeamstaerke`.** Der Wert ist die gewichtete Summe der Kategoriedifferenzen und damit eine Aussage über Skillsummen; wer ihn über viele Läufe sammelt und die wechselnden Aufstellungen kennt, kann auf einzelne Werte schließen (A12). Unterhalb von `/admin/` ist er erlaubt und steht dort in `ManuelleEinteilung`.
+         *     **Ohne `differenzTeamstaerke`.** Der Wert ist die gewichtete Summe der Kategoriedifferenzen und damit eine Aussage über Skillsummen; wer ihn über viele Läufe sammelt und die wechselnden Aufstellungen kennt, kann auf einzelne Werte schließen (A12). Unterhalb von `/admin/` sind solche Werte erlaubt: `ManuelleEinteilung` zeigt seit dem 05.11.2026 die Punktsummen je Team und Kategorie.
          */
         Teameinteilung: {
             /**
@@ -2284,7 +2286,9 @@ export interface components {
          *
          *     **Es wird nirgends gespeichert.** Es löst keine Einteilung ab, erscheint bei keinem anderen Nutzer und ist nach dem Verlassen der Seite weg. **Das gehört sichtbar auf den Bildschirm**, sonst hält der Admin es für die Einteilung des Spieltags.
          *
-         *     **Kein `seed`.** Er wäre ohne die Skillwerte daneben eine Zahl ohne Verwendung – und die stehen hier bewusst nicht. Nachvollziehbar bleibt der Lauf über den Audit-Eintrag, der als Einziger den Seed trägt.
+         *     **Punktsummen statt `differenzTeamstaerke`** (Änderung vom 05.11.2026, **brechend**): `gesamtpunkteTeamA` und `gesamtpunkteTeamB` zeigen je Kategorie, wie viele Punkte jedes Team hat – ohne den Springer. Das Feld `differenzTeamstaerke` entfällt; es sagte nur, *dass* die Teams ausgeglichen sind, nicht *wo* sie auseinanderliegen.
+         *
+         *     **Kein `seed`.** Er wäre ohne die Skillwerte jedes Einzelnen eine Zahl ohne Verwendung – und die stehen hier bewusst nicht; die Summen genügen dafür nicht. Nachvollziehbar bleibt der Lauf über den Audit-Eintrag, der als Einziger den Seed trägt.
          *
          *     **Zweimal „tatsächlich verwendet“ ist kein Zufall:** Der manuelle Lauf hat zwei Stellen, an denen der Server von der Konfiguration abweichen darf, und keine Tabelle, in der man später nachsähe.
          */
@@ -2295,15 +2299,22 @@ export interface components {
             auswechselModus: components["schemas"]["AuswechselModus"];
             /** @description Anzeigename des Springers oder `null` bei gerader Teilnehmerzahl. Er steht zusätzlich in dem Team, bei dem er beginnt. */
             auswechselspieler?: string | null;
-            /**
-             * Format: double
-             * @description Die **gewichtete Summe der Kategoriedifferenzen** zwischen den beiden Teams – **nicht** die Differenz der Gesamtstärken, die der Name nahelegt. `0` heißt perfekt ausgeglichen, größer heißt schlechter. **Bei ungerader Zahl ohne den Springer gerechnet**, denn er spielt abwechselnd für beide Seiten. **Seit dem 03.11.2026 entscheidet zuerst die größte Einzelabweichung einer Kategorie**, erst danach diese Summe (siehe `AlgorithmType`); der Wert ist damit nicht zwingend die kleinstmögliche Summe. Nur im Adminbildschirm (A12).
-             */
-            differenzTeamstaerke: number;
+            /** @description Punktsumme je Kategorie für Team A, **ohne den Springer**: Er steht markiert in der Liste seines Startteams, ausgeglichen wurden die Teams aber ohne ihn – mitgezählt läge eine Kategorie bis zu sechs Punkte auseinander, obwohl die Einteilung ausgeglichen ist. Die Abweichung je Kategorie ist die Differenz der beiden Karten. Nur im Adminbildschirm (A12). */
+            gesamtpunkteTeamA: components["schemas"]["Kategoriepunkte"];
+            /** @description Punktsumme je Kategorie für Team B, **ohne den Springer**: Er steht markiert in der Liste seines Startteams, ausgeglichen wurden die Teams aber ohne ihn – mitgezählt läge eine Kategorie bis zu sechs Punkte auseinander, obwohl die Einteilung ausgeglichen ist. Die Abweichung je Kategorie ist die Differenz der beiden Karten. Nur im Adminbildschirm (A12). */
+            gesamtpunkteTeamB: components["schemas"]["Kategoriepunkte"];
             /** @description Team A. */
             teamA: components["schemas"]["TeamEintrag"][];
             /** @description Team B. */
             teamB: components["schemas"]["TeamEintrag"][];
+        };
+        /**
+         * @description Ungewichtete Punktsumme eines Teams je **aktiver Skillkategorie** (A24, seit 05.11.2026). Schlüssel sind die Kategorieschlüssel aus `GET /admin/skills/lesen` (`schluessel`), etwa `ANGRIFF`, `VERTEIDIGUNG`, `SPIELSTAERKE`, `LAUFSTAERKE`, `TORWART` – dieselben wie bei den Skillwerten eines Profils. **Jede aktive Kategorie ist enthalten**, auch mit `0`; eine neu angelegte Kategorie erscheint ohne Vertragsänderung. Die Schlüssel stehen in der Anzeigereihenfolge der Kategorien; ein Client sollte sich trotzdem nicht darauf verlassen, sondern über `GET /admin/skills/lesen` beschriften und sortieren.
+         *
+         *     **Ungewichtet:** Ein Torwartpunkt zählt hier 1 wie jeder andere Punkt (Wertebereich 0–3); die Gewichte wirken nur in der Zielfunktion.
+         */
+        Kategoriepunkte: {
+            [key: string]: number;
         };
         /**
          * @description Ausgang eines Spiels (A21). `A` und `B` bezeichnen die Teams der Einteilung, `U` ein Unentschieden.
@@ -4471,7 +4482,20 @@ export interface operations {
                      *       "algorithmType": "EXHAUSTIV",
                      *       "auswechselModus": "ZUFAELLIG",
                      *       "auswechselspieler": null,
-                     *       "differenzTeamstaerke": 0,
+                     *       "gesamtpunkteTeamA": {
+                     *         "ANGRIFF": 7,
+                     *         "VERTEIDIGUNG": 6,
+                     *         "SPIELSTAERKE": 8,
+                     *         "LAUFSTAERKE": 6,
+                     *         "TORWART": 0
+                     *       },
+                     *       "gesamtpunkteTeamB": {
+                     *         "ANGRIFF": 6,
+                     *         "VERTEIDIGUNG": 5,
+                     *         "SPIELSTAERKE": 7,
+                     *         "LAUFSTAERKE": 8,
+                     *         "TORWART": 0
+                     *       },
                      *       "teamA": [
                      *         {
                      *           "anzeigeName": "Beispielspieler 03",

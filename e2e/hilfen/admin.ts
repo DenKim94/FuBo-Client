@@ -693,22 +693,36 @@ export async function konfigurationNachbilden(
       return problem(route, 409, 'SKILLWERTE_UNVOLLSTAENDIG', `Die Skillwerte von ${luecke.map((p) => p.name).join(', ')} sind unvollständig.`)
     }
     const namen = [
-      ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false })),
-      ...gaeste.map((g, i) => ({ anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`, gast: true })),
+      ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false, skills: p.skills })),
+      ...gaeste.map((g, i) => ({
+        anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`,
+        gast: true,
+        skills: {} as Record<string, number>,
+      })),
     ]
     const haelfte = Math.ceil(namen.length / 2)
     const teamA = namen.slice(0, haelfte).map((n) => ({ ...n, auswechselspieler: false }))
     const teamB = namen.slice(haelfte).map((n) => ({ ...n, auswechselspieler: false }))
     const ungerade = namen.length % 2 === 1
     if (ungerade) teamA[teamA.length - 1].auswechselspieler = true
+    // Punktsummen wie am Server (Vertrag vom 05.11.2026): jede Kategorie, ohne den Springer; Gaeste zaehlen hier 0.
+    const punkte = (team: typeof teamA) =>
+      Object.fromEntries(
+        E2E_KATEGORIEN.map((kat) => [
+          kat.schluessel,
+          team.filter((e) => !e.auswechselspieler).reduce((summe, e) => summe + (e.skills[kat.schluessel] ?? 0), 0),
+        ]),
+      )
+    const ohneSkills = ({ anzeigeName, gast, auswechselspieler }: (typeof teamA)[number]) => ({ anzeigeName, gast, auswechselspieler })
     return route.fulfill({
       json: {
         algorithmType: welt.konfiguration.algorithmType,
         auswechselModus: 'ZUFAELLIG',
         auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
-        differenzTeamstaerke: 1.25,
-        teamA,
-        teamB,
+        gesamtpunkteTeamA: punkte(teamA),
+        gesamtpunkteTeamB: punkte(teamB),
+        teamA: teamA.map(ohneSkills),
+        teamB: teamB.map(ohneSkills),
       },
     })
   })

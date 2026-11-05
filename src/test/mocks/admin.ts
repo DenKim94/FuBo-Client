@@ -809,21 +809,31 @@ export function adminHandler(welt: AdminWelt) {
         )
       }
       const namen = [
-        ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false })),
-        ...gaeste.map((g, i) => ({ anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`, gast: true })),
+        ...gewaehlt.map((p) => ({ anzeigeName: p.name, gast: false, skills: p.skills })),
+        ...gaeste.map((g, i) => ({ anzeigeName: g.name?.trim() ? g.name.trim() : `Gast ${String(i + 1)}`, gast: true, skills: {} })),
       ]
       const haelfte = Math.ceil(namen.length / 2)
       const ungerade = namen.length % 2 === 1
       const teamA = namen.slice(0, haelfte).map((n) => ({ ...n, auswechselspieler: false }))
       const teamB = namen.slice(haelfte).map((n) => ({ ...n, auswechselspieler: false }))
       if (ungerade) teamA[teamA.length - 1].auswechselspieler = true
+      /** Punktsummen wie am Server: jede aktive Kategorie (auch mit 0), ohne den Springer; Gäste zählen hier 0 (vereinfacht). */
+      const punkte = (team: { skills: Record<string, number>; auswechselspieler: boolean }[]) =>
+        Object.fromEntries(
+          welt.skillKategorien.map((k) => [
+            k.schluessel,
+            team.filter((e) => !e.auswechselspieler).reduce((summe, e) => summe + (e.skills[k.schluessel] ?? 0), 0),
+          ]),
+        )
+      const ohneSkills = ({ anzeigeName, gast, auswechselspieler }: (typeof teamA)[number]) => ({ anzeigeName, gast, auswechselspieler })
       return HttpResponse.json({
         algorithmType: anzahl > 24 ? 'HEURISTIK' : welt.konfiguration.algorithmType,
         auswechselModus: 'ZUFAELLIG',
         auswechselspieler: ungerade ? teamA[teamA.length - 1].anzeigeName : null,
-        differenzTeamstaerke: 1.25,
-        teamA,
-        teamB,
+        gesamtpunkteTeamA: punkte(teamA),
+        gesamtpunkteTeamB: punkte(teamB),
+        teamA: teamA.map(ohneSkills),
+        teamB: teamB.map(ohneSkills),
       })
     }),
   ]
