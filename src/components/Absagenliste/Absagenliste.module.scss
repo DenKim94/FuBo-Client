@@ -1,0 +1,30 @@
+@use '@/styles/globalVars';
+@use '@/styles/klappliste';
+
+// Rahmen, Kopfzeile, Pfeil und Eintragslinien wie die Teilnehmerliste (`_klappliste.scss`, 06.11.2026).
+.liste {
+  @include klappliste.behaelter;
+}
+
+.zusammenfassung {
+  @include klappliste.zusammenfassung;
+}
+
+.pfeil {
+  @include klappliste.pfeil('.liste');
+}
+
+.eintraege {
+  @include klappliste.eintraege;
+}
+
+.eintrag {
+  overflow-wrap: anywhere;
+
+  @include klappliste.eintrag;
+}
+
+// Ohne Absagen: ein Satz unter der Kopfzeile (wie die leere Teilnehmerliste des Admins).
+.leer {
+  @include klappliste.leer;
+}

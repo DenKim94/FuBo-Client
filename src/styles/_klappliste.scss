@@ -1,0 +1,72 @@
+// Aufklappbare Liste mit `<details>` (Teilnehmer, Absagen): Rahmen, Kopfzeile und Pfeil an einer Stelle, damit
+// beide Listen gleich aussehen (06.11.2026). Eingebunden mit `@use '@/styles/klappliste'`.
+
+// Der Behaelter: Karte mit kraeftigem Rand (Vorgabe 19.10.2026).
+@mixin behaelter {
+  border: 1px solid var(--farbe-rand-bedienbar);
+  border-radius: var(--radius-m);
+}
+
+// Die Kopfzeile (`<summary>`): die ganze Zeile klappt auf, mindestens 44 px hoch (A2).
+@mixin zusammenfassung {
+  display: flex;
+  align-items: center;
+  gap: var(--abstand-s);
+  min-block-size: var(--tapziel-min);
+  padding-inline: var(--abstand-m);
+  font-weight: var(--gewicht-halbfett);
+  cursor: pointer;
+  // Kein eingebautes Dreieck: Den Hinweis gibt der eigene Pfeil rechts (Safari zeigt es sonst trotz `display: flex`).
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// Pfeil (Winkel aus zwei Rahmenkanten) am rechten Rand: zeigt nach unten, solange die Liste zu ist, nach oben,
+// wenn sie offen ist. Die Verschiebung um ein Viertel setzt den gedrehten Winkel optisch in die Mitte der Zeile.
+// `$behaelter`: Selektor des `<details>`, dessen `[open]` den Pfeil dreht.
+@mixin pfeil($behaelter) {
+  flex: none;
+  margin-inline-start: auto;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+
+  #{$behaelter}[open] & {
+    transform: translateY(25%) rotate(225deg);
+  }
+}
+
+// Eintraege untereinander, durch Linien getrennt; die erste Linie trennt sie von der Kopfzeile. Aufzaehlungszeichen und
+// Einzug entfernt `_reset.scss` fuer `ul` und `ol`.
+@mixin eintraege {
+  display: flex;
+  flex-direction: column;
+  border-block-start: 1px solid var(--farbe-rand);
+}
+
+@mixin eintrag {
+  padding: var(--abstand-s) var(--abstand-m);
+
+  & + & {
+    border-block-start: 1px solid var(--farbe-rand);
+  }
+}
+
+// Ein Satz statt Eintraegen (leere Liste, wo es nichts zu tun gibt): unter der Kopfzeile, durch dieselbe Linie getrennt
+// wie die Eintraege. Absagen immer, Zusagen in der Admin-Ansicht (06.11.2026).
+@mixin leer {
+  padding: var(--abstand-s) var(--abstand-m);
+  border-block-start: 1px solid var(--farbe-rand);
+  font-size: var(--schrift-klein);
+  color: var(--farbe-text-schwach);
+}

@@ -603,6 +603,8 @@ export async function konfigurationNachbilden(
     const zusage = modell.zusagen.find((z) => z.gast && z.name === name)
     if (!zusage) return problem(route, 404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
     modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+    // Seit 06.11.2026 steht der Gast danach in den Absagen.
+    modell.absagen = [...(modell.absagen ?? []), { name: zusage.name, gast: true }]
     abgesagteGaeste.add(`${String(k.terminId)}:${name}`)
     modell.kontingentVersion ??= modell.teilnehmerVersion
     modell.teilnehmerVersion += 1

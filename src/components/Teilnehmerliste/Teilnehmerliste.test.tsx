@@ -102,11 +102,15 @@ describe('Teilnehmerliste', () => {
 
   test('fordert zum Zusagen auf – aber nicht den Admin, der nur liest (24.10.2026)', () => {
     const { rerender } = rendern(liste(0))
-    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Sag zu, wenn du dabei bist.')
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Sag zu, wenn du dabei sein willst.')
 
     rerender(<Teilnehmerliste liste={liste(0)} eigenerName={EIGENER_NAME} eigenerGast={false} eingeklappt={false} nurLesen />)
-    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Noch keine Zusagen')
-    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent('Sobald jemand zusagt, erscheint er hier.')
+    // Seit 06.11.2026 wie bei den Absagen: ein kurzer Satz, kein Leerzustand mit Überschrift.
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent(/^Bisher hat niemand zugesagt\.$/)
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
     expect(screen.queryByText(/Sag zu/)).not.toBeInTheDocument()
+
+    rerender(<Teilnehmerliste liste={liste(0)} eigenerName={EIGENER_NAME} eigenerGast={false} eingeklappt={false} nurLesen beendet />)
+    expect(screen.getByTestId('teilnehmerliste-leer')).toHaveTextContent(/^Für diesen Termin gab es keine Zusagen\.$/)
   })
 })

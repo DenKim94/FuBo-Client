@@ -229,6 +229,52 @@ describe('TerminAnsicht', () => {
   })
 })
 
+describe('TerminAnsicht – Absagen (06.11.2026)', () => {
+  const ANDERE = [
+    { name: 'Zora', gast: false },
+    { name: 'Anton', gast: false },
+    { name: 'Beispielgast 2', gast: true },
+  ]
+
+  test('steht direkt unter der Teilnehmerliste, alphabetisch, mit Zahl in der Kopfzeile', async () => {
+    rendern({ absagen: ANDERE })
+    const absagen = await screen.findByTestId('absagenliste')
+    // Direkt danach im DOM: Die Absagen gehören zu den Zusagen darüber.
+    expect(screen.getByTestId('teilnehmerliste').nextElementSibling).toBe(absagen)
+    expect(screen.getByTestId('absagenliste-summary')).toHaveTextContent('Absagen (3)')
+    expect(within(absagen).getAllByRole('listitem').map((e) => e.textContent)).toEqual([
+      'Anton',
+      'Beispielgast 2 (Gast)',
+      'Zora',
+    ])
+  })
+
+  test('ist eingeklappt, wenn die Teilnehmerliste eingeklappt ist (Dashboard), sonst offen', async () => {
+    rendern({ absagen: ANDERE }, { eingeklappt: true })
+    expect(await screen.findByTestId('absagenliste')).not.toHaveAttribute('open')
+    expect(screen.getByTestId('teilnehmerliste')).not.toHaveAttribute('open')
+  })
+
+  test('nach „Ich kann nicht“ steht die eigene Absage mit „(du)“ in der Liste', async () => {
+    rendern({ absagen: ANDERE })
+    await userEvent.click(await screen.findByTestId('rueckmeldung-absagen'))
+    await waitFor(() => expect(screen.getByTestId('absagenliste-summary')).toHaveTextContent('Absagen (4)'))
+    expect(within(screen.getByTestId('absagenliste')).getByText(`${EIGENER_NAME} (du)`)).toBeInTheDocument()
+  })
+
+  test('entfällt bei einem abgesagten Termin, wie die Teilnehmerliste', async () => {
+    rendern({ status: 'ABGESAGT', absagen: ANDERE })
+    await screen.findByTestId('termin-abgesagt')
+    expect(screen.queryByTestId('absagenliste')).not.toBeInTheDocument()
+  })
+
+  test('der Admin sieht die Absagen ebenfalls', async () => {
+    mockServer.use(http.get('*/auth/session/lesen', () => HttpResponse.json(beispielAdminSitzung)))
+    rendern({ absagen: ANDERE }, { nurLesen: true })
+    expect(await screen.findByTestId('absagenliste-summary')).toHaveTextContent('Absagen (3)')
+  })
+})
+
 describe('TerminAnsicht nurLesen (Admin, C7 E2)', () => {
   /** Der Admin liest den Termin; seine Sitzung hat die Rolle ADMIN. */
   function alsAdmin() {

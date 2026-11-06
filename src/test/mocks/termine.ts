@@ -36,8 +36,13 @@ export type TerminModell = {
   max: number
   /** Zusagen in Meldereihenfolge, einschließlich der eigenen. */
   zusagen: Zusage[]
-  /** Eigene Rückmeldung, dreiwertig. Bei `true` steht der eigene Name in `zusagen`. */
+  /** Eigene Rückmeldung, dreiwertig. Bei `true` steht der eigene Name in `zusagen`, bei `false` in den Absagen. */
   eigene: boolean | null
+  /**
+   * Absagen **anderer** (seit 06.11.2026; ungesetzt: keine). Die eigene Absage folgt aus `eigene === false` und wird beim
+   * Abruf ergänzt – so bleiben Fälle mit `eigene: false` stimmig, ohne die Liste zu pflegen.
+   */
+  absagen?: Zusage[]
   teilnehmerVersion: number
   /** Stand des Datensatzes (optimistische Sperre, C7): steigt mit jedem Schreiben des Admins. */
   version: number
@@ -97,6 +102,17 @@ export function terminModell(teil: Partial<TerminModell> & { terminId: number })
   }
 }
 
+/**
+ * Die Absagen wie am Server (Vertrag vom 06.11.2026): alphabetisch nach Namen, die eigene aus `eigene === false`.
+ *
+ * @param modell Das Terminmodell.
+ */
+export function absagenVon(modell: TerminModell): components['schemas']['AbsageEintrag'][] {
+  const andere = (modell.absagen ?? []).filter((a) => a.name !== EIGENER_NAME || a.gast)
+  const alle = modell.eigene === false ? [...andere, { name: EIGENER_NAME, gast: false }] : andere
+  return alle.map((a) => ({ anzeigeName: a.name, gast: a.gast })).sort((x, y) => x.anzeigeName.localeCompare(y.anzeigeName, 'de'))
+}
+
 /** Der Termin in der Listenansicht. */
 export function uebersichtVon(modell: TerminModell): TerminUebersicht {
   return {
@@ -108,6 +124,7 @@ export function uebersichtVon(modell: TerminModell): TerminUebersicht {
     status: modell.status,
     teilnehmerVersion: modell.teilnehmerVersion,
     zusagen: modell.zusagen.length,
+    absagen: absagenVon(modell).length,
     eigeneRueckmeldung: modell.eigene,
   }
 }
@@ -131,6 +148,7 @@ export function detailsVon(modell: TerminModell, gastStufeFuerAdmin = false): Te
         if (gastStufeFuerAdmin && z.gast) eintrag.gastStufe = z.stufe ?? 'MITTEL'
         return eintrag
       }),
+      absagen: absagenVon(modell),
     },
     teams: modell.teams
       ? {

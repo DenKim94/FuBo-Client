@@ -17,7 +17,7 @@ import {
 
 /** Baut einen Termin mit den Angaben, auf die es im Fall ankommt. */
 function termin(id: number, datum: string, status: TerminUebersicht['status'], uhrzeit = '19:00:00'): TerminUebersicht {
-  return { terminId: id, datum, uhrzeit, status, teilnehmerVersion: 0, zusagen: 0 }
+  return { terminId: id, datum, uhrzeit, status, teilnehmerVersion: 0, zusagen: 0, absagen: 0 }
 }
 
 describe('datumListe', () => {

@@ -13,6 +13,12 @@ export type Teilnehmerliste = components['schemas']['Teilnehmerliste']
 /** Ein Eintrag der Teilnehmerliste. */
 export type TeilnehmerEintrag = components['schemas']['TeilnehmerEintrag']
 
+/**
+ * Eine Absage zu einem Termin (seit 06.11.2026): nur Name und Gast-Kennzeichen, für jede Rolle ohne Bewertung. Die Liste
+ * `teilnehmerliste.absagen` ist alphabetisch, nie `null`; ihre Länge entspricht `absagen` des Termins.
+ */
+export type AbsageEintrag = components['schemas']['AbsageEintrag']
+
 /** Zustand eines Termins: `GEPLANT`, `ABGESAGT` oder `ABGESCHLOSSEN`. */
 /** Restkontingent der Teamgenerierung der lesenden Sitzung (`erlaubt`, `uebrig`), nur in der Einzelansicht. */
 export type KontingentGenerierung = components['schemas']['KontingentGenerierung']

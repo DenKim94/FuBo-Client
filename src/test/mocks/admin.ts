@@ -697,6 +697,8 @@ export function adminHandler(welt: AdminWelt) {
       const zusage = modell.zusagen.find((z) => z.gast && z.name === name)
       if (!zusage) return problem(404, 'INHALT_NICHT_GEFUNDEN', 'Für diesen Termin liegt keine Zusage dieses Gastes vor.')
       modell.zusagen = modell.zusagen.filter((z) => z !== zusage)
+      // Seit 06.11.2026 steht der Gast danach in den Absagen (Vertrag: auch eine Admin-Absage zählt).
+      modell.absagen = [...(modell.absagen ?? []), { name: zusage.name, gast: true }]
       gastAbsagen.add(schluessel)
       // Eine Absage ändert den Kreis (Einteilung veraltet), öffnet aber kein Kontingent: Der Kontingentstand bleibt.
       modell.kontingentVersion ??= modell.teilnehmerVersion

@@ -15,8 +15,9 @@ type TeilnehmerlisteEigenschaften = {
   /** Der Termin ist vorbei: Der Leerzustand nennt dann nur den Grund, keinen nächsten Schritt. */
   beendet?: boolean
   /**
-   * Nur lesen (Admin, C7 E2): Der Admin sagt nicht zu; der Leerzustand fordert ihn deshalb nicht dazu auf, sondern sagt,
-   * was geschieht (24.10.2026).
+   * Nur lesen (Admin, C7 E2): Der Admin sagt nicht zu. Ohne Zusagen steht deshalb kein Leerzustand mit Aufforderung,
+   * sondern derselbe kurze Satz wie bei den Absagen: „Bisher hat niemand zugesagt.“ (Vorgabe vom 06.11.2026; bis dahin
+   * „Noch keine Zusagen / Sobald jemand zusagt, erscheint er hier.“).
    */
   nurLesen?: boolean
   /** Test-ID des Behälters. */
@@ -61,16 +62,14 @@ export default function Teilnehmerliste({
         {eintraege.length > 0 && <span className={style.pfeil} aria-hidden="true" data-testid={`${testId}-pfeil`} />}
       </summary>
 
-      {eintraege.length === 0 ? (
+      {eintraege.length === 0 && nurLesen ? (
+        <p className={style.leer} data-testid={`${testId}-leer`}>
+          {beendet ? 'Für diesen Termin gab es keine Zusagen.' : 'Bisher hat niemand zugesagt.'}
+        </p>
+      ) : eintraege.length === 0 ? (
         <Leerzustand
           titel={beendet ? 'Keine Zusagen' : 'Noch keine Zusagen'}
-          text={
-            beendet
-              ? 'Für diesen Termin gab es keine Zusagen.'
-              : nurLesen
-                ? 'Sobald jemand zusagt, erscheint er hier.'
-                : 'Sag zu, wenn du dabei bist.'
-          }
+          text={beendet ? 'Für diesen Termin gab es keine Zusagen.' : 'Sag zu, wenn du dabei sein willst.'}
           data-testid={`${testId}-leer`}
         />
       ) : (

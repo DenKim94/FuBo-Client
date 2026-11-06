@@ -15,6 +15,7 @@ function termin(teil: Partial<TerminUebersicht> = {}): TerminUebersicht {
     status: 'GEPLANT',
     teilnehmerVersion: 1,
     zusagen: 8,
+    absagen: 0,
     ...teil,
   }
 }

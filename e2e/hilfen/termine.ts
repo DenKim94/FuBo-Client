@@ -34,8 +34,10 @@ export type TerminModell = {
   min: number
   max: number
   zusagen: Zusage[]
-  /** Eigene Rueckmeldung, dreiwertig. Bei `true` steht der eigene Name in `zusagen`. */
+  /** Eigene Rueckmeldung, dreiwertig. Bei `true` steht der eigene Name in `zusagen`, bei `false` in den Absagen. */
   eigene: boolean | null
+  /** Absagen anderer (seit 06.11.2026; ungesetzt: keine). Die eigene folgt aus `eigene === false`. */
+  absagen?: Zusage[]
   teilnehmerVersion: number
   /** Einteilung (`teams`) oder `null`: „noch nicht generiert“. */
   teams: Einteilung | null
@@ -139,6 +141,13 @@ export function inMinuten(minuten: number): { datum: string; uhrzeit: string } {
   }
 }
 
+/** Absagen wie am Server (Vertrag vom 06.11.2026): alphabetisch, die eigene aus `eigene === false`. */
+function absagenVon(m: TerminModell) {
+  const andere = (m.absagen ?? []).filter((a) => a.name !== EIGENER_NAME || a.gast)
+  const alle = m.eigene === false ? [...andere, { name: EIGENER_NAME, gast: false }] : andere
+  return alle.map((a) => ({ anzeigeName: a.name, gast: a.gast })).sort((x, y) => x.anzeigeName.localeCompare(y.anzeigeName, 'de'))
+}
+
 function uebersicht(m: TerminModell) {
   return {
     terminId: m.terminId,
@@ -149,6 +158,7 @@ function uebersicht(m: TerminModell) {
     status: m.status,
     teilnehmerVersion: m.teilnehmerVersion,
     zusagen: m.zusagen.length,
+    absagen: absagenVon(m).length,
     eigeneRueckmeldung: m.eigene,
   }
 }
@@ -170,6 +180,7 @@ function details(m: TerminModell, admin = false) {
         // Fuer alle anderen fehlt der Schluessel ganz (nicht null).
         ...(admin && z.gast ? { gastStufe: z.stufe ?? 'MITTEL' } : {}),
       })),
+      absagen: absagenVon(m),
     },
     teams: m.teams
       ? { ...m.teams, veraltet: m.teamsVersion !== null && m.teamsVersion !== m.teilnehmerVersion }

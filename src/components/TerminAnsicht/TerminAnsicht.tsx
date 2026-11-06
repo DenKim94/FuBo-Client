@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react'
 import { ApiFehler } from '@/api/common/fehler'
 import type { TerminDetails } from '@/api/termine/termine'
+import Absagenliste from '@/components/Absagenliste/Absagenliste'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
 import Fortschrittsbalken from '@/components/Fortschrittsbalken/Fortschrittsbalken'
@@ -178,6 +179,16 @@ export default function TerminAnsicht({
             eingeklappt={eingeklappt}
             beendet={!geplant}
             nurLesen={nurLesen}
+          />
+        )}
+        {/* Absagen unter den Zusagen (06.11.2026), gleich eingeklappt; bei einem abgesagten Termin entfallen beide. */}
+        {termin.status !== 'ABGESAGT' && (
+          <Absagenliste
+            absagen={liste.absagen}
+            eigenerName={eigenerName}
+            eigenerGast={istGast}
+            eingeklappt={eingeklappt}
+            beendet={!geplant}
           />
         )}
 

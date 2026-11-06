@@ -674,6 +674,8 @@ export interface paths {
          *     **Ohne `ab` sind alle Termine enthalten, auch vergangene** – die Liste beginnt dann beim ältesten Eintrag und enthält keine Untergrenze. Mit `ab` beginnt sie an diesem Tag. Die Antwort wächst damit mit der Zahl der Termine; ein Client, der nur kommende Termine anzeigen will, setzt `ab` auf den heutigen Tag.
          *
          *     **Abgesagte Termine bleiben in der Liste.** Der Spieler soll sehen, dass sein Training ausfällt, statt einen Termin vorzufinden, der spurlos verschwunden ist – `status` unterscheidet sie.
+         *
+         *     **Absagen (seit 06.11.2026):** Neben `zusagen` trägt jeder Eintrag `absagen`, die Zahl der Absagen ohne gesperrte Profile. Die Namen stehen nur in der Einzelansicht.
          */
         get: operations["termineLesen"];
         put?: never;
@@ -700,6 +702,8 @@ export interface paths {
          *     **Die Teilnehmerliste kommt mit S4-Paket 7 dazu** – als zusätzliches Feld, nicht als zweiter Endpunkt: Wer einen Termin öffnet, will die Teilnehmer sehen, und zwei Aufrufe für eine Ansicht sind zwei Gelegenheiten für einen inkonsistenten Stand.
          *
          *     **Das Restkontingent der Teamgenerierung** (`kontingentGenerierung`) kam am 22.10.2026 dazu – nur hier, nicht in der Liste; Bedeutung und `null`-Fälle stehen am Feld.
+         *
+         *     **Die Absagen** (seit 06.11.2026) stehen als `teilnehmerliste.absagen` alphabetisch neben der Warteschlange – für jede Rolle, ohne Bewertung.
          */
         get: operations["terminLesen"];
         put?: never;
@@ -1916,9 +1920,16 @@ export interface components {
             teilnehmerVersion: number;
             /**
              * Format: int32
-             * @description Anzahl der Zusagen. Absagen zählen nicht mit – deshalb `count(*) FILTER (WHERE zusage)` und nicht die Zahl der Rückmeldungen.
+             * @description Anzahl der Zusagen. Absagen zählen nicht mit – sie stehen seit dem 06.11.2026 in `absagen` – deshalb `count(*) FILTER (WHERE zusage)` und nicht die Zahl der Rückmeldungen.
              */
             zusagen: number;
+            /**
+             * Format: int32
+             * @description Anzahl der Absagen (seit 06.11.2026) – das Gegenstück zu `zusagen`. Gezählt werden Absagen **aktiver Spieler und von Gästen**; **gesperrte Profile zählen nicht mit**, denn beim Sperren werden ihre künftigen Zusagen technisch in Absagen umgewandelt, die der Spieler nie gegeben hat. Wer gar nicht geantwortet hat, zählt weder hier noch bei `zusagen`.
+             *
+             *     Die Namen stehen nur in der Einzelansicht (`teilnehmerliste.absagen`); dort ist die Liste genau so lang wie diese Zahl.
+             */
+            absagen: number;
             /**
              * @description Die eigene Rückmeldung des Aufrufers – **dreiwertig**: `true` zugesagt, `false` abgesagt, `null` noch nicht gemeldet. Ein `if (eigeneRueckmeldung)` behandelt „noch nicht gemeldet“ wie eine Absage; das Frontend zeigt drei Zustände, nicht zwei.
              *
@@ -2192,11 +2203,24 @@ export interface components {
             gastStufe?: components["schemas"]["GastStufe"] | null;
         };
         /**
+         * @description Eine Absage zu einem Termin (Ergänzung vom 06.11.2026).
+         *
+         *     **Ein eigener Typ, nicht `TeilnehmerEintrag`:** `position` und `wartet` gehören zur Warteschlange, und in der steht nur, wer zugesagt hat. Gemeinsam sind nur Name und Gast-Kennzeichen.
+         *
+         *     **Keine Bewertung, für keine Rolle** – anders als bei den Zusagen auch für den Admin ohne `gastStufe`.
+         */
+        AbsageEintrag: {
+            /** @description Profilname oder Gastname. Das Anhängen von „(Gast)“ ist Sache des Frontends (A8). */
+            anzeigeName: string;
+            /** @description `true`, wenn hinter dem Eintrag kein Profil steht. */
+            gast: boolean;
+        };
+        /**
          * @description Die Zusagen eines Termins samt der Kennzahlen, an denen sie zu messen sind (A10, A11).
          *
-         *     **Ohne `terminId` und ohne `zusagen`** – beide stehen bereits im umgebenden `TerminDetails`. Zweimal dieselbe Zahl in einer Antwort ist eine Einladung, die falsche zu lesen.
+         *     **Ohne `terminId`, `zusagen` und `absagen`** – beide stehen bereits im umgebenden `TerminDetails`. Zweimal dieselbe Zahl in einer Antwort ist eine Einladung, die falsche zu lesen.
          *
-         *     **Absagen erscheinen hier nicht.** Wer abgesagt hat, sieht das an `eigeneRueckmeldung` des Termins.
+         *     **Zusagen und Absagen stehen in zwei Listen** (seit 06.11.2026): `teilnehmer` ist die Warteschlange mit Position und Wartestatus, `absagen` steht alphabetisch daneben. Eine gemeinsame Liste zwänge jeden Leser, die Absagen aus Position, Warteschlange und Mindestzahl wieder herauszurechnen.
          */
         Teilnehmerliste: {
             /**
@@ -2213,6 +2237,16 @@ export interface components {
             mindestzahlErreicht: boolean;
             /** @description Die Zusagen in Warteschlangenreihenfolge. **Im Frontend nicht umsortieren** – sonst stimmt `position` nicht mehr mit der Anzeige überein. */
             teilnehmer: components["schemas"]["TeilnehmerEintrag"][];
+            /**
+             * @description Die Absagen **alphabetisch nach `anzeigeName`** (seit 06.11.2026); eine leere Liste, wenn niemand abgesagt hat, nie `null`.
+             *
+             *     **Alphabetisch, weil es keinen Absagezeitpunkt gibt:** Der Server speichert nur den Zeitpunkt der letzten Zusage. Die Sortierung folgt der Collation der Datenbank.
+             *
+             *     **Enthalten:** aktive Spieler und Gäste – auch ein Gast, für den der Admin über `POST /admin/teilnahme/gast-absagen` abgesagt hat. **Nicht enthalten:** gesperrte Profile und wer gar nicht geantwortet hat. Die Länge entspricht `absagen` des umgebenden Termins.
+             *
+             *     Wer erneut zusagt, wechselt beim nächsten Abruf in `teilnehmer` und reiht sich dort hinten ein.
+             */
+            absagen: components["schemas"]["AbsageEintrag"][];
         };
         /**
          * @description Ein eingeteilter Teilnehmer.
@@ -3871,6 +3905,7 @@ export interface operations {
                      *         "status": "GEPLANT",
                      *         "teilnehmerVersion": 0,
                      *         "zusagen": 0,
+                     *         "absagen": 0,
                      *         "eigeneRueckmeldung": null
                      *       }
                      *     ]
