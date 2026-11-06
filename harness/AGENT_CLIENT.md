@@ -3,7 +3,7 @@
 > Gilt für den Agenten, der **ausschließlich die Frontend-Seite (`client/`)** bearbeitet.
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`.
-> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten, **am 22.10.2026** um C8 (Admin-Verwaltung, Teil 2), **am 24.10.2026** um Gäste-Verwaltung und Farbakzente, **am 25.10.2026** um C9 (PWA-Onboarding und Push; Vorfassung `archive/AGENT_CLIENT_2026-10-24.md`), **am 05.11.2026** um die Teamstärken im Team-Generator (Vorfassung `archive/AGENT_CLIENT_2026-11-03.md`). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
+> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten, **am 22.10.2026** um C8 (Admin-Verwaltung, Teil 2), **am 24.10.2026** um Gäste-Verwaltung und Farbakzente, **am 25.10.2026** um C9 (PWA-Onboarding und Push; Vorfassung `archive/AGENT_CLIENT_2026-10-24.md`), **am 05.11.2026** um die Teamstärken im Team-Generator (Vorfassung `archive/AGENT_CLIENT_2026-11-03.md`), **am 06.11.2026** um die Absagenliste (Vorfassung `archive/AGENT_CLIENT_2026-11-05.md`). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
 > `archive/AGENT_CLIENT_2026-10-17c.md`, die Fassung vor der Design-Überarbeitung unter `archive/AGENT_CLIENT_2026-10-18b.md`, ältere unter `archive/AGENT_CLIENT_2026-10-03.md` und `…-10-17.md`/`…-10-17b.md`.
 
 ### Rolle
@@ -105,7 +105,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `minTeilnehmer`, ohne Push): Texte dürfen `ABGESAGT` nicht als Absage durch den Admin darstellen.
 - Teamdaten für USER/GAST: nur Name, Team, Auswechselflag. Namensliste: `id`, `name`, `belegt`; gewählt wird über die `id`. Gastname ohne
   „(Gast)" senden.
-- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (46 Operationen, Stand 05.11.2026; `AuswechselModus` = `ZUFAELLIG` | `ZULETZT_ANGEMELDET`; `ManuelleEinteilung` mit `gesamtpunkteTeamA`/`gesamtpunkteTeamB` statt `differenzTeamstaerke`). Maßgeblich ist `server/fubo-api.json`: Änderungen zuerst
+- **Kontrakt-Kopie** `client/harness/assets/fubo-api.json` (46 Operationen, Stand 06.11.2026, Version 1.0.1; `TerminUebersicht.absagen` und `teilnehmerliste.absagen` (`AbsageEintrag`) Pflicht; `AuswechselModus` = `ZUFAELLIG` | `ZULETZT_ANGEMELDET`; `ManuelleEinteilung` mit `gesamtpunkteTeamA`/`gesamtpunkteTeamB` statt `differenzTeamstaerke`). Maßgeblich ist `server/fubo-api.json`: Änderungen zuerst
   dort, dann die Kopie **gegen den Unterschied** auffrischen, Typen (`npm run api:typen`) und Mocks nachziehen. Typen nur aus dem Generat
   (`components['schemas'][…]`, `operations[…]`).
 - **Bekannte Vertragslücke:** In `PIN_VERIFIED` nennt kein Endpunkt die freien Gastplätze; „Gast" lässt sich erst nach `409 KEIN_GAST_SLOT_FREI` sperren.
@@ -163,7 +163,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `Teilnehmerliste`, `TeamsAnzeige`, `ErgebnisAnzeige`, `ErgebnisFormular` u. a.; aus C7 `Bestaetigung` (Dialog für jede nicht umkehrbare Aktion), `Verwaltungsliste`,
   `SkillFelder`, `ProfilListe`/`ProfilZeile`, `TerminFormular`, `AdminTerminZeile`, `SerieErgebnis`; aus der Design-Überarbeitung (18.10.2026) `Segmente`, `Schalter`, `Feldzeile`, `Netzdiagramm`,
   `ProfilKennzeichen`, `ProfilLader` (siehe unten, „Design-Überarbeitung Admin“); aus C9 `Onboarding` (Karte mit zwei Schritten), Seite `Einstellungen`; aus C8 `StufeWahl` (Radiogruppe der Gast-Stufe über `Segmente`), `Textbereich` (mehrzeiliges Feld, Gegenstück zu `Feld`),
-  `ErgebnisEingabe` (Eingabeteil aus `ErgebnisFormular`, gemeinsam mit der Korrektur), `TeamListen` (aus `TeamsAnzeige`, gemeinsam mit `AdminTeams`), Hook `useZeitpunktErreicht` (Uhr nie im Render); seit 05.11.2026 `Teamstaerken` (nur `AdminTeams`, A12).
+  `ErgebnisEingabe` (Eingabeteil aus `ErgebnisFormular`, gemeinsam mit der Korrektur), `TeamListen` (aus `TeamsAnzeige`, gemeinsam mit `AdminTeams`), Hook `useZeitpunktErreicht` (Uhr nie im Render); seit 05.11.2026 `Teamstaerken` (nur `AdminTeams`, A12); seit 06.11.2026 `Absagenliste` (unter `Teilnehmerliste` in `TerminAnsicht`, gleich eingeklappt; Rahmen, Kopfzeile, Pfeil und Linien beider Listen aus `src/styles/_klappliste.scss`).
 - **Passwort- und Codefelder (C4):**
   - `PasswortFeld` (umhüllt `Feld`): Auge-Umschalter als reiner Symbol-`button` (`visibility_{on,off}_dark.png`) mit festem `aria-label`
     „Passwort anzeigen" und `aria-pressed`; Pflicht (kein Wiederholungsfeld); verbirgt beim Absenden wieder; `maxLength` 72; **kein `trim()`**;
