@@ -101,7 +101,7 @@ export default function SitzungAblaufDialog() {
     >
       <p id={beschreibungId} className={style.text} data-testid="sitzung-ablauf-text">
         {verlaengerbar
-          ? 'Deine Sitzung läuft gleich ab. Verlängere sie, um weiterzuarbeiten.'
+          ? 'Deine Sitzung läuft gleich ab. Verlängere sie, um angemeldet zu bleiben.'
           : 'Deine Sitzung endet gleich und lässt sich nicht mehr verlängern. Schließe deine Eingabe jetzt ab; danach ist ein erneuter Login nötig.'}
       </p>
 

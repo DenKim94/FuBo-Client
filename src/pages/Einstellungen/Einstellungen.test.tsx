@@ -96,13 +96,16 @@ describe('Einstellungen je Rolle', () => {
 })
 
 describe('Gerätelagen', () => {
-  test('eingerichtet: Entfernen-Knopf und Hinweis zum geteilten Gerät', async () => {
+  test('eingerichtet: Entfernen-Knopf und Satz, was das Entfernen bewirkt', async () => {
     geraet.berechtigung = 'granted'
     geraet.abo = { endpoint: 'https://push.example/a', vapid: BEISPIEL_VAPID }
     rendern()
     expect(await geraetText()).toBe('Auf diesem Gerät eingerichtet.')
     expect(screen.getByTestId('push-entfernen')).toHaveTextContent('Auf diesem Gerät entfernen')
-    expect(screen.getByTestId('push-geraet')).toHaveTextContent('Gibst du das Gerät weiter')
+    // Seit 06.11.2026: Folge des Entfernens statt Hinweis zum weitergegebenen Gerät (Vorgabe des Entwicklers).
+    expect(screen.getByTestId('push-geraet')).toHaveTextContent(
+      'Gilt nur für dieses Gerät: Nach Entfernung bekommt es keine Benachrichtigungen mehr. Andere Geräte bleiben eingerichtet.',
+    )
     expect(screen.getByTestId('push-gesamtsatz')).toHaveTextContent('Du bekommst Erinnerungen und Absagen')
   })
 

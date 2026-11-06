@@ -64,7 +64,7 @@ describe('SitzungAblaufDialog', () => {
 
     expect(screen.getByRole('dialog', { name: 'Sitzung läuft ab' })).toBe(dialog())
     expect(screen.getByTestId('sitzung-ablauf-text')).toHaveTextContent(
-      'Deine Sitzung läuft gleich ab. Verlängere sie, um weiterzuarbeiten.',
+      'Deine Sitzung läuft gleich ab. Verlängere sie, um angemeldet zu bleiben.',
     )
     // Keine Restzeit als Zahl: Der Balken ist die einzige Zeitanzeige.
     expect(screen.queryByTestId('sitzung-ablauf-restzeit')).not.toBeInTheDocument()

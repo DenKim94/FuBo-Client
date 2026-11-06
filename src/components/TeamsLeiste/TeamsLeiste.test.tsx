@@ -110,8 +110,8 @@ describe('TeamsLeiste', () => {
 
     const knopf = screen.getByTestId('teams-generieren')
     expect(knopf).toHaveAttribute('aria-disabled', 'true')
-    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.')
-    expect(knopf).toHaveAccessibleDescription('Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.')
+    expect(screen.getByTestId('teams-grund')).toHaveTextContent('Nur Teilnehmer des Termins können den Team-Generator nutzen.')
+    expect(knopf).toHaveAccessibleDescription('Nur Teilnehmer des Termins können den Team-Generator nutzen.')
 
     await userEvent.click(knopf)
     expect(welt.protokoll.generierungen).toHaveLength(0)

@@ -159,7 +159,7 @@ test.describe('Tab Teams', () => {
 })
 
 test.describe('Nur Teilnehmer generieren', () => {
-  const GRUND = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+  const GRUND = 'Nur Teilnehmer des Termins können den Team-Generator nutzen.'
 
   test.beforeEach(async ({ page }) => {
     await sitzungNachbilden(page, { leerlaufSek: 900 })

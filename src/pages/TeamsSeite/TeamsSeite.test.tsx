@@ -101,7 +101,7 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
     rendern('/teams/102', teilnehmend({ terminId: 102 }))
     const leer = await screen.findByTestId('teams-nicht-generiert')
     expect(leer).toHaveTextContent('Noch keine Einteilung')
-    expect(leer).toHaveTextContent('Sobald jemand die Teams generiert hat, erscheinen sie hier.')
+    expect(leer).toHaveTextContent('Sobald jemand die Teams eingeteilt hat, erscheinen sie hier.')
     expect(screen.queryByTestId('teams-anzeige')).not.toBeInTheDocument()
     expect(screen.getByTestId('teams-generieren')).toHaveTextContent('Teams generieren')
   })
@@ -266,7 +266,7 @@ describe('TeamsSeite: Generieren', () => {
 })
 
 describe('TeamsSeite: nur Teilnehmer generieren', () => {
-  const GRUND = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+  const GRUND = 'Nur Teilnehmer des Termins können den Team-Generator nutzen.'
 
   test.each([
     ['ohne Rückmeldung', null],

@@ -244,7 +244,9 @@ export default function PushBereich({ istAdmin }: { istAdmin: boolean }) {
           )}
           {lage === 'eingerichtet' && (
             <>
-              <p className={style.klein}>Gilt nur für dieses Gerät. Gibst du das Gerät weiter, entferne es vorher hier.</p>
+              <p className={style.klein}>
+                Gilt nur für dieses Gerät: Nach Entfernung bekommt es keine Benachrichtigungen mehr. Andere Geräte bleiben eingerichtet.
+              </p>
               <CustomButton
                 art="sekundaer"
                 breit

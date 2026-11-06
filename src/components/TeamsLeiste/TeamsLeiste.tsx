@@ -104,7 +104,7 @@ export default function TeamsLeiste({
   // durch Zusagen, das Kontingent durch eine neue Zusage.
   let grund: string | null = null
   if (!berechtigt) {
-    grund = 'Nur Teilnehmer des Termins dürfen den Team-Generator nutzen.'
+    grund = 'Nur Teilnehmer des Termins können den Team-Generator nutzen.'
   } else if (!mindestzahlErreicht) {
     grund = `Mindestens ${String(minTeilnehmer)} Zusagen sind erforderlich.`
   } else if (kontingent?.uebrig === 0) {

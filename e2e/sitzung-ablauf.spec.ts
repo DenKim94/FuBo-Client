@@ -43,7 +43,7 @@ test.describe('Ablauf-Dialog der Sitzung', () => {
     await expect(dialog).toBeVisible()
     await expect(page.getByRole('dialog', { name: 'Sitzung läuft ab' })).toBeVisible()
     await expect(page.getByTestId('sitzung-ablauf-text')).toHaveText(
-      'Deine Sitzung läuft gleich ab. Verlängere sie, um weiterzuarbeiten.',
+      'Deine Sitzung läuft gleich ab. Verlängere sie, um angemeldet zu bleiben.',
     )
     // Keine Restzeit als Zahl; der Balken zeigt den Verlauf.
     await expect(page.getByTestId('sitzung-ablauf-restzeit')).toHaveCount(0)
