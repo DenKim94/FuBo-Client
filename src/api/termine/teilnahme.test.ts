@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { detailsVon, teamsAus, terminModell } from '@/test/mocks/termine'
-import { istEingeteilt, spieltMit } from './teilnahme'
+import { einteilungVeraltet, istEingeteilt, spieltMit } from './teilnahme'
 
 const ICH = 'Beispielspieler 01'
 
@@ -73,5 +73,60 @@ describe('istEingeteilt', () => {
   test('ohne Einteilung oder ohne Namen: nicht eingeteilt', () => {
     expect(istEingeteilt(null, ICH, false)).toBe(false)
     expect(istEingeteilt(teams, undefined, false)).toBe(false)
+  })
+})
+
+describe('einteilungVeraltet (07.11.2026: nur geänderte Zusagen zählen)', () => {
+  const A = { name: 'Beispielspieler 11', gast: false }
+  const B = { name: 'Beispielspieler 12', gast: false }
+  const C = { name: 'Beispielspieler 13', gast: false }
+  const GAST = { name: 'Beispielgast 1', gast: true }
+
+  /** Einteilung aus `eingeteilt`, Zusagen `zusagen`; der Server meldet `veraltet` wie angegeben. */
+  function lage(eingeteilt: { name: string; gast: boolean }[], zusagen: { name: string; gast: boolean }[], veraltet = true, max = 10) {
+    const details = detailsVon(terminModell({ terminId: 1, max, min: 1, zusagen, eigene: null }))
+    const eintrag = (z: { name: string; gast: boolean }) => ({ anzeigeName: z.name, gast: z.gast, auswechselspieler: false })
+    const haelfte = Math.ceil(eingeteilt.length / 2)
+    return {
+      ...details,
+      teams: {
+        erzeugtAm: '2026-11-07T08:15:00+01:00',
+        erzeugtVon: A.name,
+        veraltet,
+        teamA: eingeteilt.slice(0, haelfte).map(eintrag),
+        teamB: eingeteilt.slice(haelfte).map(eintrag),
+      },
+    }
+  }
+
+  test('Server meldet veraltet, Besetzung gleich (etwa eine Absage ohne vorherige Zusage): nicht veraltet', () => {
+    expect(einteilungVeraltet(lage([A, B, GAST], [GAST, B, A]))).toBe(false)
+  })
+
+  test('eine Zusage weniger oder mehr: veraltet', () => {
+    expect(einteilungVeraltet(lage([A, B, C], [A, B]))).toBe(true)
+    expect(einteilungVeraltet(lage([A, B], [A, B, C]))).toBe(true)
+  })
+
+  test('gleich viele, aber eine andere Person: veraltet', () => {
+    expect(einteilungVeraltet(lage([A, B], [A, C]))).toBe(true)
+  })
+
+  test('Gast-Kennzeichen zählt mit: ein Profil, das so heißt wie der Gast, ist eine andere Person', () => {
+    expect(einteilungVeraltet(lage([GAST], [{ name: GAST.name, gast: false }]))).toBe(true)
+  })
+
+  test('Mehrfachvorkommen zählen: zwei gleichnamige Gäste sind nicht einer', () => {
+    expect(einteilungVeraltet(lage([GAST, GAST, A], [GAST, A, A]))).toBe(true)
+    expect(einteilungVeraltet(lage([GAST, GAST, A], [GAST, A, GAST]))).toBe(false)
+  })
+
+  test('die Warteschlange zählt nicht: ein neuer Wartender ändert die Besetzung nicht', () => {
+    expect(einteilungVeraltet(lage([A, B], [A, B, C], true, 2))).toBe(false)
+  })
+
+  test('meldet der Server nicht veraltet, bleibt es dabei; ohne Einteilung nie veraltet', () => {
+    expect(einteilungVeraltet(lage([A, B], [A, C], false))).toBe(false)
+    expect(einteilungVeraltet({ ...lage([A], [A]), teams: null })).toBe(false)
   })
 })

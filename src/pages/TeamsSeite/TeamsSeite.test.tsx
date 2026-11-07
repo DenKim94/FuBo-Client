@@ -125,7 +125,9 @@ describe('TeamsSeite: Zustaende der Einteilung', () => {
 
   test('zeigt eine veraltete Einteilung samt Hinweis und dem Weg zur Neugenerierung', async () => {
     const modell = mitEinteilung({ terminId: 102 })
-    modell.teilnehmerVersion += 1 // eine Aenderung nach dem Lauf
+    // Eine Zusage weniger nach dem Lauf (seit 07.11.2026 zählt nur eine geänderte Besetzung, nicht der Zähler allein).
+    modell.zusagen = modell.zusagen.slice(0, -1)
+    modell.teilnehmerVersion += 1
     rendern('/teams/102', modell)
 
     expect(await screen.findByTestId('teams-anzeige-veraltet')).toHaveTextContent('Du kannst die Teams neu generieren.')
@@ -319,9 +321,24 @@ describe('TeamsSeite: nur Teilnehmer generieren', () => {
     await waitFor(() => expect(screen.getByTestId('teams-grund')).toHaveTextContent(GRUND))
   })
 
+  test('eine Absage ohne vorherige Zusage zeigt keinen Hinweis; die Rückfrage vor dem Ersetzen bleibt (07.11.2026)', async () => {
+    // Der Server zählt `teilnehmerVersion` auch bei dieser Absage hoch und meldet `veraltet`; die Besetzung ist gleich.
+    const modell = mitEinteilung({ terminId: 102 })
+    modell.absagen = [{ name: 'Beispielspieler 30', gast: false }]
+    modell.teilnehmerVersion += 1
+    rendern('/teams/102', modell)
+
+    expect(await screen.findByTestId('teams-anzeige')).toBeInTheDocument()
+    expect(screen.queryByTestId('teams-anzeige-veraltet')).not.toBeInTheDocument()
+    // Die Einteilung gilt als aktuell: Neu generieren fragt nach, statt sie still zu ersetzen.
+    await userEvent.click(screen.getByTestId('teams-generieren'))
+    expect(await screen.findByTestId('teams-ersetzen-dialog')).toBeInTheDocument()
+  })
+
   test('eine veraltete Einteilung bietet Nicht-Teilnehmern keine Neugenerierung an', async () => {
     const basis = terminModell({ terminId: 102 })
     const modell = { ...basis, teams: teamsAus(basis, 'Beispielspieler 11'), teamsVersion: basis.teilnehmerVersion }
+    modell.zusagen = modell.zusagen.slice(0, -1)
     modell.teilnehmerVersion += 1
     rendern('/teams/102', modell)
 

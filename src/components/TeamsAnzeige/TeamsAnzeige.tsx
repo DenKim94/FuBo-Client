@@ -15,6 +15,11 @@ type TeamsAnzeigeEigenschaften = {
   eigenerGast: boolean
   /** Ziel für den Fokus nach einer Generierung (Überschrift der Einteilung). */
   ueberschriftRef?: Ref<HTMLHeadingElement>
+  /**
+   * Hinweis „Teilnehmerliste geändert“ zeigen. Die Seite bestimmt ihn (`einteilungVeraltet`, seit 07.11.2026): nur
+   * geänderte Zusagen zählen, nicht jedes `teams.veraltet` des Servers.
+   */
+  veraltet: boolean
   /** Die Seite bietet die Neugenerierung an: Der Hinweis „veraltet“ nennt dann den Weg. */
   neuGenerierbar?: boolean
   /** Test-ID des Behälters. */
@@ -45,6 +50,7 @@ export default function TeamsAnzeige({
   eigenerName,
   eigenerGast,
   ueberschriftRef,
+  veraltet,
   neuGenerierbar = false,
   'data-testid': testId = 'teams-anzeige',
 }: TeamsAnzeigeEigenschaften) {
@@ -54,7 +60,7 @@ export default function TeamsAnzeige({
         Letzte Einteilung am {zeitpunktKurz(teams.erzeugtAm)}
       </h2>
 
-      {teams.veraltet && (
+      {veraltet && (
         <Hinweis data-testid={`${testId}-veraltet`}>
           Seit dieser Einteilung hat sich die Teilnehmerliste geändert.
           {neuGenerierbar && ' Du kannst die Teams neu generieren.'}

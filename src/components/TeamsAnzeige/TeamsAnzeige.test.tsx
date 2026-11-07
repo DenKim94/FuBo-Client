@@ -20,7 +20,7 @@ function einteilung(teil: Partial<Teameinteilung> = {}): Teameinteilung {
 }
 
 function rendern(teams: Teameinteilung, eigenerName: string | null = EIGENER_NAME, eigenerGast = false) {
-  return render(<TeamsAnzeige teams={teams} eigenerName={eigenerName} eigenerGast={eigenerGast} />)
+  return render(<TeamsAnzeige teams={teams} eigenerName={eigenerName} eigenerGast={eigenerGast} veraltet={teams.veraltet} />)
 }
 
 describe('TeamsAnzeige', () => {
@@ -85,6 +85,12 @@ describe('TeamsAnzeige', () => {
     expect(screen.queryByText(/\(du\)/)).not.toBeInTheDocument()
   })
 
+  test('der Hinweis folgt der Eigenschaft `veraltet`, nicht `teams.veraltet` (07.11.2026)', () => {
+    // Die Seite entscheidet (nur geänderte Zusagen zählen); der Server kann `veraltet` schon nach einer Absage melden.
+    render(<TeamsAnzeige teams={einteilung({ veraltet: true })} eigenerName={null} eigenerGast={false} veraltet={false} />)
+    expect(screen.queryByTestId('teams-anzeige-veraltet')).not.toBeInTheDocument()
+  })
+
   test('zeigt eine veraltete Einteilung weiter an und weist darauf hin', () => {
     // Verstecken waere falsch: Jemand hat die Aufstellung vielleicht schon vorgelesen.
     rendern(einteilung({ veraltet: true }))
@@ -97,10 +103,10 @@ describe('TeamsAnzeige', () => {
 
   test('nennt den Weg zur Neugenerierung nur, wenn die Seite ihn anbietet', () => {
     const { rerender } = render(
-      <TeamsAnzeige teams={einteilung({ veraltet: true })} eigenerName={null} eigenerGast={false} />,
+      <TeamsAnzeige teams={einteilung({ veraltet: true })} eigenerName={null} eigenerGast={false} veraltet />,
     )
     expect(screen.getByTestId('teams-anzeige-veraltet')).not.toHaveTextContent('neu generieren')
-    rerender(<TeamsAnzeige teams={einteilung({ veraltet: true })} eigenerName={null} eigenerGast={false} neuGenerierbar />)
+    rerender(<TeamsAnzeige teams={einteilung({ veraltet: true })} eigenerName={null} eigenerGast={false} veraltet neuGenerierbar />)
     expect(screen.getByTestId('teams-anzeige-veraltet')).toHaveTextContent('Du kannst die Teams neu generieren.')
   })
 

@@ -77,6 +77,29 @@ test.describe('Tab Teams', () => {
     expect(welt.detailabrufe.every((k) => k === 'true')).toBe(true)
   })
 
+  test('eine Absage ohne vorherige Zusage markiert die Einteilung nicht als veraltet (07.11.2026)', async ({ page }) => {
+    const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true })])
+    await teamsNachbilden(page, welt)
+    await page.clock.install()
+    await page.goto('/teams')
+    await page.getByTestId('teams-generieren').click()
+    await expect(page.getByTestId('teams-anzeige')).toBeVisible()
+
+    // Jemand, der nie zugesagt hatte, sagt ab: Der Server zählt hoch und meldet `veraltet`, die Zusagen sind gleich.
+    const abrufeVorher = welt.detailabrufe.length
+    welt.modelle[0].absagen = [{ name: 'Beispielspieler 30', gast: false }]
+    welt.modelle[0].teilnehmerVersion += 1
+    await page.clock.runFor(21_000)
+    // Der neue Stand ist angekommen (die Absage steht in den Absagen), erst dann zählt das Fehlen des Hinweises.
+    await expect.poll(() => welt.detailabrufe.length).toBeGreaterThan(abrufeVorher)
+    await page.goto('/termine/102')
+    await expect(page.getByTestId('absagenliste-summary')).toHaveText('Absagen (1)')
+    await page.goto('/teams')
+    await expect(page.getByTestId('teams-anzeige')).toBeVisible()
+
+    await expect(page.getByTestId('teams-anzeige-veraltet')).toHaveCount(0)
+  })
+
   test('fragt vor dem Ersetzen einer aktuellen Einteilung nach', async ({ page }) => {
     const welt = await termineNachbilden(page, [terminModell({ terminId: 102, zusagen: zusagen(8, true), eigene: true })])
     await teamsNachbilden(page, welt)

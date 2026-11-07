@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import { ApiFehler } from '@/api/common/fehler'
-import { spieltMit } from '@/api/termine/teilnahme'
+import { einteilungVeraltet, spieltMit } from '@/api/termine/teilnahme'
 import { naechsterTermin } from '@/api/termine/terminZeit'
 import Fehlerzustand from '@/components/Fehlerzustand/Fehlerzustand'
 import Fehlermeldung from '@/components/Fehlermeldung/Fehlermeldung'
@@ -101,6 +101,8 @@ function TeamsTermin({ terminId }: { terminId: number }) {
     // Generieren dürfen der Admin (wie am Server) und wer mitspielt: zugesagt und – strenger als der Server, Vorgabe
     // des Entwicklers vom 22.10.2026 – nicht auf der Warteschlange. Auch „Du kannst die Teams neu generieren“ gilt nur dann.
     const berechtigt = istAdmin || spieltMit(termin, sitzung?.anzeigeName, istGast)
+    // Nur geänderte Zusagen machen die Einteilung „veraltet“, nicht jede Absage (07.11.2026); Anzeige und Rückfrage gleich.
+    const veraltet = einteilungVeraltet(termin)
 
     inhalt = (
       <>
@@ -113,6 +115,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
             eigenerName={sitzung?.anzeigeName}
             eigenerGast={istGast}
             ueberschriftRef={ueberschriftRef}
+            veraltet={veraltet}
             neuGenerierbar={geplant && !begonnen && berechtigt}
           />
         )}
@@ -135,7 +138,7 @@ function TeamsTermin({ terminId }: { terminId: number }) {
         <TeamsLeiste
           terminId={termin.terminId}
           vorhanden={teams !== null}
-          veraltet={teams?.veraltet ?? false}
+          veraltet={veraltet}
           erzeugtVon={teams?.erzeugtVon}
           berechtigt={berechtigt}
           mindestzahlErreicht={liste.mindestzahlErreicht}

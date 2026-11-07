@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LOGIN_PFADE } from '@/app/schutz/zielpfad'
 import { ApiFehler } from '@/api/common/fehler'
-import { istEingeteilt } from '@/api/termine/teilnahme'
+import { einteilungVeraltet, istEingeteilt } from '@/api/termine/teilnahme'
 import BilanzKarte from '@/components/BilanzKarte/BilanzKarte'
 import ErgebnisAnzeige from '@/components/ErgebnisAnzeige/ErgebnisAnzeige'
 import ErgebnisFormular from '@/components/ErgebnisFormular/ErgebnisFormular'
@@ -169,7 +169,12 @@ function ErgebnisTermin({ terminId }: { terminId: number }) {
         <BilanzKarte />
         <TerminKarte termin={termin} ebene={1} kompakt />
         {teams && (
-          <TeamsAnzeige teams={teams} eigenerName={sitzung?.anzeigeName} eigenerGast={istGast} />
+          <TeamsAnzeige
+            teams={teams}
+            eigenerName={sitzung?.anzeigeName}
+            eigenerGast={istGast}
+            veraltet={einteilungVeraltet(termin)}
+          />
         )}
         {zustand}
       </>

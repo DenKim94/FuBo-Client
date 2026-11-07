@@ -45,3 +45,31 @@ export function istEingeteilt(
   if (!teams || !eigenerName) return false
   return [...teams.teamA, ...teams.teamB].some((e) => e.anzeigeName === eigenerName && e.gast === eigenerGast)
 }
+
+/**
+ * Ist die Einteilung veraltet **im Sinne der Zusagen**? Grundlage des Hinweises „Seit dieser Einteilung hat sich die
+ * Teilnehmerliste geändert.“ und der Rückfrage vor dem Ersetzen (Vorgabe des Entwicklers vom 07.11.2026).
+ *
+ * **Warum nicht einfach `teams.veraltet`:** Der Server setzt das Feld über `teilnehmerVersion`, und die steigt bei jeder
+ * Absage – auch der Absage von jemandem, der nie zugesagt hatte –, bei Gast-Stufen, Skillwerten und Sperrungen. Der
+ * Hinweis soll aber nur erscheinen, wenn sich die **Zusagen** geändert haben, also die Einteilung nicht mehr die
+ * Spielenden zeigt.
+ *
+ * **Regel:** veraltet, wenn der Server `veraltet` meldet **und** die Eingeteilten (Team A und B, der Springer
+ * eingeschlossen) nicht mehr genau den Zusagen ohne Warteschlange entsprechen. Verglichen wird über Anzeigename **und**
+ * Gast-Kennzeichen, mit Mehrfachvorkommen (zwei Gäste dürfen gleich heißen). Die Warteschlange zählt nicht, weil nur
+ * eingeteilt ist, wer nicht wartet (Vertrag). Meldet der Server `false`, bleibt es dabei: Eine bloße Umbenennung
+ * soll keinen Hinweis auslösen.
+ *
+ * **Folge:** Geänderte Skillwerte oder Gast-Stufen allein lösen den Hinweis nicht mehr aus (die Besetzung ist gleich).
+ *
+ * @param termin Der Termin mit Einteilung und Teilnehmerliste.
+ */
+export function einteilungVeraltet(termin: Pick<TerminDetails, 'teams' | 'teilnehmerliste'>): boolean {
+  const teams = termin.teams
+  if (!teams?.veraltet) return false
+  const schluessel = (e: { anzeigeName: string; gast: boolean }) => `${e.gast ? 'G' : 'P'}:${e.anzeigeName}`
+  const eingeteilt = [...teams.teamA, ...teams.teamB].map(schluessel).sort()
+  const spielend = termin.teilnehmerliste.teilnehmer.filter((e) => !e.wartet).map(schluessel).sort()
+  return eingeteilt.length !== spielend.length || eingeteilt.some((s, i) => s !== spielend[i])
+}
