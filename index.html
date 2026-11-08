@@ -18,6 +18,10 @@
     />
     <link rel="icon" type="image/png" href="/icons/pwa/app-icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/pwa/apple-touch-icon.png" />
+    <!-- Name unter dem Symbol, den iOS beim Hinzufuegen zum Home-Bildschirm vorschlaegt; gleich manifest.short_name
+         in vite.config.ts (08.11.2026). Nur der Name: kein apple-mobile-web-app-capable/-status-bar-style, deren
+         Wirkung auf die Statusleiste ist bewusst ausgeschlossen (siehe src/pwa/iosApp.ts). -->
+    <meta name="apple-mobile-web-app-title" content="Die Kickers" />
     <title>MONTAGS-KICKER</title>
   </head>
   <body>

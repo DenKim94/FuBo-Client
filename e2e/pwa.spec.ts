@@ -40,8 +40,11 @@ test.describe('PWA-Grundgeruest', () => {
     // hier festgenagelt, weil zwei Vorgaben daran haengen: keine Erwaehnung des
     // Projektnamens "FuBo" in der Oberflaeche und hoechstens zwoelf Zeichen,
     // sonst kuerzt das Betriebssystem.
-    expect(manifestInhalt.short_name).toBe('GUT-KICK')
+    expect(manifestInhalt.short_name).toBe('Die Kickers')
     expect(manifestInhalt.short_name.length).toBeLessThanOrEqual(12)
+    // iOS schlaegt beim Hinzufuegen den Namen aus dem Meta-Tag vor; er muss dem Manifest entsprechen (08.11.2026).
+    await page.goto('/')
+    await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute('content', manifestInhalt.short_name)
 
     // Ohne ein 512er-Icon mit `any` zaehlt Chrome die Anwendung nicht als
     // installierbar, und `beforeinstallprompt` feuert stillschweigend nicht.

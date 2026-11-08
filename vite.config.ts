@@ -49,8 +49,11 @@ export default defineConfig({
         // Startbildschirm. Startbildschirme kuerzen nach rund zwoelf Zeichen,
         // `MONTAGS-KICKER` hat vierzehn. Deshalb eine Kurzform - aber nicht
         // "FuBo": Das ist Projekt- und Repositoriumsname und erscheint nicht in
-        // der Oberflaeche (AGENT_CLIENT.md). Festgelegt am 26.09.2026.
-        short_name: 'GUT-KICK',
+        // der Oberflaeche (AGENT_CLIENT.md). Festgelegt am 26.09.2026 als
+        // "GUT-KICK", seit 08.11.2026 "Die Kickers" (Vorgabe des Entwicklers).
+        // iOS liest den Namen aus <meta name="apple-mobile-web-app-title"> in
+        // index.html; beide muessen gleich sein (e2e/pwa.spec.ts).
+        short_name: 'Die Kickers',
         description: 'Teameinteilung und Terminverwaltung fuer die Trainingsgruppe.',
         lang: 'de',
         dir: 'ltr',
