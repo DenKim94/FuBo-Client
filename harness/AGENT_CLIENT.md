@@ -3,7 +3,7 @@
 > Gilt für den Agenten, der **ausschließlich die Frontend-Seite (`client/`)** bearbeitet.
 > Gesamtspezifikation: `/PRJ_FuBo/harness/AGENT.md`; UI-Vorgaben: `/PRJ_FuBo/harness/assets/Design/DESIGN.md`;
 > Stand und Meilensteine: `CONTEXT_HANDOFF_CLIENT.md`.
-> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten, **am 22.10.2026** um C8 (Admin-Verwaltung, Teil 2), **am 24.10.2026** um Gäste-Verwaltung und Farbakzente, **am 25.10.2026** um C9 (PWA-Onboarding und Push; Vorfassung `archive/AGENT_CLIENT_2026-10-24.md`), **am 05.11.2026** um die Teamstärken im Team-Generator (Vorfassung `archive/AGENT_CLIENT_2026-11-03.md`), **am 06.11.2026** um die Absagenliste (Vorfassung `archive/AGENT_CLIENT_2026-11-05.md`), **am 07.11.2026** um „veraltet“ nur bei geänderten Zusagen (Vorfassung `archive/AGENT_CLIENT_2026-11-06.md`). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
+> **Komprimierte Fassung vom 17.10.2026** (Stand nach C5), **ergänzt am 18.10.2026** um C7 und die Design-Überarbeitung der Admin-Ansichten, **am 22.10.2026** um C8 (Admin-Verwaltung, Teil 2), **am 24.10.2026** um Gäste-Verwaltung und Farbakzente, **am 25.10.2026** um C9 (PWA-Onboarding und Push; Vorfassung `archive/AGENT_CLIENT_2026-10-24.md`), **am 05.11.2026** um die Teamstärken im Team-Generator (Vorfassung `archive/AGENT_CLIENT_2026-11-03.md`), **am 06.11.2026** um die Absagenliste (Vorfassung `archive/AGENT_CLIENT_2026-11-05.md`), **am 07.11.2026** um „veraltet“ nur bei geänderten Zusagen (Vorfassung `archive/AGENT_CLIENT_2026-11-06.md`), **am 08.11.2026** um den Kurznamen „Die Kickers“ (Vorfassung `archive/AGENT_CLIENT_2026-11-07.md`). Die ausführliche Vorfassung mit allen Herleitungen liegt unter
 > `archive/AGENT_CLIENT_2026-10-17c.md`, die Fassung vor der Design-Überarbeitung unter `archive/AGENT_CLIENT_2026-10-18b.md`, ältere unter `archive/AGENT_CLIENT_2026-10-03.md` und `…-10-17.md`/`…-10-17b.md`.
 
 ### Rolle
@@ -126,7 +126,7 @@ Ordnernamen englisch, Bezeichner und Oberflächentext deutsch.
   `purpose: 'any'` plus maskierbarer 512er, Worker mit `fetch`-Handler. Cloudflare: `_headers` mit `no-cache` für `sw.js`, Manifest und `/`;
   SPA-Rückfall darf `sw.js`, Manifest, Icons nicht erfassen; Rocket Loader und Auto-Minify aus. Benachrichtigung: Server liefert Rückfalltext
   (`titel`, `text`) und Felder (`typ`, `terminId`, …); Worker formuliert bei bekanntem `typ` selbst; `tag` je Termin; Titel ohne Anwendungsnamen;
-  keine Namen Dritter, Skillwerte, Zugangsdaten. Manifest: `name` `MONTAGS-KICKER`, `short_name` `GUT-KICK` (in `e2e/pwa.spec.ts` festgenagelt),
+  keine Namen Dritter, Skillwerte, Zugangsdaten. Manifest: `name` `MONTAGS-KICKER`, `short_name` `Die Kickers` (seit 08.11.2026, vorher `GUT-KICK`; gleich `<meta name="apple-mobile-web-app-title">` in `index.html`, beides in `e2e/pwa.spec.ts` festgenagelt),
   `lang: de`, `start_url`/`scope` `/`. Precache nur App-Shell, `includeManifestIcons: false`, dazu `no_connection_icon_red.svg` und
   `icons/visibility_{on,off}_dark.png`.
 
